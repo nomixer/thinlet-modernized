@@ -140,3 +140,26 @@ preserve as vendored 2005 artifacts (parser + golden-trace fidelity), and
 `thinlet-drafts/.../internationalization.xml`) that Spotless cannot process as
 UTF-8. Spotless XML hygiene therefore applies only to project-authored XML
 (POMs, `config/`). `thinlet.dtd` remains excluded and byte-verbatim (D8).
+
+## D13 — Linters relaxed to a documented legacy baseline (Phase 0)
+**Date:** 2026-06-13
+
+`mvn verify` runs Spotless + Checkstyle + SpotBugs and must pass on the
+**unmodified** 2005 source (plan Phase 0 step 6: config/suppression changes
+only, zero production-code edits). Concretely:
+
+- **Checkstyle** (Google-derived) drops `NeedBraces`, `EmptyBlock`,
+  `MissingSwitchDefault`, and `FileTabCharacter` (the last fires on tab-indented
+  code inside a *commented-out* method that palantir correctly leaves alone),
+  and raises `LineLength` to 120 to match palantir's column limit.
+- **SpotBugs** accepts a baseline of ~20 idiomatic 2005 patterns across
+  `thinlet.*` (boxing via constructors, interned-string `==`, broad
+  `catch (Exception)`, default-less switches, dead stores, demo GC/stream
+  idioms, etc.), enumerated in `config/spotbugs/exclude.xml`.
+- A few SpotBugs findings are **candidate genuine bugs** (null-param deref and
+  unclosed-stream paths in the XML parser, `FileChooser` null path). They are
+  accepted for the Phase-0 baseline and earmarked for `KNOWN_QUIRKS.md` entries
+  locked by tests in Phase 1 — not fixed in Phase 0.
+
+As internal refactors (Phase 3) and Enhanced Thinlet address these, exclude
+entries are removed so the linters fail on regressions again.

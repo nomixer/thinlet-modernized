@@ -2,22 +2,72 @@
 <!--
   SpotBugs exclude filter for thinlet-modernized.
 
-  Phase 0 stance: linters are wired and gate `verify`, but the 2005 production
-  code is NOT edited to satisfy them (plan Phase 0 step 6). Genuine bugs are
-  documented in KNOWN_QUIRKS.md and locked by tests in Phase 1, not fixed here.
+  Phase 0 stance (plan step 6): linters are wired and gate `verify`, but the
+  2005 production code is NOT edited to satisfy them. SpotBugs runs against a
+  documented LEGACY BASELINE: the idiomatic 2005 patterns below are accepted in
+  the `thinlet.*` classes. Genuine bugs among them (e.g. null-param deref and
+  unclosed-stream paths in the XML parser) are triaged into KNOWN_QUIRKS.md and
+  locked by tests during Phase 1 — not fixed here. See DECISIONS.md D13.
 
-  This filter suppresses noisy / low-signal categories. Specific legacy
-  detectors are added as the build is iterated; see the trailing section.
+  As Enhanced Thinlet (future) addresses these, entries are removed so SpotBugs
+  starts failing on regressions again.
 -->
 <FindBugsFilter>
+
   <!-- Noisy categories with little signal for a legacy AWT GUI toolkit. -->
   <Match>
     <Bug category="I18N"/>
   </Match>
 
-  <!-- Internationalization / default-encoding reliance is inherent to the 2005
-       code; not a Phase-0 concern. -->
+  <!-- 2005 legacy idioms accepted across the thinlet.* code. -->
   <Match>
-    <Bug pattern="DM_DEFAULT_ENCODING"/>
+    <Class name="~thinlet\..*"/>
+    <Or>
+      <!-- Boxing via constructors instead of valueOf() (pre-Java-5 style). -->
+      <Bug pattern="DM_NUMBER_CTOR"/>
+      <Bug pattern="DM_STRING_CTOR"/>
+      <!-- Default-encoding reliance, inherent to the 2005 code. -->
+      <Bug pattern="DM_DEFAULT_ENCODING"/>
+      <!-- Intentional identity comparison of interned property/class-name
+           strings (Thinlet compares == against string constants by design). -->
+      <Bug pattern="ES_COMPARING_PARAMETER_STRING_WITH_EQ"/>
+      <Bug pattern="RC_REF_COMPARISON_BAD_PRACTICE_BOOLEAN"/>
+      <!-- Broad catch / ignored exceptions in init, paint, and event paths. -->
+      <Bug pattern="REC_CATCH_EXCEPTION"/>
+      <Bug pattern="DE_MIGHT_IGNORE"/>
+      <!-- Dead local stores left by hand-optimized layout/paint code. -->
+      <Bug pattern="DLS_DEAD_LOCAL_STORE"/>
+      <!-- Default-less switches over component-type chars. -->
+      <Bug pattern="SF_SWITCH_NO_DEFAULT"/>
+      <!-- String concatenation in a loop (attribute building). -->
+      <Bug pattern="SBSC_USE_STRINGBUFFER_CONCATENATION"/>
+      <!-- Static lazy-init / threading idioms of the timer + render hints. -->
+      <Bug pattern="LI_LAZY_INIT_STATIC"/>
+      <Bug pattern="IS2_INCONSISTENT_SYNC"/>
+      <Bug pattern="NN_NAKED_NOTIFY"/>
+      <!-- Mutable field exposure (AWT component wiring). -->
+      <Bug pattern="EI_EXPOSE_REP2"/>
+      <Bug pattern="EI_EXPOSE_REP"/>
+      <!-- Constructor that may throw (FrameLauncher). -->
+      <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+      <Bug pattern="RV_RETURN_VALUE_IGNORED"/>
+      <!-- Candidate genuine bugs — XML parser null-param + stream cleanup.
+           Accepted for the Phase-0 baseline; to be locked as KNOWN_QUIRKS
+           entries with tests in Phase 1. -->
+      <Bug pattern="NP_NULL_PARAM_DEREF"/>
+      <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+      <Bug pattern="OBL_UNSATISFIED_OBLIGATION"/>
+      <Bug pattern="OBL_UNSATISFIED_OBLIGATION_EXCEPTION_EDGE"/>
+      <!-- Demo-only idioms (AmazonExplorer, FileChooser). -->
+      <Bug pattern="ES_COMPARING_STRINGS_WITH_EQ"/>
+      <Bug pattern="UCF_USELESS_CONTROL_FLOW"/>
+      <Bug pattern="URF_UNREAD_FIELD"/>
+      <Bug pattern="DMI_HARDCODED_ABSOLUTE_FILENAME"/>
+      <!-- Draft-only idioms (SystemProperties demo forces GC; Widgets leaves a
+           resource stream open). -->
+      <Bug pattern="DM_GC"/>
+      <Bug pattern="OS_OPEN_STREAM"/>
+    </Or>
   </Match>
+
 </FindBugsFilter>
