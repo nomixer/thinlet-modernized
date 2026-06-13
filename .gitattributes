@@ -1,0 +1,25 @@
+# Line-ending and whitespace hygiene.
+#
+# thinlet.dtd is preserved byte-verbatim from the 2005 archive. Marking it
+# `binary` bypasses any line-ending normalization or text diffing on
+# checkout/checkin, guaranteeing the bytes never change (see DECISIONS.md).
+
+* text=auto eol=lf
+
+*.java   text eol=lf
+*.xml    text eol=lf
+*.html   text eol=lf
+*.css    text eol=lf
+*.json   text eol=lf
+*.yml    text eol=lf
+*.yaml   text eol=lf
+*.properties text eol=lf
+*.md     text eol=lf
+
+# DTD: byte-verbatim, never rewritten.
+*.dtd    binary
+
+# Binary assets shipped with the original docs.
+*.png    binary
+*.ico    binary
+*.jar    binary
