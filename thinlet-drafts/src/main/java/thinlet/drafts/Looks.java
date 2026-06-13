@@ -1,4 +1,3 @@
 package thinlet.drafts;
 
-public class Looks {
-}
+public class Looks {}
