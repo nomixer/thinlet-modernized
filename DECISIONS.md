@@ -163,3 +163,25 @@ only, zero production-code edits). Concretely:
 
 As internal refactors (Phase 3) and Enhanced Thinlet address these, exclude
 entries are removed so the linters fail on regressions again.
+
+## D14 — Phase 0 CI runs Maven on JDK 21; "jdk 8" is a target, not a runtime
+**Date:** 2026-06-13
+
+The plan's build arrangement (Maven on a modern LTS, Java 8 *target*) and its
+cross-JDK matrix are in tension for the JDK-8 row: the modern toolchain
+(palantir-java-format needs JDK 17+, Checkstyle 10 and SpotBugs need JDK 11+)
+cannot run under JDK 8. Resolution:
+
+- The Phase-0 CI job runs `./mvnw -B verify` inside the JDK-21 Dev Container.
+  Java 8 *bytecode* is guaranteed by `--release 8`, exercised in this job.
+- The per-JDK *execution* matrix (run the test suite/trace on JDK 8/11/17/21/25
+  via `maven-toolchains-plugin` + surefire) is inert until tests exist; it lands
+  with Phase 1 and expands one row at a time in Phase 2. The JDK-8 *toolchain*
+  drives surefire while Maven itself stays on JDK 21.
+- Maven local repo: CI points `maven.repo.local` at `.m2/repository` inside the
+  bind-mounted workspace and caches that path, so the Dev Container writes into
+  the cached directory (addresses the Dev Containers Maven-cache note).
+
+Note: the CI workflow itself has not been executed in a GitHub Actions runner
+from this bootstrap session — it is wired per plan and validated only by local
+`mvn verify`. First real run is on push.

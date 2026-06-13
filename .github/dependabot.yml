@@ -1,0 +1,24 @@
+version: 2
+updates:
+  # Maven plugins (no runtime deps in thinlet-core; this watches the build
+  # plugin versions in the POMs). Watches main only.
+  - package-ecosystem: maven
+    directory: "/"
+    schedule:
+      interval: weekly
+    target-branch: main
+    groups:
+      maven-build-plugins:
+        patterns:
+          - "*"
+
+  # GitHub Actions used by the CI workflow.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    target-branch: main
+    groups:
+      github-actions:
+        patterns:
+          - "*"

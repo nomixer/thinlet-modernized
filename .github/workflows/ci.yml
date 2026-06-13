@@ -1,0 +1,58 @@
+name: CI
+
+# Phase 0: a single build job. The cross-JDK matrix (8 / 11 / 17 / 21 / 25) and
+# the cross-JDK trace diff are added one row at a time in Phase 2; the Phase 1
+# test suite + golden trace land before that. See thinlet plan, Phase 0 step 8.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build (Maven JDK 21 / target Java 8)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Maven itself runs on JDK 21 (the modern lint/format plugins require
+        # JDK 11+); Java 8 *bytecode* is enforced by --release 8 in every build.
+        # The per-JDK execution matrix (surefire via toolchains) arrives with
+        # the Phase 1 test suite and expands in Phase 2:
+        #   - { jdk: 8 }
+        #   - { jdk: 11 }
+        #   - { jdk: 17 }
+        #   - { jdk: 21 }
+        #   - { jdk: 25 }
+        include:
+          - { maven_jdk: 21 }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Cache the Maven local repo. maven.repo.local is pointed at .m2/repository
+      # inside the bind-mounted workspace so the dev container writes into the
+      # cached path (see DECISIONS.md D14 / Dev Containers cache note).
+      - name: Cache Maven repository
+        uses: actions/cache@v4
+        with:
+          path: .m2/repository
+          key: m2-${{ matrix.maven_jdk }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            m2-${{ matrix.maven_jdk }}-
+
+      - name: Build & verify inside the Dev Container
+        uses: devcontainers/ci@v0.3
+        with:
+          push: never
+          runCmd: ./mvnw -B -Dmaven.repo.local=.m2/repository verify

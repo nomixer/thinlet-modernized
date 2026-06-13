@@ -9,6 +9,9 @@ dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
+# CI-local Maven repository (maven.repo.local points here so the dev container
+# writes into the cached, bind-mounted workspace).
+.m2/
 
 # IDE - IntelliJ / Eclipse / NetBeans / VS Code
 .idea/
