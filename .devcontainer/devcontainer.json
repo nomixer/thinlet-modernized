@@ -1,0 +1,40 @@
+{
+  "name": "thinlet-modernized (JDK 21)",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      // The CI matrix builds the same Dockerfile per JDK target, switching only
+      // this arg (8 / 11 / 17 / 21 / 25). The default dev image is the LTS used
+      // to run Maven itself.
+      "JDK_VERSION": "21"
+    }
+  },
+  "features": {},
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "redhat.vscode-xml",
+        "EditorConfig.EditorConfig"
+      ],
+      "settings": {
+        "java.configuration.runtimes": [
+          { "name": "JavaSE-21", "path": "/usr/local/sdkman/candidates/java/current" }
+        ]
+      }
+    }
+  },
+  // Headless AWT needs a display; Xvfb is started lazily by tests/run scripts.
+  // Pinned fonts + fontconfig are baked into the image (see Dockerfile) so
+  // local and CI font metrics share the same glyph source.
+  "containerEnv": {
+    "DISPLAY": ":99"
+  },
+  // Persist the Maven local repo across rebuilds; CI mounts ~/.m2 explicitly
+  // because the build runs inside this container, not on the runner host.
+  "mounts": [
+    "source=thinlet-m2,target=/home/vscode/.m2,type=volume"
+  ],
+  "postCreateCommand": "pre-commit install || true",
+  "remoteUser": "vscode"
+}

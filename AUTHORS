@@ -1,0 +1,19 @@
+# Authors
+
+## Original author
+
+- **Robert Bajzat** &lt;rbajzat@freemail.hu&gt; — creator and author of the
+  Thinlet GUI toolkit (2002–2005). All of the library code in
+  `thinlet-core/src/main/java/thinlet/Thinlet.java` and
+  `FrameLauncher.java`, the demos, the drafts, and the original
+  documentation are his work. Original site: https://thinlet.sourceforge.net/
+
+The LGPL 2.1 copyright headers in the source files are preserved verbatim.
+This fork adds no new copyright claim over the original code.
+
+## Modernization fork
+
+- **C. Bartlett** &lt;cbartlett@nomixer.com&gt; — modernization-fork maintainer
+  (nomixer). Responsible for the Maven build, tooling, tests, CI, and
+  cross-JDK packaging in this repository. Not an author of the original
+  Thinlet library.
