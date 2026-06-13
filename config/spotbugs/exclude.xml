@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SpotBugs exclude filter for thinlet-modernized.
+
+  Phase 0 stance: linters are wired and gate `verify`, but the 2005 production
+  code is NOT edited to satisfy them (plan Phase 0 step 6). Genuine bugs are
+  documented in KNOWN_QUIRKS.md and locked by tests in Phase 1, not fixed here.
+
+  This filter suppresses noisy / low-signal categories. Specific legacy
+  detectors are added as the build is iterated; see the trailing section.
+-->
+<FindBugsFilter>
+  <!-- Noisy categories with little signal for a legacy AWT GUI toolkit. -->
+  <Match>
+    <Bug category="I18N"/>
+  </Match>
+
+  <!-- Internationalization / default-encoding reliance is inherent to the 2005
+       code; not a Phase-0 concern. -->
+  <Match>
+    <Bug pattern="DM_DEFAULT_ENCODING"/>
+  </Match>
+</FindBugsFilter>

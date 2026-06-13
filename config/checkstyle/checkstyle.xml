@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+<!--
+  thinlet-modernized Checkstyle config.
+
+  Derived from Google's style, deliberately RELAXED to fit the 2005 legacy
+  source without production-code edits (see DECISIONS.md, plan Phase 0 step 6):
+    - LineLength max raised to 120 to match palantir-java-format's column limit.
+    - Star imports allowed (Thinlet.java uses java.awt.* etc.; google-java-format
+      does not expand them).
+    - Member / parameter / local naming checks omitted (legacy short names like
+      c, k, v are intentional until Phase 3 internal refactors).
+  Tightened over time; Phase 0 priority is "pass on the existing file."
+-->
+<module name="Checker">
+  <property name="charset" value="UTF-8"/>
+  <property name="severity" value="error"/>
+  <property name="fileExtensions" value="java, properties, xml"/>
+
+  <!-- Suppressions file (per-path relaxations). -->
+  <module name="SuppressionFilter">
+    <property name="file" value="${config_loc}/suppressions.xml"/>
+    <property name="optional" value="false"/>
+  </module>
+
+  <!-- Allow // CHECKSTYLE:OFF / ON toggles if ever needed. -->
+  <module name="SuppressionCommentFilter"/>
+
+  <!-- File-level checks. -->
+  <module name="FileTabCharacter">
+    <property name="eachLine" value="false"/>
+  </module>
+  <module name="NewlineAtEndOfFile">
+    <property name="lineSeparator" value="lf"/>
+  </module>
+  <module name="LineLength">
+    <property name="max" value="120"/>
+    <property name="ignorePattern" value="^package.*|^import.*|href|http://|https://"/>
+  </module>
+
+  <module name="TreeWalker">
+    <!-- Required to honor SuppressionCommentFilter. -->
+    <module name="SuppressionCommentFilter"/>
+
+    <!-- Imports: star imports intentionally NOT forbidden here. -->
+    <module name="RedundantImport"/>
+    <module name="UnusedImports">
+      <property name="processJavadoc" value="true"/>
+    </module>
+
+    <!-- Type naming (relaxed set — types only, not members). -->
+    <module name="TypeName"/>
+    <module name="PackageName"/>
+
+    <!-- Blocks / braces. -->
+    <module name="LeftCurly"/>
+    <module name="NeedBraces">
+      <property name="allowSingleLineStatement" value="true"/>
+    </module>
+    <module name="EmptyBlock">
+      <property name="option" value="text"/>
+      <property name="tokens" value="LITERAL_TRY, LITERAL_FINALLY, LITERAL_IF, LITERAL_ELSE, LITERAL_SWITCH"/>
+    </module>
+
+    <!-- Common correctness smells (kept; legacy violations go to suppressions
+         or KNOWN_QUIRKS if they turn out to be real). -->
+    <module name="FallThrough"/>
+    <module name="MissingSwitchDefault"/>
+    <module name="OneStatementPerLine"/>
+    <module name="UpperEll"/>
+    <module name="ModifierOrder"/>
+  </module>
+</module>

@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.nomixer.thinlet</groupId>
+  <artifactId>thinlet-parent</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>Thinlet (modernized) — parent</name>
+  <description>
+    Modernization fork of the 2002-2005 Thinlet GUI toolkit by Robert Bajzat.
+    Parent POM: versioning and plugin management. Only thinlet-core publishes.
+  </description>
+  <url>https://github.com/nomixer/thinlet-modernized</url>
+
+  <licenses>
+    <license>
+      <name>GNU Lesser General Public License, version 2.1</name>
+      <url>https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <modules>
+    <module>thinlet-core</module>
+    <module>thinlet-demos</module>
+    <module>thinlet-drafts</module>
+  </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+    <!-- Build on a modern LTS JDK (21); emit Java 8 bytecode via the compiler
+         "release" flag. See DECISIONS.md D5 for the deprecation hedge. -->
+    <maven.compiler.release>8</maven.compiler.release>
+
+    <!-- Plugin versions, pinned. -->
+    <version.compiler.plugin>3.13.0</version.compiler.plugin>
+    <version.surefire.plugin>3.5.2</version.surefire.plugin>
+    <version.jar.plugin>3.4.1</version.jar.plugin>
+    <version.deploy.plugin>3.1.3</version.deploy.plugin>
+    <version.toolchains.plugin>3.2.0</version.toolchains.plugin>
+    <version.spotless.plugin>2.43.0</version.spotless.plugin>
+    <version.palantir.format>2.50.0</version.palantir.format>
+    <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
+    <version.checkstyle.tool>10.21.0</version.checkstyle.tool>
+    <version.spotbugs.plugin>4.8.6.6</version.spotbugs.plugin>
+    <version.japicmp.plugin>0.23.1</version.japicmp.plugin>
+
+    <!-- japicmp is INACTIVE during Phase 0; activated from v0.1.0 (Phase 1). -->
+    <japicmp.skip>true</japicmp.skip>
+  </properties>
+
+  <distributionManagement>
+    <!-- Only thinlet-core actually deploys; demos/drafts set maven.deploy.skip. -->
+    <repository>
+      <id>github-nomixer</id>
+      <name>GitHub Packages — nomixer/thinlet-modernized</name>
+      <url>https://maven.pkg.github.com/nomixer/thinlet-modernized</url>
+    </repository>
+  </distributionManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${version.compiler.plugin}</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${version.jar.plugin}</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>${version.deploy.plugin}</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${version.surefire.plugin}</version>
+        </plugin>
+
+        <!-- Toolchains: surefire runs tests on a real JDK 8 when the jdk8-tests
+             profile is active and a JDK-8 toolchain is configured. Default build
+             (this Phase-0 container has only JDK 21) does not require it. -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-toolchains-plugin</artifactId>
+          <version>${version.toolchains.plugin}</version>
+        </plugin>
+
+        <!-- japicmp: configured here, INACTIVE in Phase 0 (japicmp.skip=true). -->
+        <plugin>
+          <groupId>com.github.siom79.japicmp</groupId>
+          <artifactId>japicmp-maven-plugin</artifactId>
+          <version>${version.japicmp.plugin}</version>
+          <configuration>
+            <skip>${japicmp.skip}</skip>
+            <parameter>
+              <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
+              <onlyModified>true</onlyModified>
+            </parameter>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
+      <!-- Code formatter: Spotless + palantir-java-format. spotless:check gates
+           verify; spotless:apply rewrites in place. thinlet.dtd is NOT a Spotless
+           target (the DTD stays byte-verbatim). -->
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>${version.spotless.plugin}</version>
+        <configuration>
+          <java>
+            <palantirJavaFormat>
+              <version>${version.palantir.format}</version>
+            </palantirJavaFormat>
+            <removeUnusedImports/>
+          </java>
+          <formats>
+            <!-- Gentle XML hygiene for project-authored XML only (POMs, config).
+                 The 2005-origin XML corpus is EXCLUDED: it is behavior-relevant
+                 test/demo input (preserved as vendored), and some files carry
+                 legacy non-UTF-8 encodings. thinlet.dtd stays byte-verbatim.
+                 See DECISIONS.md D12. -->
+            <format>
+              <includes>
+                <include>**/*.xml</include>
+              </includes>
+              <excludes>
+                <exclude>**/target/**</exclude>
+                <exclude>**/*.dtd</exclude>
+                <exclude>**/src/main/resources/**</exclude>
+                <exclude>**/src/test/resources/**</exclude>
+              </excludes>
+              <trimTrailingWhitespace/>
+              <endWithNewline/>
+            </format>
+          </formats>
+        </configuration>
+        <executions>
+          <execution>
+            <id>spotless-check</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Style linter: Checkstyle (Google-derived, relaxed; see config). -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>${version.checkstyle.plugin}</version>
+        <dependencies>
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>${version.checkstyle.tool}</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <configLocation>${maven.multiModuleProjectDirectory}/config/checkstyle/checkstyle.xml</configLocation>
+          <suppressionsLocation>${maven.multiModuleProjectDirectory}/config/checkstyle/suppressions.xml</suppressionsLocation>
+          <consoleOutput>true</consoleOutput>
+          <includeTestSourceDirectory>true</includeTestSourceDirectory>
+          <failOnViolation>true</failOnViolation>
+          <violationSeverity>error</violationSeverity>
+        </configuration>
+        <executions>
+          <execution>
+            <id>checkstyle-check</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Bug-pattern linter: SpotBugs (bytecode-level). -->
+      <plugin>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+        <version>${version.spotbugs.plugin}</version>
+        <configuration>
+          <excludeFilterFile>${maven.multiModuleProjectDirectory}/config/spotbugs/exclude.xml</excludeFilterFile>
+          <effort>Max</effort>
+          <threshold>Medium</threshold>
+          <failOnError>true</failOnError>
+        </configuration>
+        <executions>
+          <execution>
+            <id>spotbugs-check</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <!-- Run the test suite on a real JDK 8 via toolchains. Activate in CI / where
+         a JDK-8 toolchain is configured in ~/.m2/toolchains.xml. -->
+    <profile>
+      <id>jdk8-tests</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-toolchains-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>require-jdk8</id>
+                <goals>
+                  <goal>toolchain</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <toolchains>
+                <jdk>
+                  <version>8</version>
+                </jdk>
+              </toolchains>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

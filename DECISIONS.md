@@ -116,3 +116,27 @@ directory.
 scaffolding. It is **never** published to Maven and **never** a japicmp
 baseline. japicmp is configured but inactive during Phase 0 and activates from
 `v0.1.0` onward (Phase 1), comparing against `v0.1.0`.
+
+## D11 — `thinlet-drafts` depends on `thinlet-demos`, not just `thinlet-core`
+**Date:** 2026-06-13
+
+The plan's module diagram had both `thinlet-demos` and `thinlet-drafts`
+depending only on `thinlet-core`. The actual 2005 code disagrees:
+`thinlet-drafts`/`Choosers.java` imports `thinlet.common.*` and uses
+`thinlet.common.FileChooser`, which lives in `thinlet-demos`. Rather than edit
+the 2005 source to satisfy the diagram, `thinlet-drafts` declares a dependency
+on `thinlet-demos` (and gets `thinlet-core` transitively). Neither demos nor
+drafts is published, so this changes no published artifact.
+
+## D12 — Spotless XML scope excludes the vendored 2005 corpus
+**Date:** 2026-06-13
+
+The plan called for Spotless to format `**/*.xml`. In practice the 2005 XML
+under `src/main/resources/` (demos, drafts) and the vendored corpus under
+`thinlet-core/src/test/resources/` are **excluded** from the Spotless XML
+target, for two reasons: (1) they are behavior-relevant test/demo inputs we
+preserve as vendored 2005 artifacts (parser + golden-trace fidelity), and
+(2) some carry legacy non-UTF-8 encodings (e.g.
+`thinlet-drafts/.../internationalization.xml`) that Spotless cannot process as
+UTF-8. Spotless XML hygiene therefore applies only to project-authored XML
+(POMs, `config/`). `thinlet.dtd` remains excluded and byte-verbatim (D8).

@@ -16,6 +16,10 @@
 *.properties text eol=lf
 *.md     text eol=lf
 
+# Windows batch scripts need CRLF (Maven wrapper mvnw.cmd).
+*.cmd    text eol=crlf
+*.bat    text eol=crlf
+
 # DTD: byte-verbatim, never rewritten.
 *.dtd    binary
 

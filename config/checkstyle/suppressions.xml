@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<!--
+  Per-path Checkstyle suppressions.
+
+  Phase 0: relaxations needed to pass on the unmodified 2005 source. Entries are
+  tightened as internal refactors land (Phase 3). Production code is never edited
+  to satisfy the linter (plan Phase 0 step 6); we suppress here instead and log
+  genuine bugs in KNOWN_QUIRKS.md.
+-->
+<suppressions>
+  <!-- Generated / build output, just in case it is ever scanned. -->
+  <suppress files="[\\/]target[\\/]" checks="."/>
+</suppressions>
