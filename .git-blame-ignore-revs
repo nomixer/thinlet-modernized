@@ -1,0 +1,6 @@
+# Revisions to ignore in `git blame` (bulk reformatting, no semantic changes).
+# Enable locally with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# [format] apply spotless baseline
+23cb18acc1f2aba28b8f7ae486c97bd5161b9ad8
