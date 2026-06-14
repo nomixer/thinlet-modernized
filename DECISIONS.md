@@ -185,3 +185,28 @@ cannot run under JDK 8. Resolution:
 Note: the CI workflow itself has not been executed in a GitHub Actions runner
 from this bootstrap session — it is wired per plan and validated only by local
 `mvn verify`. First real run is on push.
+
+## D15 — `v0.0.1-bootstrap` is tagged on `main` after merge, not from the bootstrap branch
+**Date:** 2026-06-14
+
+Supersedes the *placement/timing* of the tag in D10 (D10's semantics —
+git-tag-only, never published, never a japicmp baseline — still hold). Two
+constraints forced this:
+
+- **The bootstrap session's git proxy rejects tag pushes (HTTP 403).** It
+  permits pushing only the designated feature branch ref
+  (`claude/amazing-cannon-3vpwfz`); any tag ref push returns a hard 403, not a
+  transient error. So the tag *cannot* be published from the session that did
+  the scaffolding. A local annotated tag was created there but is ephemeral
+  (the container is reclaimed) and should be treated as a no-op.
+- **A bootstrap milestone belongs on mainline history.** If the branch is
+  squash-merged, a tag on the branch HEAD would point at a commit not reachable
+  from `main`. Tagging the *merge commit on `main`* keeps `v0.0.1-bootstrap`
+  reachable from `main`.
+
+Action when this branch merges: create `v0.0.1-bootstrap` as an annotated tag
+on the resulting `main` commit — via the GitHub UI (Releases → new tag on the
+merge commit) or `git tag -a v0.0.1-bootstrap <merge-sha> && git push origin
+v0.0.1-bootstrap` from a clone with push rights. Until then the tag does not
+exist on the remote, and nothing in Phase 0 depends on it (japicmp activates at
+`v0.1.0`, D10).
