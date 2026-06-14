@@ -143,6 +143,11 @@
               </includes>
               <excludes>
                 <exclude>**/target/**</exclude>
+                <!-- Maven local repo + wrapper distribution (CI points
+                     MAVEN_USER_HOME at the workspace .m2): downloaded
+                     artifacts, never linted. See DECISIONS.md D14. -->
+                <exclude>.m2/**</exclude>
+                <exclude>**/.m2/**</exclude>
                 <exclude>**/*.dtd</exclude>
                 <exclude>**/src/main/resources/**</exclude>
                 <exclude>**/src/test/resources/**</exclude>
