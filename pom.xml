@@ -125,6 +125,9 @@
         <artifactId>spotless-maven-plugin</artifactId>
         <version>${version.spotless.plugin}</version>
         <configuration>
+          <!-- Line endings follow .gitattributes (eol=lf for text): Spotless
+               normalizes CRLF/stray-CR to LF and fails check on regressions. -->
+          <lineEndings>GIT_ATTRIBUTES</lineEndings>
           <java>
             <palantirJavaFormat>
               <version>${version.palantir.format}</version>
@@ -153,6 +156,24 @@
                 <exclude>**/src/test/resources/**</exclude>
               </excludes>
               <trimTrailingWhitespace/>
+              <endWithNewline/>
+            </format>
+            <!-- Doc website (HTML/CSS) + Markdown: enforce LF + a final newline,
+                 and (since Spotless reads UTF-8) guard the docs' UTF-8 encoding.
+                 The 2005 docs were converted to UTF-8 for this; see D18. Scope is
+                 line-ending / newline / encoding only — no whitespace trimming or
+                 markup restructuring of the historical pages. -->
+            <format>
+              <includes>
+                <include>docs/**/*.html</include>
+                <include>docs/**/*.css</include>
+                <include>**/*.md</include>
+              </includes>
+              <excludes>
+                <exclude>**/target/**</exclude>
+                <exclude>.m2/**</exclude>
+                <exclude>**/.m2/**</exclude>
+              </excludes>
               <endWithNewline/>
             </format>
           </formats>

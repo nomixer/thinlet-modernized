@@ -65,8 +65,10 @@ is <code>Object</code>.</p>
 The widget (in the same XML file) identified by the given name, its type
 is <code>Object</code>.</p>
 
-<p class="xml"><font color="#000080">&lt;</font><font color="#800000"><b>button</b></font>  action=<font color="#008000">&quot;one&quot;</font> <font color="#000080">/&gt;</font><br>
-<font color="#000080">&lt;</font><font color="#800000"><b>label</b></font>  name=<font color="#008000">&quot;label1&quot;</font> text=<font color="#008000">&quot;...&quot;</font> visible=<font color="#008000">&quot;false&quot;</font> <font color="#000080">/&gt;</font><br>
+<p class="xml"><font color="#000080">&lt;</font><font color="#800000"><b>button</b></font>  action=<font color="#008000">&quot;one&quot;</font> <font color="#000080">/&gt;</font>
+<br>
+<font color="#000080">&lt;</font><font color="#800000"><b>label</b></font>  name=<font color="#008000">&quot;label1&quot;</font> text=<font color="#008000">&quot;...&quot;</font> visible=<font color="#008000">&quot;false&quot;</font> <font color="#000080">/&gt;</font>
+<br>
 <font color="#000080">&lt;</font><font color="#800000"><b>button</b></font>  action=<font color="#008000">&quot;two(thinlet, this, label1)&quot;</font> <font color="#000080">/&gt;</font></p>
 
 <p class="java"><font color="#800000"><b>public</b></font> <font color="#800000"><b>void</b></font> one() {}<br>
@@ -89,9 +91,12 @@ for <i>icon</i>s. If the <i>item</i> was null, the <i>String</i> or
 <i>Image</i> parameter is null, the <i>boolean</i> or <i>int</i>
 parameter is the default value for those items.</p>
 
-<p class="xml"><font color="#000080">&lt;</font><font color="#800000"><b>button</b></font>  action=<font color="#008000">&quot;three(this.text, this.icon, label1.visible, label1.colspan)&quot;</font> <font color="#000080">/&gt;</font><br>
-<font color="#000080">&lt;</font><font color="#800000"><b>list</b></font>  action=<font color="#008000">&quot;four(item, item.text, item.icon)&quot;</font><font color="#000080">&gt;</font><br>
-&nbsp;&nbsp;<font color="#000080">&lt;</font><font color="#800000"><b>item</b></font>  text=<font color="#008000">&quot;File&quot;</font> icon=<font color="#008000">&quot;file.gif&quot;</font> <font color="#000080">/&gt;</font><br>
+<p class="xml"><font color="#000080">&lt;</font><font color="#800000"><b>button</b></font>  action=<font color="#008000">&quot;three(this.text, this.icon, label1.visible, label1.colspan)&quot;</font> <font color="#000080">/&gt;</font>
+<br>
+<font color="#000080">&lt;</font><font color="#800000"><b>list</b></font>  action=<font color="#008000">&quot;four(item, item.text, item.icon)&quot;</font><font color="#000080">&gt;</font>
+<br>
+&nbsp;&nbsp;<font color="#000080">&lt;</font><font color="#800000"><b>item</b></font>  text=<font color="#008000">&quot;File&quot;</font> icon=<font color="#008000">&quot;file.gif&quot;</font> <font color="#000080">/&gt;</font>
+<br>
 <font color="#000080">&lt;/</font><font color="#800000"><b>list</b></font><font color="#000080">&gt;</font></p>
 
 <p class="java"><font color="#800000"><b>public</b></font> <font color="#800000"><b>void</b></font> three(<font color="#000080">String</font> buttontext, <font color="#000080">Image</font> buttonicon, <font color="#800000"><b>boolean</b></font> labelvisible, <font color="#800000"><b>int</b></font> labelcols) {}<br>
