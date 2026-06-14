@@ -380,3 +380,8 @@ Resolved by **splitting the config**:
 Both share the one `Dockerfile` (JDK, fonts, Xvfb, AWT X11 libs, mvn shim,
 pre-commit), so the build/test environment can't drift between them; only the
 desktop layer differs.
+
+The dev image's `postCreateCommand` runs `.devcontainer/dev-postcreate.sh`
+(chown `~/.m2`, `pre-commit install` when git is usable, and install a
+one-time-per-terminal hint into `/etc/bash.bashrc` printing the noVNC port/URL).
+The lean CI config has no `postCreateCommand`, so none of that runs in CI.
