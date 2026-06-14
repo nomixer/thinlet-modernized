@@ -30,11 +30,14 @@
   "containerEnv": {
     "DISPLAY": ":99"
   },
-  // Persist the Maven local repo across rebuilds; CI mounts ~/.m2 explicitly
-  // because the build runs inside this container, not on the runner host.
+  // Persist the Maven local repo across rebuilds. The named volume mounts
+  // root-owned, but the build runs as `vscode`; chown it on create so `mvn` /
+  // `./mvnw` can write ~/.m2 (runs on every rebuild, so it also repairs an
+  // already-root-owned volume). CI does not rely on this — it points
+  // MAVEN_USER_HOME at the writable workspace .m2 instead (see DECISIONS.md D19).
   "mounts": [
     "source=thinlet-m2,target=/home/vscode/.m2,type=volume"
   ],
-  "postCreateCommand": "pre-commit install || true",
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.m2 && (pre-commit install || true)",
   "remoteUser": "vscode"
 }

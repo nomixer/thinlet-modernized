@@ -32,6 +32,17 @@ RUN find /etc/apt/sources.list.d -type f -exec grep -lq 'dl\.yarnpkg\.com' {} \;
 COPY fonts/10-thinlet-pinned.conf /etc/fonts/conf.d/10-thinlet-pinned.conf
 RUN fc-cache -f
 
-# pre-commit framework (runs `mvn spotless:apply` before commit).
-RUN pipx install pre-commit \
- && pipx ensurepath
+# pre-commit framework, installed to /usr/local/bin so it is on PATH for the
+# vscode user (pipx's default would install under root's home, invisible to
+# vscode). The git hook itself is defined in .pre-commit-config.yaml.
+RUN PIPX_HOME=/usr/local/pipx PIPX_BIN_DIR=/usr/local/bin pipx install pre-commit
+
+# CLI `mvn` delegates to the project's Maven wrapper, so an interactive `mvn` is
+# byte-for-byte the pinned version CI runs (no separate SDKMAN Maven to drift).
+# Resolves the wrapper from the repo root, so it works from any subdirectory.
+RUN printf '%s\n' \
+      '#!/usr/bin/env bash' \
+      'root="$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null || true)"' \
+      'exec "${root:-$PWD}/mvnw" "$@"' \
+      > /usr/local/bin/mvn \
+ && chmod +x /usr/local/bin/mvn
