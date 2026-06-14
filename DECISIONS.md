@@ -362,7 +362,18 @@ golden-trace metrics (D7):
   window manager) so WM chrome never perturbs pixel metrics. The harness sets
   `DISPLAY=:99` for surefire regardless of the interactive default.
 
-Cost/scope: the feature lands in the shared image, so CI builds it too — but the
-CI build overrides the container entrypoint, so the desktop never *starts* in CI
-(no runtime cost there). The image-size delta is being measured; whether to
-split a dev-only config to keep the CI image lean is a pending judgement call.
+Cost/scope: desktop-lite measured at **~1 GB** added (2.49 → 3.51 GB). The CI
+build overrides the container entrypoint, so the desktop never *starts* in CI,
+but CI rebuilds the dev image from scratch every run (no persistent layer
+cache), so that ~1 GB would be installed on every run for zero CI benefit.
+
+Resolved by **splitting the config**:
+- `.devcontainer/devcontainer.json` — full dev image (desktop-lite, ports, `:1`);
+  VS Code auto-uses it.
+- `.devcontainer/devcontainer.ci.json` — lean image (same Dockerfile, no desktop
+  feature / ports / mounts); the CI workflow points `devcontainers/ci` at it via
+  `configFile`. CI image stays ~2.5 GB and builds as fast as before.
+
+Both share the one `Dockerfile` (JDK, fonts, Xvfb, AWT X11 libs, mvn shim,
+pre-commit), so the build/test environment can't drift between them; only the
+desktop layer differs.
