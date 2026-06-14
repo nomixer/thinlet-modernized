@@ -10,7 +10,13 @@ FROM mcr.microsoft.com/devcontainers/java:1-${JDK_VERSION}-bookworm
 # Fixed font package set + fontconfig + headless display + pre-commit.
 # The font *package set* is pinned by name here; exact apt version pinning is an
 # open item (see DECISIONS.md / README). DTD and source bytes are unaffected.
-RUN apt-get update \
+#
+# The base image ships a third-party yarn apt source (dl.yarnpkg.com) whose
+# signing key is not present on CI runners, so a plain `apt-get update` fails on
+# it (exit 100) before our packages install. We do not use yarn, so drop any
+# yarn apt source (matched by content, filename-agnostic) before updating.
+RUN find /etc/apt/sources.list.d -type f -exec grep -lq 'dl\.yarnpkg\.com' {} \; -delete ; \
+    apt-get update \
  && apt-get install -y --no-install-recommends \
         xvfb \
         fontconfig \
