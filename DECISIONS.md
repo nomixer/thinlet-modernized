@@ -279,3 +279,29 @@ windows-1252). Scope is line-ending / newline / encoding only — no whitespace
 trimming or markup restructuring. An encoding-agnostic byte-grep gate was
 considered and dropped in favor of converting the docs to UTF-8 so standard
 tooling can lint them.
+
+## D19 — Dev container: writable ~/.m2, `mvn`→wrapper shim, working pre-commit
+**Date:** 2026-06-14
+
+CI was already handled by `MAVEN_USER_HOME` (D17); these fix the *interactive*
+VS Code dev-container experience:
+
+- **Writable Maven cache.** The `thinlet-m2` named volume mounts at
+  `/home/vscode/.m2` root-owned, so the `vscode` user could not create
+  `~/.m2/repository` — both `mvn` and `./mvnw` failed locally with
+  `LocalRepositoryNotAccessibleException`. `postCreateCommand` now `sudo chown`s
+  the mount to `vscode`; it runs on every create/rebuild, so it also repairs an
+  already-root-owned volume (no manual `docker volume rm` needed).
+- **`mvn` on PATH = the wrapper.** A `/usr/local/bin/mvn` shim execs the
+  project's `./mvnw` (wrapper resolved via `git rev-parse --show-toplevel`, so it
+  works from any subdirectory). Interactive `mvn` is therefore byte-for-byte the
+  pinned Maven version CI runs — no separate SDKMAN Maven that could drift.
+- **pre-commit actually works.** It was `pipx`-installed as root (not on the
+  `vscode` PATH) and had no config, so it never ran. Now installed to
+  `/usr/local/bin` (system-wide), with a `.pre-commit-config.yaml` whose single
+  `local` hook runs `./mvnw -q -B spotless:apply` — the same formatter/config as
+  the CI Spotless gate, so local commits and CI agree. Skippable per-commit with
+  `git commit --no-verify`.
+
+These touch only the dev-container tooling; no production source or CI build
+behavior changes (CI still uses `./mvnw` directly with the workspace `.m2`).

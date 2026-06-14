@@ -1,0 +1,16 @@
+# Local git hooks for thinlet-modernized, installed by the dev container
+# (`pre-commit install` in postCreateCommand).
+#
+# The single hook runs Spotless through the Maven wrapper, so a local commit is
+# formatted by the exact same config the CI gate enforces — local and CI never
+# disagree. If Spotless rewrites files, the commit is stopped so you can re-stage
+# them. Skip a one-off run with `git commit --no-verify`.
+repos:
+  - repo: local
+    hooks:
+      - id: spotless-apply
+        name: spotless:apply (Maven wrapper)
+        entry: ./mvnw -q -B spotless:apply
+        language: system
+        pass_filenames: false
+        files: \.(java|xml|html|css|md)$
