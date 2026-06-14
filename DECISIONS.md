@@ -210,3 +210,60 @@ merge commit) or `git tag -a v0.0.1-bootstrap <merge-sha> && git push origin
 v0.0.1-bootstrap` from a clone with push rights. Until then the tag does not
 exist on the remote, and nothing in Phase 0 depends on it (japicmp activates at
 `v0.1.0`, D10).
+
+## D16 — Stay on the Microsoft dev-container base image for now (defer a self-controlled image)
+**Date:** 2026-06-14
+
+The dev image is `FROM mcr.microsoft.com/devcontainers/java:1-${JDK}-bookworm`.
+The first real CI run hit a break inherited from that base (an unsigned yarn
+apt source, see D17). We considered moving to a base we fully control
+(`eclipse-temurin:<exact>-jdk-<one-OS>` per JDK + our font/Xvfb layer + a
+non-root user), which would (a) carry no inherited third-party apt sources and
+(b) let us pin **exact** JDK builds — relevant to the cross-JDK font-metric
+determinism guarantee (D7), since `1-${JDK}-bookworm` floats patch versions.
+
+Decision: **stay on the MS base for now.** The upfront cost (re-create the
+non-root user/sudo/tooling MS provides, install each matrix JDK ourselves,
+validate font rendering across all five rows) is a bounded one-time effort, but
+not worth spending before it buys something. **Revisit triggers:** (1) D7 font
+work needs exact JDK/freetype pinning the MS floating tags can't give, or
+(2) inherited-base breakage recurs. When revisited, pin the base by digest and
+let Dependabot (already configured) propose bumps.
+
+## D17 — First real CI run hardened three env-specific failures
+**Date:** 2026-06-14
+
+`main` and the `v0.0.1-bootstrap` tag triggered the workflow's first execution
+in a real runner (the gap flagged in D14). Three failures surfaced that local
+`mvn verify` never exercised, because it does not build the dev-container image.
+All three are toolchain/config fixes — **zero production-source changes** — and
+landed squashed in one commit on `main`:
+
+- **Dev Container build:** the base image ships an unsigned yarn apt source
+  (`dl.yarnpkg.com`); `apt-get update` aborts (exit 100). Drop any yarn source
+  (matched by content) before updating. We do not use yarn.
+- **Maven wrapper home:** the wrapper writes its distribution under
+  `${MAVEN_USER_HOME:-$HOME/.m2}/wrapper`, and `~/.m2` is the root-owned
+  `thinlet-m2` named volume → permission denied. Point `MAVEN_USER_HOME` at the
+  writable workspace `.m2` (where `-Dmaven.repo.local` already writes).
+- **Spotless scope:** with the wrapper now under the workspace `.m2`, the XML
+  target scanned Maven's own bundled `toolchains.xml`. Exclude `.m2/**`.
+
+Result: `./mvnw -B verify` is green in CI on `main`.
+
+## D18 — Doc line endings normalized to LF; Spotless gates text EOL hygiene
+**Date:** 2026-06-14
+
+Five 2005 doc pages (`docs/{calculator,events,i18n,overview,showcase}.html`)
+carried mixed CRLF **and** stray lone-CR bytes, so a fresh clone warned "CRLF
+will be replaced by LF". They were normalized to pure LF (byte-confirmed: only
+line-ending bytes changed; all other bytes identical), matching the ~40 already-
+LF docs. `.gitattributes` (`* text=auto eol=lf`) already auto-normalizes CRLF on
+commit — these were pre-normalization stragglers, and git's CRLF→LF filter does
+not strip lone CRs, which is why a one-time explicit pass was needed.
+
+To make this fail-fast in CI (not just git's silent on-commit normalization), a
+Spotless `<format>` enforces LF + a final newline on `docs/**/*.{html,css}` and
+`**/*.md` (`endWithNewline`; line endings via the `GIT_ATTRIBUTES` policy = LF).
+It does **not** trim trailing whitespace or restructure the historical markup —
+scope is deliberately line-ending/final-newline only.
