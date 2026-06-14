@@ -5,6 +5,10 @@ Goal: **modernize the toolchain, not the library** — preserve the 2005
 observable behavior exactly while making it build and run on modern JDKs.
 Public artifacts, unsupported.
 
+> Claude's orientation/reference files are tracked in `.claude/MANIFEST.md` and
+> are all safe to delete. Only this `CLAUDE.md` lives outside `.claude/`;
+> everything else Claude adds for reference goes under `.claude/`.
+
 ## Read these first (source of truth = the repo)
 
 - **`DECISIONS.md`** — append-only decision log (D1–D…). **The authority.** When
