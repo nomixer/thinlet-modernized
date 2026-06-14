@@ -1,0 +1,26 @@
+{
+  // Lean Dev Container config used ONLY by CI (referenced by the workflow's
+  // devcontainers/ci `configFile`). Must be named `devcontainer.json`, hence the
+  // ci/ subfolder. VS Code's default remains ../devcontainer.json (the full dev
+  // image with the desktop-lite/noVNC desktop) — do not pick this one for
+  // interactive use.
+  //
+  // Same Dockerfile as local dev (JDK, fonts, Xvfb, AWT X11 libs, mvn shim) but
+  // WITHOUT the desktop-lite feature: that desktop adds ~1 GB, CI never starts
+  // it (the build overrides the entrypoint), and CI rebuilds the image from
+  // scratch every run (no persistent layer cache) — pure waste otherwise. CI
+  // writes the Maven repo to the workspace .m2 (MAVEN_USER_HOME in the workflow),
+  // so no ~/.m2 named-volume mount or postCreate chown is needed. See D22.
+  //
+  // dockerfile/context are relative to THIS file, so reach up into .devcontainer/
+  // (context "..") so the Dockerfile's `COPY fonts/...` resolves.
+  "name": "thinlet-modernized (CI, JDK 21) — not for interactive use",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": "..",
+    "args": {
+      "JDK_VERSION": "21"
+    }
+  },
+  "remoteUser": "vscode"
+}

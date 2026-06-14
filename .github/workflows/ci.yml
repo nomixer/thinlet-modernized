@@ -60,6 +60,6 @@ jobs:
         with:
           # Lean CI image (no desktop-lite/noVNC) — the viewable desktop is
           # local-dev only. See DECISIONS.md D22.
-          configFile: .devcontainer/devcontainer.ci.json
+          configFile: .devcontainer/ci/devcontainer.json
           push: never
           runCmd: MAVEN_USER_HOME="$PWD/.m2" ./mvnw -B -Dmaven.repo.local=.m2/repository verify

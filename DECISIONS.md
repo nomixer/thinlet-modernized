@@ -370,9 +370,12 @@ cache), so that ~1 GB would be installed on every run for zero CI benefit.
 Resolved by **splitting the config**:
 - `.devcontainer/devcontainer.json` — full dev image (desktop-lite, ports, `:1`);
   VS Code auto-uses it.
-- `.devcontainer/devcontainer.ci.json` — lean image (same Dockerfile, no desktop
+- `.devcontainer/ci/devcontainer.json` — lean image (same Dockerfile, no desktop
   feature / ports / mounts); the CI workflow points `devcontainers/ci` at it via
-  `configFile`. CI image stays ~2.5 GB and builds as fast as before.
+  `configFile`. (It lives in a `ci/` subfolder because the devcontainer CLI
+  requires the file be named `devcontainer.json`; `dockerfile: ../Dockerfile` +
+  `context: ..` reach back up so the `COPY fonts/...` resolves.) CI image stays
+  ~2.5 GB and builds as fast as before.
 
 Both share the one `Dockerfile` (JDK, fonts, Xvfb, AWT X11 libs, mvn shim,
 pre-commit), so the build/test environment can't drift between them; only the
