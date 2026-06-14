@@ -342,3 +342,46 @@ Xvfb on `:99` (`DISPLAY` is set in `devcontainer.json`); the Phase 1 harness
 owns starting Xvfb. *Seeing* a demo window needs a real display — run it on the
 host, or add an in-container noVNC desktop (e.g. the `desktop-lite` feature),
 which is deferred and not required for the trace-based verification (D7).
+
+## D22 — In-container noVNC desktop for visual development (display model)
+**Date:** 2026-06-14
+
+A GUI toolkit needs a code → run → *see* loop inside the dev container, not just
+build & test — so the deferral noted in D21 is taken up early (by request). The
+`desktop-lite` dev-container feature adds a lightweight Fluxbox desktop served
+over noVNC (browser, forwarded port 6080; default password `vscode`).
+
+Two-display model, deliberately separate so eyeballing never affects the
+golden-trace metrics (D7):
+
+- **`:1` — viewable desktop (desktop-lite/noVNC).** The interactive default
+  `DISPLAY` (`devcontainer.json` `containerEnv`); demos launched from the editor
+  or terminal appear in the browser desktop.
+- **`:99` — controlled headless Xvfb.** Owned/started by the Phase 1 trace
+  harness, set explicitly for those runs (fixed resolution, pinned fonts, no
+  window manager) so WM chrome never perturbs pixel metrics. The harness sets
+  `DISPLAY=:99` for surefire regardless of the interactive default.
+
+Cost/scope: desktop-lite measured at **~1 GB** added (2.49 → 3.51 GB). The CI
+build overrides the container entrypoint, so the desktop never *starts* in CI,
+but CI rebuilds the dev image from scratch every run (no persistent layer
+cache), so that ~1 GB would be installed on every run for zero CI benefit.
+
+Resolved by **splitting the config**:
+- `.devcontainer/devcontainer.json` — full dev image (desktop-lite, ports, `:1`);
+  VS Code auto-uses it.
+- `.devcontainer/ci/devcontainer.json` — lean image (same Dockerfile, no desktop
+  feature / ports / mounts); the CI workflow points `devcontainers/ci` at it via
+  `configFile`. (It lives in a `ci/` subfolder because the devcontainer CLI
+  requires the file be named `devcontainer.json`; `dockerfile: ../Dockerfile` +
+  `context: ..` reach back up so the `COPY fonts/...` resolves.) CI image stays
+  ~2.5 GB and builds as fast as before.
+
+Both share the one `Dockerfile` (JDK, fonts, Xvfb, AWT X11 libs, mvn shim,
+pre-commit), so the build/test environment can't drift between them; only the
+desktop layer differs.
+
+The dev image's `postCreateCommand` runs `.devcontainer/dev-postcreate.sh`
+(chown `~/.m2`, `pre-commit install` when git is usable, and install a
+one-time-per-terminal hint into `/etc/bash.bashrc` printing the noVNC port/URL).
+The lean CI config has no `postCreateCommand`, so none of that runs in CI.

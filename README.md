@@ -75,7 +75,10 @@ packaging. To auto-format before committing:
 A Dev Container (`.devcontainer/`) provides a pinned JDK, Xvfb (for headless
 AWT), a fixed font set, and a working `pre-commit` so local and CI runs match.
 Inside it, `mvn` is a shim for `./mvnw`, so the CLI uses the exact pinned Maven
-version CI runs.
+version CI runs. A noVNC desktop (Fluxbox) is served in the browser at forwarded
+port **6080** (password `vscode`) for visually running the demos — the default
+`DISPLAY` (`:1`) targets it, while the automated trace tests use a separate
+controlled headless display (`:99`). See `DECISIONS.md` D22.
 
 > **Open the Dev Container on a clone, not a linked `git worktree`.** A
 > worktree's `.git` is a pointer into the *main* repository, which is not

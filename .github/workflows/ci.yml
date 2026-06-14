@@ -58,5 +58,8 @@ jobs:
       - name: Build & verify inside the Dev Container
         uses: devcontainers/ci@v0.3
         with:
+          # Lean CI image (no desktop-lite/noVNC) — the viewable desktop is
+          # local-dev only. See DECISIONS.md D22.
+          configFile: .devcontainer/ci/devcontainer.json
           push: never
           runCmd: MAVEN_USER_HOME="$PWD/.m2" ./mvnw -B -Dmaven.repo.local=.m2/repository verify
