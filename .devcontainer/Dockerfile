@@ -7,9 +7,12 @@
 ARG JDK_VERSION=21
 FROM mcr.microsoft.com/devcontainers/java:1-${JDK_VERSION}-bookworm
 
-# Fixed font package set + fontconfig + headless display + pre-commit.
-# The font *package set* is pinned by name here; exact apt version pinning is an
-# open item (see DECISIONS.md / README). DTD and source bytes are unaffected.
+# Fonts + fontconfig + headless display (Xvfb) + the X11 client libraries the
+# JDK's AWT (libawt_xawt.so) dynamically links at Toolkit init + pre-commit.
+# Without libXtst/libXi/etc. ANY AWT program (the demos, and the Phase 1
+# headless trace tests) dies with UnsatisfiedLinkError before it opens a display.
+# The font *package set* is pinned by name; exact apt version pinning is an open
+# item (see DECISIONS.md / README). DTD and source bytes are unaffected.
 #
 # The base image ships a third-party yarn apt source (dl.yarnpkg.com) whose
 # signing key is not present on CI runners, so a plain `apt-get update` fails on
@@ -19,6 +22,12 @@ RUN find /etc/apt/sources.list.d -type f -exec grep -lq 'dl\.yarnpkg\.com' {} \;
     apt-get update \
  && apt-get install -y --no-install-recommends \
         xvfb \
+        libxtst6 \
+        libxi6 \
+        libxrender1 \
+        libxext6 \
+        libx11-6 \
+        libxrandr2 \
         fontconfig \
         fonts-dejavu-core \
         fonts-dejavu-extra \
