@@ -182,9 +182,9 @@ cannot run under JDK 8. Resolution:
   bind-mounted workspace and caches that path, so the Dev Container writes into
   the cached directory (addresses the Dev Containers Maven-cache note).
 
-Note: the CI workflow itself has not been executed in a GitHub Actions runner
-from this bootstrap session — it is wired per plan and validated only by local
-`mvn verify`. First real run is on push.
+Status (2026-06-14): resolved — the workflow has since run in real GitHub
+Actions runners. The first runs surfaced three env-specific fixes (see D17);
+`./mvnw -B verify` is now green on `main`.
 
 ## D15 — `v0.0.1-bootstrap` is tagged on `main` after merge, not from the bootstrap branch
 **Date:** 2026-06-14
@@ -207,9 +207,11 @@ constraints forced this:
 Action when this branch merges: create `v0.0.1-bootstrap` as an annotated tag
 on the resulting `main` commit — via the GitHub UI (Releases → new tag on the
 merge commit) or `git tag -a v0.0.1-bootstrap <merge-sha> && git push origin
-v0.0.1-bootstrap` from a clone with push rights. Until then the tag does not
-exist on the remote, and nothing in Phase 0 depends on it (japicmp activates at
-`v0.1.0`, D10).
+v0.0.1-bootstrap` from a clone with push rights. Nothing in Phase 0 depends on
+it (japicmp activates at `v0.1.0`, D10).
+
+Status (2026-06-14): done — the annotated tag `v0.0.1-bootstrap` exists on the
+remote at `4d5fe17` (reachable from `main`).
 
 ## D16 — Stay on the Microsoft dev-container base image for now (defer a self-controlled image)
 **Date:** 2026-06-14
@@ -251,19 +253,29 @@ landed squashed in one commit on `main`:
 
 Result: `./mvnw -B verify` is green in CI on `main`.
 
-## D18 — Doc line endings normalized to LF; Spotless gates text EOL hygiene
+## D18 — Doc pages normalized to LF + UTF-8; Spotless gates both
 **Date:** 2026-06-14
 
-Five 2005 doc pages (`docs/{calculator,events,i18n,overview,showcase}.html`)
-carried mixed CRLF **and** stray lone-CR bytes, so a fresh clone warned "CRLF
-will be replaced by LF". They were normalized to pure LF (byte-confirmed: only
-line-ending bytes changed; all other bytes identical), matching the ~40 already-
-LF docs. `.gitattributes` (`* text=auto eol=lf`) already auto-normalizes CRLF on
-commit — these were pre-normalization stragglers, and git's CRLF→LF filter does
-not strip lone CRs, which is why a one-time explicit pass was needed.
+Two cleanups to the 2005 `docs/` website, each gated so it cannot regress:
 
-To make this fail-fast in CI (not just git's silent on-commit normalization), a
-Spotless `<format>` enforces LF + a final newline on `docs/**/*.{html,css}` and
-`**/*.md` (`endWithNewline`; line endings via the `GIT_ATTRIBUTES` policy = LF).
-It does **not** trim trailing whitespace or restructure the historical markup —
-scope is deliberately line-ending/final-newline only.
+- **Line endings → LF.** Five pages
+  (`docs/{calculator,events,i18n,overview,showcase}.html`) carried mixed CRLF
+  *and* stray lone-CR bytes, so a fresh clone warned "CRLF will be replaced by
+  LF". Normalized to pure LF (byte-confirmed: only end-of-line bytes changed),
+  matching the ~40 docs already stored as LF. `.gitattributes`
+  (`* text=auto eol=lf`) auto-normalizes CRLF on commit, but these predated it
+  and git's CRLF→LF filter does not strip lone CRs, so a one-time pass was
+  needed.
+- **Encoding → UTF-8.** `docs/index.html` (windows-1252 `™`) and
+  `docs/showcase.html` (windows-1252 accented names) were the only non-ASCII
+  docs; transcoded cp1252 → UTF-8 (lossless round-trip verified; no
+  `<meta charset>` existed to update). All `docs/` files are now UTF-8/ASCII.
+
+Gate: a Spotless `<format>` enforces LF + a final newline on
+`docs/**/*.{html,css}` and `**/*.md`, and — because Spotless reads UTF-8 — also
+guards the docs' UTF-8 encoding (a non-UTF-8 byte fails `spotless:check`, which
+is exactly how the first attempt here caught index.html while it was still
+windows-1252). Scope is line-ending / newline / encoding only — no whitespace
+trimming or markup restructuring. An encoding-agnostic byte-grep gate was
+considered and dropped in favor of converting the docs to UTF-8 so standard
+tooling can lint them.

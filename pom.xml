@@ -125,9 +125,8 @@
         <artifactId>spotless-maven-plugin</artifactId>
         <version>${version.spotless.plugin}</version>
         <configuration>
-          <!-- Line endings follow .gitattributes (eol=lf for text); this makes
-               Spotless normalize CRLF/stray-CR to LF on apply and fail check on
-               regressions. See DECISIONS.md D18. -->
+          <!-- Line endings follow .gitattributes (eol=lf for text): Spotless
+               normalizes CRLF/stray-CR to LF and fails check on regressions. -->
           <lineEndings>GIT_ATTRIBUTES</lineEndings>
           <java>
             <palantirJavaFormat>
@@ -159,11 +158,11 @@
               <trimTrailingWhitespace/>
               <endWithNewline/>
             </format>
-            <!-- Line-ending + final-newline hygiene for human-authored text
-                 (doc website HTML/CSS, Markdown). Enforces LF and a trailing
-                 newline so CRLF / stray-CR / missing-newline regressions fail
-                 CI. Deliberately does NOT trim whitespace or restructure the
-                 historical 2005 markup. See DECISIONS.md D18. -->
+            <!-- Doc website (HTML/CSS) + Markdown: enforce LF + a final newline,
+                 and (since Spotless reads UTF-8) guard the docs' UTF-8 encoding.
+                 The 2005 docs were converted to UTF-8 for this; see D18. Scope is
+                 line-ending / newline / encoding only — no whitespace trimming or
+                 markup restructuring of the historical pages. -->
             <format>
               <includes>
                 <include>docs/**/*.html</include>
