@@ -40,19 +40,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Cache the Maven local repo. maven.repo.local is pointed at .m2/repository
-      # inside the bind-mounted workspace so the dev container writes into the
-      # cached path (see DECISIONS.md D14 / Dev Containers cache note).
-      - name: Cache Maven repository
+      # Cache the Maven local repo *and* the wrapper distribution. Both live
+      # under .m2 inside the bind-mounted workspace (via MAVEN_USER_HOME below),
+      # which the dev-container user can write to — unlike the root-owned
+      # thinlet-m2 named volume at ~/.m2. (See DECISIONS.md D14 / cache note.)
+      - name: Cache Maven repository and wrapper
         uses: actions/cache@v4
         with:
-          path: .m2/repository
-          key: m2-${{ matrix.maven_jdk }}-${{ hashFiles('**/pom.xml') }}
+          path: .m2
+          key: m2-${{ matrix.maven_jdk }}-${{ hashFiles('**/pom.xml', '.mvn/wrapper/maven-wrapper.properties') }}
           restore-keys: |
             m2-${{ matrix.maven_jdk }}-
 
+      # MAVEN_USER_HOME points the Maven wrapper's distribution dir
+      # (${MAVEN_USER_HOME}/wrapper, see mvnw) and the local repo at the writable
+      # workspace .m2, so neither touches the root-owned ~/.m2 named volume.
       - name: Build & verify inside the Dev Container
         uses: devcontainers/ci@v0.3
         with:
           push: never
-          runCmd: ./mvnw -B -Dmaven.repo.local=.m2/repository verify
+          runCmd: MAVEN_USER_HOME="$PWD/.m2" ./mvnw -B -Dmaven.repo.local=.m2/repository verify
