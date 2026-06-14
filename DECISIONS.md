@@ -385,3 +385,26 @@ The dev image's `postCreateCommand` runs `.devcontainer/dev-postcreate.sh`
 (chown `~/.m2`, `pre-commit install` when git is usable, and install a
 one-time-per-terminal hint into `/etc/bash.bashrc` printing the noVNC port/URL).
 The lean CI config has no `postCreateCommand`, so none of that runs in CI.
+
+## D23 — CI caches the lean dev-container image layers in GHCR
+**Date:** 2026-06-14
+
+CI rebuilds the lean (D22) dev-container image from scratch every run. On a
+public repo that costs only time, not money (Actions minutes are free and the
+image is never stored), but it slows feedback and would draw down the free quota
+if the repo ever went private. Caching layers across the ephemeral runners needs
+a store; the free, GitHub-native one is GHCR.
+
+The workflow logs in to GHCR and passes `imageName` + `cacheFrom`
+(`ghcr.io/nomixer/thinlet-modernized/devcontainer-ci`) to `devcontainers/ci`,
+with `push: filter` — push the updated cache only on `main`, not on PRs. Most
+runs then rebuild only changed layers; when the Dockerfile is untouched, image
+setup is a fast pull. Requires `permissions: packages: write`. (First effect is
+deferred: the cache image only exists after the first `main` run pushes it.)
+
+Rejected alternatives: the registry-free `type=gha` buildx cache would mean
+dropping `devcontainers/ci` and re-implementing the uid/workspace-mount handling
+it does for us (the source of the D17/D19 fixes). Base-image digest pinning is
+deferred — the Dockerfile takes `JDK_VERSION` as a build arg for the future
+cross-JDK matrix, so one digest can't pin all rows; revisit with the base-image
+decision (D16).
