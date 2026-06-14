@@ -324,3 +324,21 @@ traceback during create: `postCreateCommand` runs `pre-commit install` only when
 git works (`git rev-parse --git-dir >/dev/null 2>&1 && pre-commit install ||
 true`). The `mvn` shim (D19) already degrades gracefully — its failed
 `git rev-parse` falls back to `$PWD/mvnw`.
+
+## D21 — Dev image includes AWT's X11 client libraries
+**Date:** 2026-06-14
+
+Running any AWT program in the dev container (a demo, or the Phase 1 headless
+trace tests) failed with `UnsatisfiedLinkError: libXtst.so.6: cannot open
+shared object file`. The JDK's `libawt_xawt.so` dynamically links several X11
+client libraries at `Toolkit` init, and the base image shipped Xvfb + fonts but
+not those libs. The image now also installs `libxtst6 libxi6 libxrender1
+libxext6 libx11-6 libxrandr2`. This is on Phase 1's critical path (AWT must
+initialize for the trace tests), independent of the demos.
+
+Library vs. display — distinct layers: this fixes only the missing *library*.
+AWT still needs a running X server to open a window. Headless run/tests use
+Xvfb on `:99` (`DISPLAY` is set in `devcontainer.json`); the Phase 1 harness
+owns starting Xvfb. *Seeing* a demo window needs a real display — run it on the
+host, or add an in-container noVNC desktop (e.g. the `desktop-lite` feature),
+which is deferred and not required for the trace-based verification (D7).
