@@ -38,6 +38,6 @@
   "mounts": [
     "source=thinlet-m2,target=/home/vscode/.m2,type=volume"
   ],
-  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.m2 && (pre-commit install || true)",
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.m2 && (git rev-parse --git-dir >/dev/null 2>&1 && pre-commit install || true)",
   "remoteUser": "vscode"
 }

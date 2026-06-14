@@ -305,3 +305,22 @@ VS Code dev-container experience:
 
 These touch only the dev-container tooling; no production source or CI build
 behavior changes (CI still uses `./mvnw` directly with the workspace `.m2`).
+
+## D20 — Dev Container is for clones, not linked git worktrees
+**Date:** 2026-06-14
+
+A linked `git worktree`'s `.git` is a pointer file into the *main* repository's
+`.git/worktrees/<name>` — a host path outside the folder the Dev Container
+mounts. Inside a worktree-based container, git is therefore non-functional
+(`fatal: not a git repository`), which breaks Source Control, commits, and
+`pre-commit` (the latter is what surfaced it). Making a worktree work would
+require bind-mounting the main repo's `.git` at its exact host path —
+host-specific and non-portable, so it is **not** added to the shared
+`devcontainer.json`.
+
+Resolution: open the Dev Container on a normal clone (documented in `README.md`,
+"Building"). Plus graceful degradation so a worktree open doesn't throw a
+traceback during create: `postCreateCommand` runs `pre-commit install` only when
+git works (`git rev-parse --git-dir >/dev/null 2>&1 && pre-commit install ||
+true`). The `mvn` shim (D19) already degrades gracefully — its failed
+`git rev-parse` falls back to `$PWD/mvnw`.

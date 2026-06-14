@@ -72,8 +72,17 @@ packaging. To auto-format before committing:
 ./mvnw spotless:apply
 ```
 
-A Dev Container (`.devcontainer/`) provides a pinned JDK, Maven, Xvfb (for
-headless AWT), `pre-commit`, and a fixed font set so local and CI runs match.
+A Dev Container (`.devcontainer/`) provides a pinned JDK, Xvfb (for headless
+AWT), a fixed font set, and a working `pre-commit` so local and CI runs match.
+Inside it, `mvn` is a shim for `./mvnw`, so the CLI uses the exact pinned Maven
+version CI runs.
+
+> **Open the Dev Container on a clone, not a linked `git worktree`.** A
+> worktree's `.git` is a pointer into the *main* repository, which is not
+> mounted into the container — so git is non-functional inside it (Source
+> Control, commits, and `pre-commit` all fail with `fatal: not a git
+> repository`). Use a normal clone, or `git clone --branch <branch>` into its
+> own folder, and open that. See `DECISIONS.md` D20.
 
 ## Consuming `thinlet-core` (GitHub Packages auth required)
 
