@@ -342,3 +342,27 @@ Xvfb on `:99` (`DISPLAY` is set in `devcontainer.json`); the Phase 1 harness
 owns starting Xvfb. *Seeing* a demo window needs a real display — run it on the
 host, or add an in-container noVNC desktop (e.g. the `desktop-lite` feature),
 which is deferred and not required for the trace-based verification (D7).
+
+## D22 — In-container noVNC desktop for visual development (display model)
+**Date:** 2026-06-14
+
+A GUI toolkit needs a code → run → *see* loop inside the dev container, not just
+build & test — so the deferral noted in D21 is taken up early (by request). The
+`desktop-lite` dev-container feature adds a lightweight Fluxbox desktop served
+over noVNC (browser, forwarded port 6080; default password `vscode`).
+
+Two-display model, deliberately separate so eyeballing never affects the
+golden-trace metrics (D7):
+
+- **`:1` — viewable desktop (desktop-lite/noVNC).** The interactive default
+  `DISPLAY` (`devcontainer.json` `containerEnv`); demos launched from the editor
+  or terminal appear in the browser desktop.
+- **`:99` — controlled headless Xvfb.** Owned/started by the Phase 1 trace
+  harness, set explicitly for those runs (fixed resolution, pinned fonts, no
+  window manager) so WM chrome never perturbs pixel metrics. The harness sets
+  `DISPLAY=:99` for surefire regardless of the interactive default.
+
+Cost/scope: the feature lands in the shared image, so CI builds it too — but the
+CI build overrides the container entrypoint, so the desktop never *starts* in CI
+(no runtime cost there). The image-size delta is being measured; whether to
+split a dev-only config to keep the CI image lean is a pending judgement call.

@@ -9,7 +9,19 @@
       "JDK_VERSION": "21"
     }
   },
-  "features": {},
+  // desktop-lite: a lightweight Fluxbox desktop reachable via noVNC in a browser
+  // (forwarded port 6080), so the GUI demos can actually be *seen* while
+  // developing. It runs on its own display (:1); the trace harness keeps a
+  // separate, controlled headless Xvfb on :99 (see containerEnv + DECISIONS.md
+  // D22). Dev-only: the CI build overrides the entrypoint, so the desktop never
+  // starts in CI. Default noVNC password is "vscode".
+  "features": {
+    "ghcr.io/devcontainers/features/desktop-lite:1": {}
+  },
+  "forwardPorts": [6080],
+  "portsAttributes": {
+    "6080": { "label": "Desktop (noVNC)", "onAutoForward": "silent" }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
@@ -24,11 +36,14 @@
       }
     }
   },
-  // Headless AWT needs a display; Xvfb is started lazily by tests/run scripts.
-  // Pinned fonts + fontconfig are baked into the image (see Dockerfile) so
-  // local and CI font metrics share the same glyph source.
+  // Interactive default display is the viewable desktop-lite/noVNC desktop (:1),
+  // so demos launched from the editor or terminal appear in the browser desktop.
+  // The golden-trace harness instead uses a dedicated, controlled headless Xvfb
+  // on :99 (set explicitly for those runs) so window-manager chrome never
+  // pollutes pixel metrics — see DECISIONS.md D7/D22. Pinned fonts + fontconfig
+  // are baked into the image so local and CI font metrics share one glyph source.
   "containerEnv": {
-    "DISPLAY": ":99"
+    "DISPLAY": ":1"
   },
   // Persist the Maven local repo across rebuilds. The named volume mounts
   // root-owned, but the build runs as `vscode`; chown it on create so `mvn` /
