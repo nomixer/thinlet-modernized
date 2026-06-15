@@ -20,8 +20,37 @@
     only module published to GitHub Packages.
   </description>
 
-  <!-- Dependency-free at runtime, period. JUnit 5 + AssertJ (test scope) are
-       added in Phase 1 with the test suite. -->
+  <!-- Dependency-free at runtime, period. JUnit 5 + AssertJ are test scope only
+       (Phase 1 trace harness) and never enter the published jar. -->
+  <dependencies>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- Surefire runs the headless trace tests against the controlled Xvfb on
+           :99 (DECISIONS.md D22). The XvfbDisplayExtension starts that server;
+           the forked JVM's AWT binds to it via this DISPLAY. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <environmentVariables>
+            <DISPLAY>:99</DISPLAY>
+          </environmentVariables>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
   <!-- japicmp activates here from v0.1.0 onward (japicmp.skip flipped to false
        in Phase 1); the parent leaves it configured-but-inactive for Phase 0. -->

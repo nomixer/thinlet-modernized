@@ -53,7 +53,29 @@
 
     <!-- japicmp is INACTIVE during Phase 0; activated from v0.1.0 (Phase 1). -->
     <japicmp.skip>true</japicmp.skip>
+
+    <!-- Test-only dependencies (Phase 1 trace harness). Test scope only; never
+         enter the published thinlet-core jar (it stays runtime-dependency-free). -->
+    <version.junit>5.11.4</version.junit>
+    <version.assertj>3.27.3</version.assertj>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${version.junit}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-core</artifactId>
+        <version>${version.assertj}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <distributionManagement>
     <!-- Only thinlet-core actually deploys; demos/drafts set maven.deploy.skip. -->

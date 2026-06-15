@@ -1,0 +1,26 @@
+{
+  "calls": [
+    {"op": "setFont", "cat": ["SansSerif|0|12"], "num": []},
+    {"op": "translate", "cat": [], "num": [0, 0]},
+    {"op": "setColor", "cat": ["#909090FF"], "num": []},
+    {"op": "setColor", "cat": ["#E6E6E6FF"], "num": []},
+    {"op": "fillRect", "cat": [], "num": [0, 0, 1024, 768]},
+    {"op": "translate", "cat": [], "num": [0, 0]},
+    {"op": "setColor", "cat": ["#909090FF"], "num": []},
+    {"op": "drawLine", "cat": [], "num": [1023, 0, 0, 0]},
+    {"op": "drawLine", "cat": [], "num": [0, 1, 0, 767]},
+    {"op": "drawLine", "cat": [], "num": [1, 767, 1023, 767]},
+    {"op": "drawLine", "cat": [], "num": [1023, 766, 1023, 1]},
+    {"op": "setColor", "cat": ["#FFFFFFFF"], "num": []},
+    {"op": "fillRect", "cat": [], "num": [1, 1, 1022, 766]},
+    {"op": "clipRect", "cat": [], "num": [1, 1, 1022, 766]},
+    {"op": "translate", "cat": [], "num": [1, 1]},
+    {"op": "translate", "cat": [], "num": [-1, -1]},
+    {"op": "setClip", "cat": [], "num": [0, 0, 1024, 768]},
+    {"op": "translate", "cat": [], "num": [0, 0]},
+    {"op": "translate", "cat": [], "num": [0, 0]}
+  ],
+  "layout": [
+    {"class": "tree", "x": 0, "y": 0, "w": 1024, "h": 768}
+  ]
+}

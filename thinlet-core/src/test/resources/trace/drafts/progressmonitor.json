@@ -1,0 +1,30 @@
+{
+  "calls": [
+    {"op": "setFont", "cat": ["SansSerif|0|12"], "num": []},
+    {"op": "translate", "cat": [], "num": [0, 0]},
+    {"op": "setColor", "cat": ["#909090FF"], "num": []},
+    {"op": "setColor", "cat": ["#E6E6E6FF"], "num": []},
+    {"op": "fillRect", "cat": [], "num": [0, 0, 1024, 768]},
+    {"op": "translate", "cat": [], "num": [0, 0]},
+    {"op": "translate", "cat": [], "num": [0, 0]},
+    {"op": "setColor", "cat": ["#909090FF"], "num": []},
+    {"op": "drawLine", "cat": [], "num": [42, 0, 0, 0]},
+    {"op": "drawLine", "cat": [], "num": [0, 1, 0, 20]},
+    {"op": "drawLine", "cat": [], "num": [1, 20, 42, 20]},
+    {"op": "drawLine", "cat": [], "num": [42, 19, 42, 1]},
+    {"op": "setColor", "cat": ["#E6E6E6FF"], "num": []},
+    {"op": "fillRect", "cat": [], "num": [1, 1, 41, 4]},
+    {"op": "drawImage", "cat": [], "num": [1, 5, 15, 15]},
+    {"op": "drawImage", "cat": [], "num": [16, 5, 15, 15]},
+    {"op": "drawImage", "cat": [], "num": [31, 5, 11, 15]},
+    {"op": "setColor", "cat": ["#000000FF"], "num": []},
+    {"op": "drawString", "cat": ["Start"], "num": [6, 15]},
+    {"op": "translate", "cat": [], "num": [0, 0]},
+    {"op": "translate", "cat": [], "num": [0, 0]},
+    {"op": "translate", "cat": [], "num": [0, 0]}
+  ],
+  "layout": [
+    {"class": "panel", "x": 0, "y": 0, "w": 1024, "h": 768},
+    {"class": "button", "x": 0, "y": 0, "w": 43, "h": 21}
+  ]
+}
