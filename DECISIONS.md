@@ -164,6 +164,15 @@ only, zero production-code edits). Concretely:
 As internal refactors (Phase 3) and Enhanced Thinlet address these, exclude
 entries are removed so the linters fail on regressions again.
 
+Status (2026-06-15): Phase 1 triage done (see KNOWN_QUIRKS.md). The parser
+null-source NPE is locked as Q1 with tests. The parser "unclosed-stream"
+findings (`OBL_*`, `OS_OPEN_STREAM`) were judged non-reproducible — the parser's
+`Reader` is closed in a `finally` on every practical path — so they are tracked,
+not behavior-locked. The `FileChooser` null deref lives in a demos fallback path
+(private inner class, used only when Swing's `View2` fails to load) and is
+documented rather than test-locked. All remain SpotBugs suppressions for
+Enhanced Thinlet.
+
 ## D14 — Phase 0 CI runs Maven on JDK 21; "jdk 8" is a target, not a runtime
 **Date:** 2026-06-13
 
