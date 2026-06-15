@@ -241,6 +241,29 @@ work needs exact JDK/freetype pinning the MS floating tags can't give, or
 (2) inherited-base breakage recurs. When revisited, pin the base by digest and
 let Dependabot (already configured) propose bumps.
 
+Input (2026-06-15, from wiring the JDK-8 row, D25) — to weigh when this is
+revisited, not a decision now:
+
+- **The cross-JDK *toolchains* model needs several JDKs in one image.** The MS
+  base ships a single JDK, so JDK 8 was layered in by hand (`/opt/jdk8`). It
+  worked cleanly, but the MS base's "one JDK per image" convenience is largely
+  moot for us — we hand-install the extra JDK(s) regardless, and the full Phase 2
+  matrix (8/11/17/21/25) means installing several.
+- **Determinism cuts toward a self-owned base.** We now float *two* JDK sources
+  (the MS `1-21` tag floats patch versions; the Temurin 8 install uses Adoptium
+  "latest 8 GA", also floating). A self-controlled base pinned by digest per JDK
+  would give the exact-build pinning D7/D16 care about across all rows.
+- **Locale.** The JDK-8 default-charset gotcha (US-ASCII when `LANG` is unset)
+  was handled per-test via `-Dfile.encoding=UTF-8` (D25); a self-owned image
+  could pin `LANG`/locale at the image level instead.
+- **Build-time external dep.** Installing JDK 8 via a network download on every
+  image rebuild adds an Adoptium dependency; a baked multi-JDK base would be more
+  reproducible.
+
+Net: the more JDK rows we add, the less the MS single-JDK base buys and the more
+a self-owned multi-JDK base buys (exact pinning) — but the current approach works,
+so no urgency.
+
 ## D17 — First real CI run hardened three env-specific failures
 **Date:** 2026-06-14
 
