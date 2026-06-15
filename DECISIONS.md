@@ -408,3 +408,44 @@ it does for us (the source of the D17/D19 fixes). Base-image digest pinning is
 deferred — the Dockerfile takes `JDK_VERSION` as a build arg for the future
 cross-JDK matrix, so one digest can't pin all rows; revisit with the base-image
 decision (D16).
+
+## D24 — Golden-trace harness, slice 1 (recorder + serializer + first goldens)
+**Date:** 2026-06-15
+
+First Phase 1 slice: a golden-trace harness in `thinlet-core` (test scope),
+proving the pipeline end to end before scaling across the corpus and JDK matrix.
+
+- **Hook with zero `Thinlet.java` edits.** `TracingGraphics2D extends Graphics2D`
+  delegates every call and records the drawing vocabulary; it is passed into
+  Thinlet's public `paint(Graphics)`, capturing the whole draw stream. A fresh
+  `BufferedImage` graphics has a null clip and Thinlet's paint dereferences clip
+  bounds, so the driver sets the clip on the raw graphics before wrapping (not
+  recorded).
+- **Trace shape = D7.** Each call is `op` + categorical args (colors `#RRGGBBAA`,
+  fonts, strings, shape names — compared exactly) + numeric args (compared within
+  `trace-tolerance.json`, default ±2 px). `getFontMetrics` is delegated but not
+  recorded; its JDK variance is absorbed by the coordinate tolerance. `LayoutTrace`
+  walks the `Object[]` widget tree (`"bounds"`/`:comp`/`:next`) in definition
+  order. Serialization is a hand-rolled deterministic JSON writer+reader — no JSON
+  dependency, so `thinlet-core` stays runtime-dependency-free; JUnit 5 + AssertJ
+  are test scope only.
+- **Display (D22).** `XvfbDisplayExtension` owns Xvfb `:99`, launched **detached**
+  (`sh -c "Xvfb … &"`) — a direct child Xvfb process breaks surefire's fork
+  lifecycle ("error occurred in starting fork" even on passing tests); detaching
+  avoids it, and the server is reused by later forks. Surefire sets `DISPLAY=:99`;
+  not `java.awt.headless`.
+- **Corpus coverage is partial in this slice — a known limitation.** The vendored
+  corpus XML is handler-coupled: `finishParse` resolves event-handler/`init`
+  method references (e.g. `showDialog`, `resultSelected`, `closeDialog`) against
+  the handler by reflection and throws when absent. With a bare `Thinlet` handler
+  only **2 of 42** files parse and render (`drafts/i18npanel.xml`,
+  `drafts/looks.xml`); the other 40 reference demo handler methods that live in
+  `thinlet-demos`. Slice 1 records goldens for the renderable subset and skips the
+  rest (reported by the record run). Expanding coverage — a no-op stub handler
+  exposing the referenced method signatures, or rendering with the demo handler
+  classes — is the next slice.
+- **Tests** (both `@ExtendWith(XvfbDisplayExtension.class)`): a self-consistency
+  test (render twice → tolerant diff empty, through a JSON round trip) and a
+  golden regression test (each committed golden re-rendered, matched within
+  tolerance). Same-JDK for now; the per-JDK execution matrix (D14) is a later
+  slice. Goldens are (re)written only with `-Dtrace.record=true`.
