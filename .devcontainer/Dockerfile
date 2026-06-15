@@ -35,6 +35,17 @@ RUN find /etc/apt/sources.list.d -type f -exec grep -lq 'dl\.yarnpkg\.com' {} \;
         pipx \
  && rm -rf /var/lib/apt/lists/*
 
+# A second JDK (Temurin 8) for the cross-JDK *test* execution row (DECISIONS.md
+# D14/D25): Maven itself runs on the base JDK (21) for the modern lint/format
+# plugins, while surefire forks the test suite on JDK 8 via
+# maven-toolchains-plugin (-Pjdk8-tests). Installed at the fixed path /opt/jdk8
+# so .mvn/jdk8-toolchains.xml can reference it; exact-version pinning is the open
+# item tracked in DECISIONS.md D16.
+RUN mkdir -p /opt/jdk8 \
+ && curl -fsSL "https://api.adoptium.net/v3/binary/latest/8/ga/linux/x64/jdk/hotspot/normal/eclipse" \
+      | tar -xz -C /opt/jdk8 --strip-components=1 \
+ && /opt/jdk8/bin/java -version
+
 # Deterministic font rendering: pin a fontconfig drop-in so hinting/antialias
 # behavior does not vary by host. (Metric *math* still varies by JDK — that is
 # what the trace tolerance model absorbs; see DECISIONS.md D7.)

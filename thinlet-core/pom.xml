@@ -47,6 +47,13 @@
           <environmentVariables>
             <DISPLAY>:99</DISPLAY>
           </environmentVariables>
+          <!-- Pin the JVM default charset so the parser's platform-default
+               InputStreamReader decodes XML identically across JDKs. JDK 18+
+               defaults to UTF-8 (JEP 400); older JDKs use a locale-dependent
+               default (e.g. US-ASCII when LANG is unset), which would otherwise
+               make non-ASCII corpus text — and thus the goldens — diverge by
+               JDK. See DECISIONS.md D25. -->
+          <argLine>-Dfile.encoding=UTF-8</argLine>
         </configuration>
       </plugin>
     </plugins>

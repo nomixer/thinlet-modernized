@@ -1,8 +1,10 @@
 name: CI
 
-# Phase 0: a single build job. The cross-JDK matrix (8 / 11 / 17 / 21 / 25) and
-# the cross-JDK trace diff are added one row at a time in Phase 2; the Phase 1
-# test suite + golden trace land before that. See thinlet plan, Phase 0 step 8.
+# Two jobs: `build` runs the full verify (Spotless/Checkstyle/SpotBugs + tests)
+# with Maven on JDK 21 (the modern plugins need JDK 11+); `test-jdk8` is the
+# first cross-JDK execution row — Maven still on 21, but surefire forks the test
+# suite (incl. the golden traces) on JDK 8 via toolchains. Rows 11/17/25 of the
+# cross-JDK matrix follow in Phase 2. See DECISIONS.md D14/D25.
 
 on:
   push:
@@ -78,3 +80,40 @@ jobs:
           cacheFrom: ghcr.io/nomixer/thinlet-modernized/devcontainer-ci
           push: filter
           runCmd: MAVEN_USER_HOME="$PWD/.m2" ./mvnw -B -Dmaven.repo.local=.m2/repository verify
+
+  test-jdk8:
+    name: tests (JDK 8 via toolchains)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache Maven repository and wrapper
+        uses: actions/cache@v4
+        with:
+          path: .m2
+          key: m2-jdk8-${{ hashFiles('**/pom.xml', '.mvn/wrapper/maven-wrapper.properties') }}
+          restore-keys: |
+            m2-jdk8-
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Maven runs on the image's base JDK (21) for the lint/format plugins;
+      # maven-toolchains-plugin (-Pjdk8-tests) makes surefire fork the test suite
+      # on the JDK 8 installed at /opt/jdk8 (see Dockerfile). This is the first
+      # true cross-JDK run of the golden traces — the file.encoding=UTF-8 pin in
+      # thinlet-core's surefire config keeps decoding consistent. See DECISIONS.md
+      # D14/D25. Pulls the cached image but does not push it (the build job does).
+      - name: Run tests on JDK 8 (toolchains) inside the Dev Container
+        uses: devcontainers/ci@v0.3
+        with:
+          configFile: .devcontainer/ci/devcontainer.json
+          imageName: ghcr.io/nomixer/thinlet-modernized/devcontainer-ci
+          cacheFrom: ghcr.io/nomixer/thinlet-modernized/devcontainer-ci
+          push: never
+          runCmd: MAVEN_USER_HOME="$PWD/.m2" ./mvnw -B -Dmaven.repo.local=.m2/repository -Pjdk8-tests -t .mvn/jdk8-toolchains.xml test

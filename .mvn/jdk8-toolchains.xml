@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  JDK-8 toolchain for the cross-JDK test execution row (DECISIONS.md D14/D25).
+  Passed via `-t .mvn/jdk8-toolchains.xml` with the `jdk8-tests` profile so
+  maven-toolchains-plugin selects JDK 8 and surefire forks the tests on it, while
+  Maven itself keeps running on the base JDK (21). The jdkHome path is provided by
+  the dev-container image (see .devcontainer/Dockerfile).
+-->
+<toolchains>
+  <toolchain>
+    <type>jdk</type>
+    <provides>
+      <version>8</version>
+    </provides>
+    <configuration>
+      <jdkHome>/opt/jdk8</jdkHome>
+    </configuration>
+  </toolchain>
+</toolchains>
