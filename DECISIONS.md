@@ -464,3 +464,31 @@ proving the pipeline end to end before scaling across the corpus and JDK matrix.
   golden regression test (each committed golden re-rendered, matched within
   tolerance). Same-JDK for now; the per-JDK execution matrix (D14) is a later
   slice. Goldens are (re)written only with `-Dtrace.record=true`.
+
+## D25 — JDK-8 execution row lands via toolchains, with a pinned test charset
+**Date:** 2026-06-15
+
+The first cross-JDK row of the execution matrix (D14): Maven still runs on JDK 21
+(the lint/format plugins need 11+), but surefire forks the test suite — including
+the golden traces — on **JDK 8**.
+
+- **Toolchains, not a per-JDK container.** The dev image installs a second JDK
+  (Temurin 8) at `/opt/jdk8` alongside the base JDK 21; `.mvn/jdk8-toolchains.xml`
+  points at it; the `jdk8-tests` profile + `-t` make `maven-toolchains-plugin`
+  select it so surefire forks tests on JDK 8. CI gains a separate `test-jdk8`
+  job (the existing JDK-21 `build` job — and its check name — is unchanged).
+- **Charset pin (the load-bearing fix).** Thinlet's parser reads XML with a
+  platform-default `InputStreamReader`. JDK 18+ defaults to UTF-8 (JEP 400);
+  JDK 8 uses a locale-dependent default — **US-ASCII when `LANG` is unset**, as in
+  the CI container. Without a pin, non-ASCII corpus text (e.g.
+  `drafts/internationalization.xml`, one label in `drafts/widgets.xml`) decoded
+  differently on JDK 8, diverging the goldens far beyond the ±2 px tolerance
+  (categorical string mismatches and ~15 px layout cascades — not metric jitter).
+  surefire now sets `-Dfile.encoding=UTF-8` (a no-op on JDK 21), an environment
+  pin in the same spirit as pinned fonts/Xvfb. This is *not* a `Thinlet.java`
+  change — the 2005 platform-default behavior is preserved; the harness just fixes
+  the environment so traces are comparable.
+- **Result.** With the charset pinned, all 41 goldens + self-consistency + quirk
+  tests pass on JDK 8, validating the D7 cross-JDK tolerance guarantee for the
+  first time. Exact JDK-8 version pinning (vs the floating Adoptium "latest 8 GA"
+  download) stays the open item from D16.
