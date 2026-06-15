@@ -120,7 +120,7 @@ public final class TracingGraphics2D extends Graphics2D {
 
     @Override
     public void setColor(Color c) {
-        rec("setColor", cat(hex(c)));
+        rec("setColor", cat(c == null ? "null" : hex(c)));
         d.setColor(c);
     }
 

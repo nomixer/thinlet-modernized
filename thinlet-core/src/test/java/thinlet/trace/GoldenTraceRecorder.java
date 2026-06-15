@@ -38,12 +38,17 @@ final class GoldenTraceRecorder {
             throw new IOException("corpus resource not found: " + resource);
         }
         try {
-            root = thinlet.parse(in);
+            root = thinlet.parse(in, new CorpusHandler());
         } finally {
             in.close();
         }
         thinlet.add(root);
         thinlet.setSize(WIDTH, HEIGHT);
+        // setSize posts an async COMPONENT_RESIZED event (Thinlet enables component
+        // events); its handler sets the content bounds that paint needs. Flush the
+        // event queue so layout is always applied before painting — otherwise the
+        // direct paint() races the EDT and intermittently renders an empty tree.
+        pumpEventQueue();
         BufferedImage img = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
         Graphics2D raw = img.createGraphics();
         // Thinlet.paint dereferences the clip bounds, and a fresh BufferedImage
@@ -58,6 +63,19 @@ final class GoldenTraceRecorder {
             g.dispose();
         }
         return new Trace(sink, LayoutTrace.walk(root));
+    }
+
+    private static void pumpEventQueue() {
+        try {
+            // A few passes drain any events the resize handler itself posts.
+            for (int i = 0; i < 3; i++) {
+                java.awt.EventQueue.invokeAndWait(() -> {});
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (java.lang.reflect.InvocationTargetException ignored) {
+            // best-effort flush
+        }
     }
 
     static String readClasspath(String resource) throws IOException {

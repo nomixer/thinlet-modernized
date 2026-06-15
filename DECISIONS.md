@@ -434,16 +434,22 @@ proving the pipeline end to end before scaling across the corpus and JDK matrix.
   lifecycle ("error occurred in starting fork" even on passing tests); detaching
   avoids it, and the server is reused by later forks. Surefire sets `DISPLAY=:99`;
   not `java.awt.headless`.
-- **Corpus coverage is partial in this slice — a known limitation.** The vendored
-  corpus XML is handler-coupled: `finishParse` resolves event-handler/`init`
-  method references (e.g. `showDialog`, `resultSelected`, `closeDialog`) against
-  the handler by reflection and throws when absent. With a bare `Thinlet` handler
-  only **2 of 42** files parse and render (`drafts/i18npanel.xml`,
-  `drafts/looks.xml`); the other 40 reference demo handler methods that live in
-  `thinlet-demos`. Slice 1 records goldens for the renderable subset and skips the
-  rest (reported by the record run). Expanding coverage — a no-op stub handler
-  exposing the referenced method signatures, or rendering with the demo handler
-  classes — is the next slice.
+- **Corpus coupling and coverage.** The vendored corpus XML is handler-coupled:
+  `finishParse` resolves event-handler/`init` method references (e.g.
+  `showDialog`, `resultSelected`, `closeDialog`) against the handler by reflection
+  and throws when absent; those methods live in `thinlet-demos`, not core. The
+  harness parses with `CorpusHandler`, a **no-op stub** exposing every method
+  signature the corpus binds (init hooks therefore run as no-ops — the trace is a
+  deterministic *static* render, not the demo's live data). This brings coverage
+  to **41 of 42** files. The one exclusion is `drafts/chart.xml`, which embeds a
+  `thinlet.drafts.ChartBean` *class* (not a handler method) and so can't be
+  stubbed; it is skipped and reported.
+- **Determinism fix.** `setSize` posts an async `COMPONENT_RESIZED` event whose
+  handler computes the content bounds; a direct `paint()` raced the EDT and
+  intermittently produced an empty render. The driver flushes the AWT event queue
+  (`EventQueue.invokeAndWait`) after `setSize`, so layout is always applied before
+  painting. `setColor(null)` is recorded as the categorical `"null"` (Thinlet
+  resets the color this way; a fresh `Color` would NPE).
 - **Tests** (both `@ExtendWith(XvfbDisplayExtension.class)`): a self-consistency
   test (render twice → tolerant diff empty, through a JSON round trip) and a
   golden regression test (each committed golden re-rendered, matched within
