@@ -515,3 +515,33 @@ the golden traces — on **JDK 8**.
   tests pass on JDK 8, validating the D7 cross-JDK tolerance guarantee for the
   first time. Exact JDK-8 version pinning (vs the floating Adoptium "latest 8 GA"
   download) stays the open item from D16.
+
+## D26 — Text-encoding inventory + policy (UTF-8 authored; legacy artifacts annotated)
+**Date:** 2026-06-15
+
+Two charset hiccups (Spotless on a non-UTF-8 file, D12; the JDK-8 default-charset
+trace divergence, D25) shared a root cause: no declared, discoverable record of
+which file uses which encoding. A one-time audit (`file --mime-encoding` over all
+tracked files) found every file is US-ASCII or valid UTF-8 **except the two
+byte-identical copies of the i18n demo**, which are **ISO-8859-2** (declared in
+their XML prolog):
+`thinlet-core/src/test/resources/corpus/drafts/internationalization.xml` and
+`thinlet-drafts/src/main/resources/thinlet/drafts/internationalization.xml`.
+
+Policy:
+
+- **Authored files are UTF-8** (Spotless already enforces this for Java, project
+  XML, and `docs/**` + `**/*.md`; `.gitattributes` normalizes EOL).
+- **Vendored 2005 artifacts stay byte-verbatim** (D8/D9). The non-UTF-8 ones are
+  behavior-relevant — Thinlet's parser reads XML with the platform-default
+  charset, so the raw bytes drive rendering and the goldens — and are **not**
+  transcoded. They are now annotated `-text` in `.gitattributes` (no EOL/encoding
+  normalization) and catalogued in `docs/encoding-inventory.md`, which also
+  documents how to re-run the scan and how to determine any file's codeset.
+
+Deliberately *not* doing a bulk UTF-8 conversion: transcoding the ISO-8859-2 i18n
+files would make the parser render them "correctly" and silently change the
+locked 2005 behavior (the `-Dfile.encoding=UTF-8` pin from D25 makes the
+legacy-bytes-as-UTF-8 reading deterministic across JDKs — that *is* the behavior
+under test). A standing CI guard (fail on a new non-UTF-8, non-allowlisted file)
+is noted as a possible follow-up in the inventory doc.
