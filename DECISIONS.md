@@ -567,3 +567,34 @@ This supersedes the earlier placement of `backend-portability/` and
 `encoding-inventory.md` under `docs/`. References updated (`.gitattributes`,
 `.claude/paint-pipeline-map.md`, D26). The rule is also recorded in `CLAUDE.md`
 so future sessions keep `docs/` for Thinlet's own documentation.
+
+## D28 — Release/publish mechanism: tag-driven deploy to GitHub Packages
+**Date:** 2026-06-16
+
+How `v0.1.0` (the first published artifact, D4/D10) and later releases publish:
+
+- **Tag-driven.** A `Release` workflow (`.github/workflows/release.yml`) triggers
+  on a `v*` tag, derives the release version from the tag (`vX.Y.Z` → `X.Y.Z` via
+  `versions:set`), and runs `mvn deploy`. `main` stays on `-SNAPSHOT`; the release
+  version exists only in the tagged build — no release-commit churn on `main`.
+- **Auth.** `actions/setup-java` writes the `settings.xml` for server id
+  `github-nomixer` (matching `distributionManagement`) from the workflow's
+  `GITHUB_TOKEN` (`permissions: packages: write`). The Maven wrapper reads that
+  `settings.xml` by default.
+- **Scope.** The deploy publishes **`thinlet-core` and the parent POM**
+  (`thinlet-parent`) — the parent must be published for consumers to resolve
+  core. `thinlet-demos`/`thinlet-drafts` keep `maven.deploy.skip=true` (D4). A
+  future refinement could use `flatten-maven-plugin` to inline the parent and
+  publish core alone.
+- **Tests skipped, gates kept.** The tagged commit was already verified green on
+  `main`, so the release job runs `-DskipTests` (also avoids needing the JDK-8
+  toolchain / Xvfb on a plain runner); Spotless/Checkstyle/SpotBugs still run on
+  JDK 21.
+- **The tag is a maintainer action.** This session's git proxy cannot push tags
+  (D15), so a maintainer pushes `v0.1.0`.
+- **japicmp timing.** Stays skipped through `v0.1.0` (no prior baseline); it is
+  activated afterwards so `v0.1.1+` compare against the published `v0.1.0` (D10).
+
+Validated locally with a dry-run `deploy` to a `file://` staging repo: only
+`thinlet-parent` + `thinlet-core` artifacts are produced; demos/drafts skip
+deployment.
