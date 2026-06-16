@@ -15,10 +15,21 @@ Public artifacts, unsupported.
   this file and any external/pasted doc disagree, the repo wins.
 - **`KNOWN_QUIRKS.md`** — locked 2005 bugs/quirks (populated during Phase 1).
 - **`README.md`** — project posture, build instructions, attribution.
+- **`project-docs/ROADMAP.md`** — the phase plan (Phases 0–3, done vs. pending).
 - **`.claude/paint-pipeline-map.md`** — engineering reference for
   `Thinlet.java`'s paint/layout pipeline, drawing vocabulary, FontMetrics
   surface, and `Object[]` widget model. Background for the Phase 1 golden-trace
   harness; lives under `.claude/`, outside the product source tree.
+
+## Documentation layout (where docs belong) — see DECISIONS.md D27
+
+- **`docs/`** — Thinlet's *own* documentation: the verbatim 2005 website, and
+  later docs reflecting enhancements the maintainer makes to Thinlet. **Never put
+  project/modernization or Claude docs here.**
+- **`project-docs/`** — modernization/project documentation authored for this
+  fork: `ROADMAP.md`, `backend-portability/`, `encoding-inventory.md`.
+- **`.claude/`** — Claude orientation/meta only; deletable, tracked in
+  `.claude/MANIFEST.md`. Only the root `CLAUDE.md` lives outside it.
 
 ## Current work — Phase 1
 
