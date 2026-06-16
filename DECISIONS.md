@@ -536,7 +536,7 @@ Policy:
   behavior-relevant — Thinlet's parser reads XML with the platform-default
   charset, so the raw bytes drive rendering and the goldens — and are **not**
   transcoded. They are now annotated `-text` in `.gitattributes` (no EOL/encoding
-  normalization) and catalogued in `docs/encoding-inventory.md`, which also
+  normalization) and catalogued in `project-docs/encoding-inventory.md`, which also
   documents how to re-run the scan and how to determine any file's codeset.
 
 Deliberately *not* doing a bulk UTF-8 conversion: transcoding the ISO-8859-2 i18n
@@ -545,3 +545,25 @@ locked 2005 behavior (the `-Dfile.encoding=UTF-8` pin from D25 makes the
 legacy-bytes-as-UTF-8 reading deterministic across JDKs — that *is* the behavior
 under test). A standing CI guard (fail on a new non-UTF-8, non-allowlisted file)
 is noted as a possible follow-up in the inventory doc.
+
+## D27 — Documentation directory layout (`docs/` vs `project-docs/` vs `.claude/`)
+**Date:** 2026-06-16
+
+Three documentation homes, kept strictly separate so each has one clear purpose:
+
+- **`docs/` — Thinlet's *own* documentation.** The verbatim 2005 website
+  (preserved) and, later, docs reflecting enhancements the maintainer makes to
+  Thinlet itself. **No project/modernization or Claude docs go here** — this
+  directory is the toolkit's documentation, period.
+- **`project-docs/` — modernization/project documentation** authored for this
+  fork: `ROADMAP.md` (the phase plan, previously only an external/uncommitted
+  doc), `backend-portability/` (porting reference, populated by the trace-curator
+  agent — moved here from `docs/`), and `encoding-inventory.md` (D26, moved here
+  from `docs/`). Durable; not Claude-meta.
+- **`.claude/` — Claude orientation/meta only.** Deletable, tracked in
+  `.claude/MANIFEST.md`; only the root `CLAUDE.md` lives outside it.
+
+This supersedes the earlier placement of `backend-portability/` and
+`encoding-inventory.md` under `docs/`. References updated (`.gitattributes`,
+`.claude/paint-pipeline-map.md`, D26). The rule is also recorded in `CLAUDE.md`
+so future sessions keep `docs/` for Thinlet's own documentation.

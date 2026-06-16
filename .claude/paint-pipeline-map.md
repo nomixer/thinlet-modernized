@@ -7,7 +7,7 @@
 >
 > Purpose: orient work on the Phase 1 golden-trace harness. This is a hand-built
 > dev reference and is intentionally **separate** from
-> `docs/backend-portability/`, whose stubs are reserved for the trace-curator
+> `project-docs/backend-portability/`, whose stubs are reserved for the trace-curator
 > agent to populate from actual trace JSON. Line numbers are accurate as of the
 > verbatim import; re-verify if `Thinlet.java` is ever reformatted.
 
