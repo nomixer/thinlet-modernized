@@ -118,6 +118,25 @@ authentication even for public reads**. Consumers need a GitHub token with
 
 (`0.1.0` is the first published release; the current `main` may be pre-release.)
 
+## Releasing (maintainers)
+
+Releases are tag-driven and publish `thinlet-core` (plus the parent POM it
+depends on) to GitHub Packages. `main` stays on `-SNAPSHOT` — the release version
+comes from the tag, so there is no release commit to manage.
+
+1. Make sure `main` is green and points at the commit you want to release.
+2. Push a version tag, e.g.:
+   ```sh
+   git tag -a v0.1.0 -m "thinlet-core 0.1.0" <main-sha>
+   git push origin v0.1.0
+   ```
+3. The **Release** workflow (`.github/workflows/release.yml`) derives the version
+   from the tag (`vX.Y.Z` → `X.Y.Z`) and runs `mvn deploy`, publishing to GitHub
+   Packages.
+
+API-compatibility checking (japicmp) activates after `v0.1.0` exists, comparing
+later releases against the published baseline (see `DECISIONS.md` D10/D28).
+
 ## License
 
 LGPL 2.1 — see [`LICENSE`](LICENSE). The original LGPL header notices in the

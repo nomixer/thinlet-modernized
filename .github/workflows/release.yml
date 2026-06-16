@@ -1,0 +1,47 @@
+name: Release
+
+# Publishes thinlet-core (and the parent POM it needs) to GitHub Packages when a
+# version tag is pushed. The release version is taken from the tag (vX.Y.Z ->
+# X.Y.Z); main itself stays on -SNAPSHOT, so there is no release-commit churn.
+# Tests are skipped here — the tagged commit was already verified green on main
+# (CI runs on every PR/push); this job builds and publishes the artifacts. The
+# Spotless/Checkstyle/SpotBugs gates still run. See DECISIONS.md D28.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  packages: write # publish to GitHub Packages
+
+jobs:
+  publish:
+    name: publish thinlet-core to GitHub Packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # setup-java writes ~/.m2/settings.xml with a server whose id matches
+      # distributionManagement (github-nomixer), reading the credentials from the
+      # named env vars below. The Maven wrapper reads that settings.xml by default.
+      - name: Set up JDK 21 + GitHub Packages auth
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          server-id: github-nomixer
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+
+      - name: Set release version from tag and deploy
+        env:
+          MAVEN_USERNAME: ${{ github.actor }}
+          MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Releasing version: $VERSION"
+          ./mvnw -B -ntp versions:set -DnewVersion="$VERSION" -DgenerateBackupPoms=false
+          ./mvnw -B -ntp -DskipTests deploy
