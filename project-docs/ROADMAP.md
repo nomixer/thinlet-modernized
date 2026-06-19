@@ -20,7 +20,7 @@ Status: ✅ done · ⏳ in progress · ⬜ not started
   (D21/D22); Microsoft base image for now (D16); GHCR layer cache (D23).
 - CI skeleton; `v0.0.1-bootstrap` tag (D10/D15).
 
-## Phase 1 — Test harness + golden traces ✅ (released; one follow-up)
+## Phase 1 — Test harness + golden traces ✅ (released)
 
 - ✅ Golden-trace harness: `TracingGraphics2D` recorder, deterministic JSON
   serializer (D7 tolerance), `LayoutTrace`, Xvfb `:99` ownership; goldens for
@@ -32,11 +32,11 @@ Status: ✅ done · ⏳ in progress · ⬜ not started
 - ✅ Encoding audit + inventory (D26, PR #13); `project-docs/` established (D27).
 - ✅ Release machinery (D28, PR #15) and **`v0.1.0` published** to GitHub Packages
   (2026-06-19) — `thinlet-core` + the `thinlet-parent` POM.
-- ⬜ **Follow-up: activate japicmp** against the published `v0.1.0` baseline (D10),
-  so `v0.1.1+` are checked for accidental API breaks. Deferred because it needs
-  CI-only GitHub Packages **read** auth (D4) and should be profile-gated so the
-  default `./mvnw verify` doesn't start requiring a token — best done where the
-  CI auth path can be validated, not pushed blind.
+- ✅ japicmp activated against the published `v0.1.0` baseline (D10/D29): the
+  `apicheck` profile wires the binary-compatibility gate into `thinlet-core`, and
+  a dedicated `api-compat` CI job runs it with GitHub Packages **read** auth (D4).
+  It is profile-gated and off by default, so the default `./mvnw verify` stays
+  token-free; `v0.1.1+` are now checked for accidental API breaks (PR #17).
 
 ## Phase 2 — Cross-JDK matrix + backend-portability docs ⬜
 
