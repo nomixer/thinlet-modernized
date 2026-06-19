@@ -598,3 +598,9 @@ How `v0.1.0` (the first published artifact, D4/D10) and later releases publish:
 Validated locally with a dry-run `deploy` to a `file://` staging repo: only
 `thinlet-parent` + `thinlet-core` artifacts are produced; demos/drafts skip
 deployment.
+
+Status (2026-06-19): `v0.1.0` published — a maintainer pushed the `v0.1.0` tag,
+the Release workflow ran, and `com.nomixer.thinlet:thinlet-core:0.1.0` (with the
+`thinlet-parent` POM) is live on GitHub Packages. japicmp activation against this
+baseline (D10) is the remaining follow-up; it needs CI-only GitHub Packages read
+auth (D4) and should be profile-gated so default `verify` stays token-free.

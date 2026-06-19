@@ -20,7 +20,7 @@ Status: ✅ done · ⏳ in progress · ⬜ not started
   (D21/D22); Microsoft base image for now (D16); GHCR layer cache (D23).
 - CI skeleton; `v0.0.1-bootstrap` tag (D10/D15).
 
-## Phase 1 — Test harness + golden traces ⏳ (release pending)
+## Phase 1 — Test harness + golden traces ✅ (released; one follow-up)
 
 - ✅ Golden-trace harness: `TracingGraphics2D` recorder, deterministic JSON
   serializer (D7 tolerance), `LayoutTrace`, Xvfb `:99` ownership; goldens for
@@ -30,9 +30,13 @@ Status: ✅ done · ⏳ in progress · ⬜ not started
 - ✅ JDK-8 cross-JDK execution row via `maven-toolchains-plugin`; `file.encoding`
   pinned to UTF-8 for cross-JDK determinism (D14/D25, PR #11).
 - ✅ Encoding audit + inventory (D26, PR #13); `project-docs/` established (D27).
-- ⬜ **Cut `v0.1.0`** — publish `thinlet-core` to GitHub Packages and activate the
-  japicmp API baseline (D4/D10). The `v0.1.0` tag must be pushed by a maintainer;
-  this session's git proxy cannot push tags (D15).
+- ✅ Release machinery (D28, PR #15) and **`v0.1.0` published** to GitHub Packages
+  (2026-06-19) — `thinlet-core` + the `thinlet-parent` POM.
+- ⬜ **Follow-up: activate japicmp** against the published `v0.1.0` baseline (D10),
+  so `v0.1.1+` are checked for accidental API breaks. Deferred because it needs
+  CI-only GitHub Packages **read** auth (D4) and should be profile-gated so the
+  default `./mvnw verify` doesn't start requiring a token — best done where the
+  CI auth path can be validated, not pushed blind.
 
 ## Phase 2 — Cross-JDK matrix + backend-portability docs ⬜
 
