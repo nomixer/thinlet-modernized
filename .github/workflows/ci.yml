@@ -117,3 +117,39 @@ jobs:
           cacheFrom: ghcr.io/nomixer/thinlet-modernized/devcontainer-ci
           push: never
           runCmd: MAVEN_USER_HOME="$PWD/.m2" ./mvnw -B -Dmaven.repo.local=.m2/repository -Pjdk8-tests -t .mvn/jdk8-toolchains.xml test
+
+  api-compat:
+    name: API compatibility (japicmp vs v0.1.0)
+    runs-on: ubuntu-latest
+    # japicmp is a pure JDK-21 bytecode comparison: no Xvfb / fonts / JDK-8, so
+    # it runs on a plain runner (not the dev container). It resolves the v0.1.0
+    # baseline from GitHub Packages, which needs read auth even for public reads
+    # (D4); the default `verify` stays token-free because the plugin and that
+    # repository are gated behind -Papicheck (see thinlet-core/pom.xml). D29.
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # setup-java writes ~/.m2/settings.xml with a server whose id matches the
+      # apicheck profile's repository (github-nomixer), reading credentials from
+      # the env vars below; the Maven wrapper reads that settings.xml by default.
+      - name: Set up JDK 21 + GitHub Packages read auth
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          server-id: github-nomixer
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+
+      # -DskipTests skips the Xvfb-dependent surefire suite (already covered by
+      # the build/test-jdk8 jobs); `package` (implied by verify) still builds the
+      # jar japicmp diffs, and -pl thinlet-core -am avoids demos/drafts.
+      - name: Check public API against published v0.1.0 (japicmp)
+        env:
+          MAVEN_USERNAME: ${{ github.actor }}
+          MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: ./mvnw -B -ntp -Papicheck -DskipTests -pl thinlet-core -am verify

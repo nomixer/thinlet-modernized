@@ -59,6 +59,72 @@
     </plugins>
   </build>
 
-  <!-- japicmp activates here from v0.1.0 onward (japicmp.skip flipped to false
-       in Phase 1); the parent leaves it configured-but-inactive for Phase 0. -->
+  <!-- japicmp is activated by the apicheck profile below (parent leaves it
+       configured-but-inactive). The default build never resolves GitHub Packages
+       and needs no token; CI's api-compat job runs -Papicheck with read auth. -->
+  <profiles>
+    <!-- Binary-compatibility gate: compare this build's public API against the
+         published v0.1.0 baseline (D4/D10/D28/D29). Profile-gated and OFF by
+         default so `./mvnw verify` stays token-free for local developers — the
+         GitHub Packages repository and the japicmp execution live only here.
+         CI runs it on a plain runner with packages:read (see ci.yml).
+         NOTE: never run -Papicheck on a build whose version equals the baseline
+         (0.1.0) — Maven would resolve oldVersion to the reactor jar and the gate
+         becomes a silent no-op. Safe because main stays -SNAPSHOT (D28/D29). -->
+    <profile>
+      <id>apicheck</id>
+      <properties>
+        <!-- Flip the parent's default (true) so the pluginManagement-configured
+             japicmp plugin actually runs under this profile. -->
+        <japicmp.skip>false</japicmp.skip>
+      </properties>
+      <repositories>
+        <!-- Resolve the v0.1.0 baseline jar. GitHub Packages needs auth even for
+             reads (D4); CI provides it via settings.xml (server id github-nomixer).
+             Scoped to this profile so default builds never reach out here. -->
+        <repository>
+          <id>github-nomixer</id>
+          <name>GitHub Packages — nomixer/thinlet-modernized</name>
+          <url>https://maven.pkg.github.com/nomixer/thinlet-modernized</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+      <build>
+        <plugins>
+          <!-- Version + break-on-binary-incompatible config are inherited from
+               the parent pluginManagement; this only adds the execution and the
+               baseline to compare against. -->
+          <plugin>
+            <groupId>com.github.siom79.japicmp</groupId>
+            <artifactId>japicmp-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>api-compat</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>cmp</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <oldVersion>
+                <dependency>
+                  <groupId>com.nomixer.thinlet</groupId>
+                  <artifactId>thinlet-core</artifactId>
+                  <version>0.1.0</version>
+                  <type>jar</type>
+                </dependency>
+              </oldVersion>
+              <!-- newVersion defaults to this module's freshly built artifact. -->
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

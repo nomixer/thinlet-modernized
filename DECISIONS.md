@@ -604,3 +604,54 @@ the Release workflow ran, and `com.nomixer.thinlet:thinlet-core:0.1.0` (with the
 `thinlet-parent` POM) is live on GitHub Packages. japicmp activation against this
 baseline (D10) is the remaining follow-up; it needs CI-only GitHub Packages read
 auth (D4) and should be profile-gated so default `verify` stays token-free.
+Done in D29.
+
+## D29 — japicmp activation: profile-gated, CI-only read auth, baseline `v0.1.0`
+**Date:** 2026-06-19
+
+Closes the D28 follow-up: the binary-compatibility gate (D10) is now live against
+the published `v0.1.0` baseline, so `v0.1.1+` builds fail on accidental public-API
+breaks in `thinlet-core`.
+
+- **Profile-gated (`apicheck`), off by default.** The japicmp execution and the
+  GitHub Packages `<repository>` that resolves the baseline live only in the
+  `apicheck` profile in `thinlet-core/pom.xml`; the profile flips the parent's
+  `japicmp.skip` (default `true`) to `false`. The plain `./mvnw verify` therefore
+  never reaches GitHub Packages and **needs no token** — the load-bearing
+  constraint from D4 (reads require auth) and D28 (keep default builds token-free).
+- **Baseline.** `oldVersion` is pinned to `com.nomixer.thinlet:thinlet-core:0.1.0`
+  (jar); `newVersion` is the freshly built artifact. The
+  `breakBuildOnBinaryIncompatibleModifications` / `onlyModified` gate is inherited
+  from the parent `pluginManagement` config — the profile adds only the execution,
+  the baseline, and the repository.
+- **CI auth path.** A dedicated `api-compat` job (`.github/workflows/ci.yml`) runs
+  on a plain runner (japicmp is a pure JDK-21 bytecode diff — no Xvfb/fonts/JDK-8)
+  with `permissions: packages: read`. `actions/setup-java` writes the
+  `settings.xml` for server id `github-nomixer` (matching the profile's
+  repository) from `GITHUB_TOKEN`, mirroring the Release workflow (D28). It runs
+  `-Papicheck -DskipTests -pl thinlet-core -am verify`: `-DskipTests` skips the
+  Xvfb-dependent surefire suite (covered by the `build`/`test-jdk8` jobs), while
+  `package` (via `verify`) still builds the jar japicmp diffs.
+- **Reactor version-collision trap (load-bearing).** japicmp's `oldVersion` is a
+  normal Maven dependency: if the project's own version ever *equals* the baseline
+  coordinate (`0.1.0`), Maven resolves `oldVersion` to the **reactor artifact**
+  (the jar just built) instead of the published baseline, so the gate silently
+  compares the build against itself, reports "No changes", and **passes no matter
+  what** — a false green. The gate is meaningful only because `main` always
+  carries a `-SNAPSHOT` version (D28), which never equals the `0.1.0` release
+  coordinate, so the CI `api-compat` job (building `0.1.0-SNAPSHOT`) gets a real
+  comparison. Implication: do **not** run `-Papicheck` against a build whose
+  version has been `versions:set` to the baseline release; and when the baseline
+  is later advanced (e.g. to `0.1.1`), keep it strictly below the current
+  `-SNAPSHOT` line.
+- **Validation.** Verified locally (JDK 21) that the gate actually *breaks* the
+  build: installed the current build as the `0.1.0` baseline, reduced
+  `Thinlet.find(String)` to `protected` on a throwaway `0.1.0-SNAPSHOT` build, and
+  the `api-compat` execution failed with
+  `thinlet.Thinlet.find(java.lang.String):METHOD_LESS_ACCESSIBLE` (source then
+  restored byte-identical). A first attempt that set the project to `0.1.0`
+  produced a false green — that is how the collision trap above was found. Also
+  confirmed japicmp resolves and analyzes the AWT-heavy `thinlet-core` jar with no
+  missing-class errors, and that the default `verify` still passes and makes no
+  GitHub Packages request. The GitHub Packages **read** auth itself is exercised
+  only in CI (no token locally, by design).
