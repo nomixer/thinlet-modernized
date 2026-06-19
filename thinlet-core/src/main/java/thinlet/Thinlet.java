@@ -6221,7 +6221,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @param name parameter value identifies the widget
      * @return the first suitable component, or null
      */
-    public Object find(String name) {
+    protected Object find(String name) {
         return find(content, name);
     }
 
