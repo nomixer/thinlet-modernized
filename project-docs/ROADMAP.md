@@ -38,11 +38,21 @@ Status: ✅ done · ⏳ in progress · ⬜ not started
   It is profile-gated and off by default, so the default `./mvnw verify` stays
   token-free; `v0.1.1+` are now checked for accidental API breaks (PR #17).
 
-## Phase 2 — Cross-JDK matrix + backend-portability docs ⬜
+## Phase 2 — Per-version build+test matrix + backend-portability docs ⏳
 
-- Expand the execution matrix to JDK 11 / 17 / 21 / 25 rows (after the JDK-8 row,
-  D14), with per-signature `trace-tolerance.json` tuning where cross-JDK metrics
-  require it (D7).
+The release axis pivoted from D1's single portable Java-8 jar to **one jar per
+Java version** (8 / 11 / 17 / 21 / 25): build+test the matrix now, publish only
+the Java 8 jar until Phase 3 differentiates them (**D30**, supersedes D1).
+
+- ⏳ Per-version build+test matrix (JDK 8/11/17/21/25): the `crossjdk` profile +
+  consolidated `.mvn/toolchains.xml` compile `--release N` on the JVM-21 javac
+  (Model A) and fork the golden traces onto each JDK; CI's single `test-jdk8` job
+  becomes a `fail-fast: false` matrix `test` job (D30). The JDK-25 row compiles
+  release 21 (the build JVM's max) and exercises the JDK-25 runtime; genuine
+  release-25 bytecode is a follow-up (D30).
+- Per-signature `trace-tolerance.json` tuning where cross-JDK metrics require it
+  (implement the reserved `perOp` hook rather than widen `defaultPx` or
+  re-record; D7).
 - Cross-JDK trace diff.
 - A `trace-curator` agent populates `project-docs/backend-portability/`
   (rendering primitives, layout algorithms, input surface) from the trace JSON.

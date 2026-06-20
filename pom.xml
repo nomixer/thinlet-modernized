@@ -113,9 +113,10 @@
           <version>${version.surefire.plugin}</version>
         </plugin>
 
-        <!-- Toolchains: surefire runs tests on a real JDK 8 when the jdk8-tests
-             profile is active and a JDK-8 toolchain is configured. Default build
-             (this Phase-0 container has only JDK 21) does not require it. -->
+        <!-- Toolchains: surefire forks the tests on a real target JDK when the
+             crossjdk profile is active (-Djdk.target=N) and a matching toolchain
+             is configured (.mvn/toolchains.xml). The default build (Maven on JDK
+             21) does not require it. See DECISIONS.md D30. -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-toolchains-plugin</artifactId>
@@ -267,10 +268,15 @@
   </build>
 
   <profiles>
-    <!-- Run the test suite on a real JDK 8 via toolchains. Activate in CI / where
-         a JDK-8 toolchain is configured in ~/.m2/toolchains.xml. -->
+    <!-- Per-version build+test matrix (DECISIONS.md D30, generalizes D14/D25).
+         maven-toolchains-plugin selects the target JDK (-Djdk.target=N) so surefire
+         forks the golden-trace tests on it; Maven itself stays on the base JDK (21).
+         Compilation stays on the JVM-21 javac via -Dmaven.compiler.release=N
+         (Model A): the build never invokes the target JDK's javac, so there is no
+         JDK-8 "release" flag caveat. Pass the toolchains with `-t .mvn/toolchains.xml`.
+         Used by CI's matrix `test` job for rows 8/11/17/21/25. -->
     <profile>
-      <id>jdk8-tests</id>
+      <id>crossjdk</id>
       <build>
         <plugins>
           <plugin>
@@ -278,7 +284,7 @@
             <artifactId>maven-toolchains-plugin</artifactId>
             <executions>
               <execution>
-                <id>require-jdk8</id>
+                <id>select-target-jdk</id>
                 <goals>
                   <goal>toolchain</goal>
                 </goals>
@@ -287,7 +293,7 @@
             <configuration>
               <toolchains>
                 <jdk>
-                  <version>8</version>
+                  <version>${jdk.target}</version>
                 </jdk>
               </toolchains>
             </configuration>
