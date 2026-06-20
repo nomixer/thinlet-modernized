@@ -800,3 +800,46 @@ than one of five behavior-identical jars. Per-version *artifacts* return in Phas
 3 when the source actually differentiates — at which point D30's Model-A/Model-B
 and `--release 25` analysis is the right starting point. (Cross-ref
 D1/D2/D5/D7/D14/D25/D28/D29/D30.)
+
+## D32 — Build-plugin bumps (deferred safe set from #20); SpotBugs 4.10 AT_ baseline
+**Date:** 2026-06-20
+
+Applies the safe plugin bumps that were carved out of the closed Dependabot
+group PR #20. Bumped, all via `pom.xml` `<properties>`: Checkstyle tool
+10.21.0→**13.6.0**, Spotless plugin 2.43.0→**3.7.0**, SpotBugs plugin
+4.8.6.6→**4.10.2.0**, japicmp 0.23.1→**0.26.1**, maven-compiler 3.13.0→**3.15.0**,
+maven-jar 3.4.1→**3.5.0**, maven-deploy 3.1.3→**3.1.4**, maven-surefire
+3.5.2→**3.5.6**, AssertJ 3.27.3→**3.27.7** and JUnit 5.11.4→**5.14.4** — both
+in-major minors that stay within the D31 pin (JUnit on 5.x, which still runs on
+the JDK-8/11 test floor; the pin only blocks the 6.x major). This PR folds in and
+**supersedes Dependabot's regenerated PR #23**: #23 proposed the same versions
+(incl. the JUnit 5.14.4 minor) but, being version-only, lacked the SpotBugs
+baseline edit below and so went red on `build` + `api-compat`. **Held:**
+`version.palantir.format`
+2.50.0 (kept fixed so the Java formatting output — and thus the 2005 source's
+on-disk form — does not move), `maven-checkstyle-plugin` 3.6.0, and
+`maven-toolchains-plugin` 3.2.0 (not in #20, and 3.6.0 drives the 13.6.0 tool
+fine).
+
+**The two majors land clean; only SpotBugs needed a baseline edit.** Verified on
+the JDK-21 build JVM (`./mvnw -B -DskipTests verify`): Checkstyle **13.6.0** runs
+the existing `config/checkstyle/checkstyle.xml` ruleset with 0 violations (no
+module renames bit us), and Spotless **3.7.0** with palantir 2.50.0 passes
+`spotless:check` unchanged — so neither major touched the source. SpotBugs
+**4.10.2.0** ships a new "Atomicity" (`AT_`) detector family absent from 4.8,
+which flagged 12 findings in `Thinlet.java` — all unsynchronized access to shared
+primitive fields (`mousex`/`mousey`, `referencex`/`referencey`, `focusinside`,
+`block`) shared between the EDT and the blink/scroll timer thread.
+
+**Disposition: accept in the legacy baseline, do not fix (D13).** These are the
+same 2005 single-threaded-by-convention threading idiom already accepted via
+`IS2_INCONSISTENT_SYNC` / `NN_NAKED_NOTIFY` / `LI_LAZY_INIT_STATIC`; the
+modernization rule is config/suppression changes only, zero production-code edits
+(D13). So `config/spotbugs/exclude.xml` gains `AT_STALE_THREAD_WRITE_OF_PRIMITIVE`
+and `AT_NONATOMIC_OPERATIONS_ON_SHARED_VARIABLE` under the existing `thinlet.*`
+`<Match>`. Like the rest of that baseline, these exclusions are removed (and the
+underlying concurrency reviewed for real) when Enhanced Thinlet revisits the
+threading model in Phase 3. **Net source-diff: none** — only `pom.xml` and the
+SpotBugs filter changed. japicmp 0.26.1 is profile-gated (`-Papicheck`), so its
+behavior is validated by CI's `api-compat` job, not the local build. (Cross-ref
+D13/D29/D31.)

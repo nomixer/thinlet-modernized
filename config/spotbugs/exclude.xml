@@ -45,6 +45,15 @@
       <Bug pattern="LI_LAZY_INIT_STATIC"/>
       <Bug pattern="IS2_INCONSISTENT_SYNC"/>
       <Bug pattern="NN_NAKED_NOTIFY"/>
+      <!-- Non-atomic / unsynchronized access to shared primitive fields
+           (mousex/mousey, referencex/referencey, focusinside, block) shared
+           between the EDT and the blink/scroll timer thread. Same 2005
+           single-threaded-by-convention idiom as IS2_INCONSISTENT_SYNC above;
+           surfaced by the SpotBugs 4.10 "Atomicity" (AT_) detector family that
+           did not exist in 4.8. Accepted for the legacy baseline (no source
+           edits, D13). See DECISIONS.md D32. -->
+      <Bug pattern="AT_STALE_THREAD_WRITE_OF_PRIMITIVE"/>
+      <Bug pattern="AT_NONATOMIC_OPERATIONS_ON_SHARED_VARIABLE"/>
       <!-- Mutable field exposure (AWT component wiring). -->
       <Bug pattern="EI_EXPOSE_REP2"/>
       <Bug pattern="EI_EXPOSE_REP"/>
