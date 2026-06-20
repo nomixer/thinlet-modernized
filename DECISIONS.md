@@ -875,19 +875,34 @@ position exceeding tolerance is a finding to triage into a `perOp`
 `trace-tolerance.json` entry (D7's reserved hook), not to silence.
 
 **Report is a regenerable artifact, not committed (chosen).** Consistent with
-D7's "side metadata is a sidecar CI artifact." `CrossJdkTraceDiff` writes
+D7's "side metadata is a sidecar CI artifact." `CrossJdkTraceDiffTest` writes
 `report.md` + `report.json` to `target/`; CI publishes them as the
 `trace-diff-report` artifact. Committed curation is deferred to the `trace-curator`
 slice, which will read `report.json`.
 
 **CI data flow.** The runtimes run as separate jobs with no shared filesystem, so
 traces move as artifacts. `build` (21) and `test` (8/11/17) add
-`-Dtrace.dump.dir=target/trace-dump/jdk-N` (gating the otherwise-inert
-`GoldenTraceDumpMode`) and upload `trace-dump-jdk-N`. A new `trace-diff` job
+`-DtraceDumpDir=target/trace-dump/jdk-N` (enabling the otherwise-inert
+`GoldenTraceDumpModeTest`) and upload `trace-dump-jdk-N`. A new `trace-diff` job
 (`needs: [build, test]`) downloads them and runs the aggregator on a **plain
 JDK-21 runner** — it renders nothing, so it needs no dev container / Xvfb /
-toolchain. The new test classes are system-property-gated (mirroring
-`GoldenTraceRecordMode`'s `-Dtrace.record`), so a normal `verify` never runs them.
+toolchain.
+
+**Two surefire gotchas the wiring has to respect (learned the hard way).** (1)
+**Discovery:** the gated modes only run if surefire *discovers* them, which means
+their class names must match the default include patterns (`*Test`), hence
+`GoldenTraceDumpModeTest` / `CrossJdkTraceDiffTest` — a `…Mode`/`…Diff` name is
+silently never run in the full-suite `test`/`verify` (the way the dump rows
+invoke it), only via an explicit `-Dtest=`. (2) **Fork delivery:** the gating
+value must reach surefire's *forked* JVM — especially the `crossjdk` toolchain
+fork. A bare CLI `-Dtrace.dump.dir` does not reliably cross that boundary, and
+`systemPropertyVariables` refuses to forward a name colliding with a CLI user
+property, so the toggles travel via surefire **`argLine`** (the same channel the
+D25 `file.encoding` pin already uses). To avoid a Maven-property-vs-system-
+property name clash, the Maven knobs are named distinctly (`traceDumpDir`,
+`traceDiffInputDir`, `traceDiffOut`, `traceRecord`) and argLine maps them to the
+`trace.*` system properties the tests read; empty defaults keep them inert in a
+normal build.
 
 **Validation.** End-to-end locally on JDK 21: the dump wrote 41 traces (the 1 skip
 is `chart.xml`, which has no golden), and the aggregator reported 0px spread vs the

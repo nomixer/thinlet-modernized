@@ -79,7 +79,7 @@ jobs:
           imageName: ghcr.io/nomixer/thinlet-modernized/devcontainer-ci
           cacheFrom: ghcr.io/nomixer/thinlet-modernized/devcontainer-ci
           push: filter
-          runCmd: MAVEN_USER_HOME="$PWD/.m2" ./mvnw -B -Dmaven.repo.local=.m2/repository -Dtrace.dump.dir=target/trace-dump/jdk-21 verify
+          runCmd: MAVEN_USER_HOME="$PWD/.m2" ./mvnw -B -Dmaven.repo.local=.m2/repository -DtraceDumpDir=target/trace-dump/jdk-21 verify
 
       # Publish the JDK 21 render trace for the cross-JDK diff (DECISIONS.md D33).
       # The dump is gated by -Dtrace.dump.dir above, so it only runs here.
@@ -141,7 +141,7 @@ jobs:
           runCmd: >-
             MAVEN_USER_HOME="$PWD/.m2" ./mvnw -B -Dmaven.repo.local=.m2/repository
             -Pcrossjdk -Djdk.target=${{ matrix.jdk }}
-            -Dtrace.dump.dir=target/trace-dump/jdk-${{ matrix.jdk }}
+            -DtraceDumpDir=target/trace-dump/jdk-${{ matrix.jdk }}
             -t .mvn/toolchains.xml test
 
       # Publish this runtime's render trace for the cross-JDK diff (DECISIONS.md D33).
@@ -213,13 +213,14 @@ jobs:
           pattern: trace-dump-jdk-*
           path: trace-dumps
 
-      # CrossJdkTraceDiff is gated by -Dtrace.diff.inputDir; absolute paths so it
-      # finds the dumps and writes the report regardless of surefire's module CWD.
+      # CrossJdkTraceDiffTest is gated by trace.diff.inputDir (mapped from the
+      # traceDiffInputDir knob via surefire argLine); absolute paths so it finds
+      # the dumps and writes the report regardless of surefire's module CWD.
       - name: Aggregate cross-JDK trace diff
         run: >-
-          ./mvnw -B -ntp -pl thinlet-core -Dtest=CrossJdkTraceDiff -DfailIfNoTests=false
-          -Dtrace.diff.inputDir="$PWD/trace-dumps"
-          -Dtrace.diff.out="$PWD/thinlet-core/target/trace-diff" test
+          ./mvnw -B -ntp -pl thinlet-core -Dtest=CrossJdkTraceDiffTest -DfailIfNoTests=false
+          -DtraceDiffInputDir="$PWD/trace-dumps"
+          -DtraceDiffOut="$PWD/thinlet-core/target/trace-diff" test
 
       - name: Upload cross-JDK trace diff report
         uses: actions/upload-artifact@v4

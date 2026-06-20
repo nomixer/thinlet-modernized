@@ -12,9 +12,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 /**
  * Dumps the full render trace of every corpus file to a directory, for the
  * cross-JDK trace diff. Disabled on a normal build; run on each JDK runtime with
- * {@code -Dtrace.dump.dir=<dir>} (CI passes a per-JDK dir like {@code
- * target/trace-dump/jdk-8}). The output mirrors the golden layout and format
- * exactly ({@link TraceJson#write}), so a dump and a golden are directly
+ * {@code -DtraceDumpDir=<dir>} (CI passes a per-JDK dir like {@code
+ * target/trace-dump/jdk-8}). The {@code traceDumpDir} Maven knob is mapped to the
+ * {@code trace.dump.dir} system property in the forked test JVM via surefire
+ * argLine (see thinlet-core/pom.xml). The output mirrors the golden layout and
+ * format exactly ({@link TraceJson#write}), so a dump and a golden are directly
  * comparable. Files that cannot parse/paint headless are skipped and reported
  * rather than failing the run, matching {@link GoldenTraceRecordMode}.
  *
@@ -23,7 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
  */
 @ExtendWith(XvfbDisplayExtension.class)
 @EnabledIfSystemProperty(named = "trace.dump.dir", matches = ".+")
-class GoldenTraceDumpMode {
+class GoldenTraceDumpModeTest {
 
     @Test
     void dumpAllTraces() throws IOException {

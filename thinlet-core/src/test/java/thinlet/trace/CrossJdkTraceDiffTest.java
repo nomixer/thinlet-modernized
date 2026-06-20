@@ -17,21 +17,24 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 /**
- * Aggregates the per-JDK trace dumps (see {@link GoldenTraceDumpMode}) into a
+ * Aggregates the per-JDK trace dumps (see {@link GoldenTraceDumpModeTest}) into a
  * cross-JDK divergence report. Disabled on a normal build; run with {@code
- * -Dtrace.diff.inputDir=<dir>} where {@code <dir>} holds one sub-directory per
+ * -DtraceDiffInputDir=<dir>} where {@code <dir>} holds one sub-directory per
  * runtime whose name contains {@code jdk-<N>} (CI downloads the {@code
- * trace-dump-jdk-N} artifacts into it). The committed goldens are the baseline
- * (reference) column and {@code trace-tolerance.json} supplies {@code defaultPx}.
+ * trace-dump-jdk-N} artifacts into it). The {@code traceDiffInputDir} /
+ * {@code traceDiffOut} Maven knobs are mapped to the {@code trace.diff.inputDir}
+ * / {@code trace.diff.out} system properties via surefire argLine (see
+ * thinlet-core/pom.xml). The committed goldens are the baseline (reference)
+ * column and {@code trace-tolerance.json} supplies {@code defaultPx}.
  *
  * <p>Pure JSON I/O — it renders nothing, so it needs no display or toolchain.
  * It is <strong>informational</strong> (DECISIONS.md D33): it never asserts on
  * divergence, only writes {@code report.json} + {@code report.md} to {@code
- * -Dtrace.diff.out} (default {@code target/trace-diff}). It fails only on a real
+ * traceDiffOut} (default {@code target/trace-diff}). It fails only on a real
  * tooling error (no dump dirs found).
  */
 @EnabledIfSystemProperty(named = "trace.diff.inputDir", matches = ".+")
-class CrossJdkTraceDiff {
+class CrossJdkTraceDiffTest {
 
     private static final Pattern JDK_DIR = Pattern.compile(".*jdk-(\\d+).*");
 

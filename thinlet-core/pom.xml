@@ -20,6 +20,21 @@
     only module published to GitHub Packages.
   </description>
 
+  <!-- Maven-facing knobs for the trace-harness toggles, mapped into the forked
+       test JVM's system properties via surefire argLine (below). Deliberately
+       named differently from the system properties the tests read
+       (trace.dump.dir etc.): a Maven property whose NAME equals a forked system
+       property gets shadowed/duplicated by surefire and lands empty in the fork.
+       Empty defaults ⇒ the argLine expands to -Dtrace.dump.dir= ⇒ "" ⇒ the
+       @EnabledIfSystemProperty(".+") dump/diff modes stay inert in a normal
+       build; CI passes -DtraceDumpDir=… etc. to enable them. -->
+  <properties>
+    <traceDumpDir></traceDumpDir>
+    <traceRecord></traceRecord>
+    <traceDiffInputDir></traceDiffInputDir>
+    <traceDiffOut>target/trace-diff</traceDiffOut>
+  </properties>
+
   <!-- Dependency-free at runtime, period. JUnit 5 + AssertJ are test scope only
        (Phase 1 trace harness) and never enter the published jar. -->
   <dependencies>
@@ -53,7 +68,14 @@
                default (e.g. US-ASCII when LANG is unset), which would otherwise
                make non-ASCII corpus text — and thus the goldens — diverge by
                JDK. See DECISIONS.md D25. -->
-          <argLine>-Dfile.encoding=UTF-8</argLine>
+          <!-- Pin the charset (D25) and forward the trace-harness toggles into
+               the forked test JVM via argLine — raw JVM args, the only reliable
+               channel: a command-line -D reaches the Maven JVM but not surefire's
+               fork (least of all the crossjdk toolchain fork), and
+               systemPropertyVariables refuses to forward a name that collides
+               with a CLI user property. The ${traceDumpDir} knobs default empty
+               (above) ⇒ -Dtrace.dump.dir= ⇒ inert; CI sets -DtraceDumpDir=… etc. -->
+          <argLine>-Dfile.encoding=UTF-8 -Dtrace.dump.dir=${traceDumpDir} -Dtrace.record=${traceRecord} -Dtrace.diff.inputDir=${traceDiffInputDir} -Dtrace.diff.out=${traceDiffOut}</argLine>
         </configuration>
       </plugin>
     </plugins>

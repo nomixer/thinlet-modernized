@@ -46,24 +46,24 @@ consequences shaped this tool:
 ```
  per runtime (CI job, on that JDK)          aggregator (plain JDK-21 job)
  ┌───────────────────────────┐              ┌──────────────────────────────┐
- │ GoldenTraceDumpMode         │  artifact   │ CrossJdkTraceDiff             │
- │  -Dtrace.dump.dir=…/jdk-N   │ ─────────▶  │  -Dtrace.diff.inputDir=…      │
+ │ GoldenTraceDumpModeTest         │  artifact   │ CrossJdkTraceDiffTest             │
+ │  -DtraceDumpDir=…/jdk-N   │ ─────────▶  │  -DtraceDiffInputDir=…      │
  │  renders corpus → TraceJson │ trace-dump- │  reads dumps + committed      │
  │  writes …/jdk-N/<path>.json │  jdk-N      │  goldens (baseline) + tol     │
  └───────────────────────────┘              │  → report.md / report.json    │
                                              └──────────────────────────────┘
 ```
 
-- **`GoldenTraceDumpMode`** (`thinlet-core/src/test`, gated by `-Dtrace.dump.dir`)
+- **`GoldenTraceDumpModeTest`** (`thinlet-core/src/test`, gated by `-DtraceDumpDir`)
   — renders every corpus file via the existing `GoldenTraceRecorder.render()` and
   writes one JSON per file, byte-identical in format to the goldens.
-- **`CrossJdkTraceDiff`** (gated by `-Dtrace.diff.inputDir`) — treats the
+- **`CrossJdkTraceDiffTest`** (gated by `-DtraceDiffInputDir`) — treats the
   committed goldens as the baseline column, reads each `…/jdk-N/` dump, computes
   `deltas()` per runtime, and writes the report. Discovers runtimes from any
   immediate sub-directory whose name contains `jdk-<N>` (so both the local
   `jdk-8` and CI's downloaded `trace-dump-jdk-8` work).
 - **CI** (`.github/workflows/ci.yml`): the `build` (21) and `test` (8/11/17) jobs
-  add `-Dtrace.dump.dir=target/trace-dump/jdk-N` and upload `trace-dump-jdk-N`;
+  add `-DtraceDumpDir=target/trace-dump/jdk-N` and upload `trace-dump-jdk-N`;
   the `trace-diff` job (`needs: [build, test]`) downloads them all and uploads
   `trace-diff-report`.
 
@@ -75,16 +75,16 @@ consequences shaped this tool:
 cd thinlet-core
 for N in 8 11 17; do
   ../mvnw -B -pl . -Pcrossjdk -Djdk.target=$N -t ../.mvn/toolchains.xml \
-      -Dtest=GoldenTraceDumpMode -Dtrace.dump.dir=target/trace-dump/jdk-$N \
+      -Dtest=GoldenTraceDumpModeTest -DtraceDumpDir=target/trace-dump/jdk-$N \
       -DfailIfNoTests=false test
 done
 # JDK 21 = the base JVM, no toolchain:
-../mvnw -B -pl . -Dtest=GoldenTraceDumpMode -Dtrace.dump.dir=target/trace-dump/jdk-21 \
+../mvnw -B -pl . -Dtest=GoldenTraceDumpModeTest -DtraceDumpDir=target/trace-dump/jdk-21 \
     -DfailIfNoTests=false test
 # aggregate:
-../mvnw -B -pl . -Dtest=CrossJdkTraceDiff -DfailIfNoTests=false \
-    -Dtrace.diff.inputDir="$PWD/target/trace-dump" \
-    -Dtrace.diff.out="$PWD/target/trace-diff" test
+../mvnw -B -pl . -Dtest=CrossJdkTraceDiffTest -DfailIfNoTests=false \
+    -DtraceDiffInputDir="$PWD/target/trace-dump" \
+    -DtraceDiffOut="$PWD/target/trace-diff" test
 # read target/trace-diff/report.md
 ```
 
