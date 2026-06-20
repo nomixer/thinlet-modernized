@@ -16,3 +16,7 @@ Purpose (documentation only — no behavior change in this project):
 | [`rendering-primitives.md`](rendering-primitives.md) | every `Graphics2D` call site in the trace |
 | [`layout-algorithms.md`](layout-algorithms.md) | `LayoutTrace` entry/exit over each layout pass |
 | [`input-surface.md`](input-surface.md) | AWT events Thinlet consumes |
+
+The [`cross-jdk-trace-diff.md`](cross-jdk-trace-diff.md) reference documents the
+tooling that captures and compares the per-runtime traces (JDK 8/11/17/21) into a
+divergence report — the quantified `FontMetrics` drift the curator will draw on.

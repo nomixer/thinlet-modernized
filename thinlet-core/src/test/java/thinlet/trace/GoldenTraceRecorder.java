@@ -120,6 +120,17 @@ final class GoldenTraceRecorder {
         return new File(TRACE_DIR, rel);
     }
 
+    /**
+     * Maps a corpus resource to its trace file under an arbitrary base directory,
+     * preserving the {@code demo/drafts/amazon} sub-path. Used by the cross-JDK
+     * dump mode to write a per-runtime trace tree that mirrors the golden layout.
+     */
+    static File dumpFileFor(File baseDir, String corpusResource) {
+        String rel = corpusResource.substring("/corpus/".length());
+        rel = rel.substring(0, rel.length() - ".xml".length()) + ".json";
+        return new File(baseDir, rel);
+    }
+
     static String corpusResourceFor(File goldenFile) {
         String rel =
                 TRACE_DIR.toPath().relativize(goldenFile.toPath()).toString().replace(File.separatorChar, '/');
