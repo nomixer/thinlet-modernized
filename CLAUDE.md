@@ -31,12 +31,15 @@ Public artifacts, unsupported.
 - **`.claude/`** — Claude orientation/meta only; deletable, tracked in
   `.claude/MANIFEST.md`. Only the root `CLAUDE.md` lives outside it.
 
-## Current work — Phase 1
+## Current work — Phase 2
 
-Golden-trace test harness in `thinlet-core`: a `TracingGraphics2D` recorder +
-deterministic serializer and a `LayoutTrace`, run headless, recording golden
-traces over the vendored corpus
-(`thinlet-core/src/test/resources/corpus/{demo,drafts,amazon}/`).
+Cross-JDK test matrix + backend-portability docs (ROADMAP Phase 2). The Phase 1
+golden-trace harness has landed: a `TracingGraphics2D` recorder + deterministic
+serializer and a `LayoutTrace`, run headless, recording golden traces over the
+vendored corpus (`thinlet-core/src/test/resources/corpus/{demo,drafts,amazon}/`).
+Phase 2 adds the cross-JDK trace diff (D33) and the `trace-curator` curation of
+`project-docs/backend-portability/` (D34, first cut: rendering + layout;
+input-surface deferred). The harness design below remains load-bearing.
 
 Load-bearing design = **D7 trace-tolerance model**: method-name + arg
 type/arity **structural-exact**; booleans/colors/strings/enums

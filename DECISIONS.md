@@ -913,3 +913,63 @@ sub-tolerance drift in the per-runtime column, and reports structural/categorica
 identical. `./mvnw -B -DskipTests verify` stays green (new test sources pass
 Spotless/Checkstyle 13/SpotBugs; goldens and the gate output unchanged). True
 multi-JDK data comes from CI. (Cross-ref D7/D24/D25/D31.)
+
+## D34 — trace-curator: first-cut backend-portability docs from the committed goldens
+
+**Date:** 2026-06-20. **Status:** accepted. **Phase:** 2.
+
+**Context.** Phase 2's last item after D33 (which produces the per-JDK trace
+dumps and the informational cross-JDK divergence report) is the `trace-curator`
+work the ROADMAP reserves: populate `project-docs/backend-portability/` from the
+trace data. The three docs there
+(`rendering-primitives.md`, `layout-algorithms.md`, `input-surface.md`) had been
+Phase-0 stubs awaiting this slice; `cross-jdk-trace-diff.md` (D33) was already
+complete. This decision records *how* the curation was started and its scope.
+
+**Decision.**
+
+1. **Realize the curator as a reusable agent + a first-cut population.** The
+   ROADMAP literally calls `trace-curator` an "agent", so the repeatable
+   procedure is codified at `.claude/agents/trace-curator.md` (a deletable
+   `.claude/` meta artifact, registered in `.claude/MANIFEST.md`), *and* the two
+   trace-backed docs are authored now from the committed goldens
+   (`thinlet-core/src/test/resources/trace/{demo,drafts,amazon}/*.json`):
+   `rendering-primitives.md` from the `calls` vocabulary (the 11 observed
+   `Graphics2D` ops), `layout-algorithms.md` from the `layout` widget bounds (26
+   widget classes) cross-referenced to `doLayout` (`Thinlet.java:193`) via
+   `.claude/paint-pipeline-map.md`.
+
+2. **`input-surface.md` is deferred, not written.** The golden-trace harness
+   records the **paint stream** (`TracingGraphics2D`) and **resolved layout**
+   (`LayoutTrace`) only — it captures **no AWT input events**, so there is no
+   trace to curate an input inventory from. Writing it from memory would violate
+   the precise-language agreement. The stub is refined to state this and to name
+   the two future paths (extend the harness to record an input-event trace, or a
+   source-derived pass over `Thinlet.java`'s listeners). Tracked as remaining
+   Phase-2 work.
+
+3. **Cross-JDK drift is cited by mechanism, not by number.** The docs reference
+   `cross-jdk-trace-diff.md` and the D7 ±2 px `FontMetrics` absorption but commit
+   **no per-JDK figures**: the real multi-runtime `report.json` is produced only
+   in CI (JDK 8/11/17 are not present in the authoring container — the toolchains
+   point at `/opt/jdk{8,11,17}`, image-provided). Any position that exceeds
+   tolerance is a `perOp` `trace-tolerance.json` candidate (D7's reserved hook),
+   not prose and not a reason to widen `defaultPx` or re-record (D33).
+
+**Observed vs. implemented (a curation rule worth recording).** The doc spine is
+the *observed* surface (what the corpus actually paints), not every primitive in
+source. Example: `Thinlet.java` contains `drawRect` (4 call sites) but **no
+golden emits `drawRect`** — that path is unexercised by the static corpus render.
+The agent definition encodes this: enumerate from the goldens, flag
+source-only primitives explicitly, never invent an op/class.
+
+**Scope / non-goals.** Documentation only — **zero** product or behavior change:
+no `Thinlet.java` edits, no golden re-record, no `trace-tolerance.json` change,
+no test changes. Build is unaffected (`thinlet-core` Java/goldens untouched);
+`./mvnw -B -DskipTests verify` stays green.
+
+**Validation.** Every op and widget class named in the two docs was derived from,
+and re-checked against, the committed goldens
+(`grep -ho '"op"…' / '"class"…' | sort -u`); cited `Thinlet.java` line refs
+spot-checked against the verbatim import; the docs contain no per-JDK numeric
+drift claim. (Cross-ref D7/D27/D33.)

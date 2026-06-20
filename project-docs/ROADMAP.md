@@ -60,9 +60,13 @@ behavior-identical until the source differentiates, so they wait for Phase 3
 - Per-signature `trace-tolerance.json` tuning where the cross-JDK diff shows
   metrics require it (implement the reserved `perOp` hook rather than widen
   `defaultPx` or re-record; D7).
-- A `trace-curator` agent populates `project-docs/backend-portability/`
+- ⏳ A `trace-curator` agent populates `project-docs/backend-portability/`
   (rendering primitives, layout algorithms, input surface) from the trace JSON
-  and the cross-JDK `report.json`.
+  and the cross-JDK `report.json`. First cut done (D34): `rendering-primitives.md`
+  and `layout-algorithms.md` curated from the committed goldens; the agent is
+  codified at `.claude/agents/trace-curator.md`. `input-surface.md` is **deferred**
+  — the harness records paint + layout only, so there is no input-event trace to
+  curate from yet.
 
 ## Phase 3 — Internal refactors / Enhanced Thinlet ⬜
 
