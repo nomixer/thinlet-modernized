@@ -39,25 +39,25 @@
     <maven.compiler.release>8</maven.compiler.release>
 
     <!-- Plugin versions, pinned. -->
-    <version.compiler.plugin>3.13.0</version.compiler.plugin>
-    <version.surefire.plugin>3.5.2</version.surefire.plugin>
-    <version.jar.plugin>3.4.1</version.jar.plugin>
-    <version.deploy.plugin>3.1.3</version.deploy.plugin>
+    <version.compiler.plugin>3.15.0</version.compiler.plugin>
+    <version.surefire.plugin>3.5.6</version.surefire.plugin>
+    <version.jar.plugin>3.5.0</version.jar.plugin>
+    <version.deploy.plugin>3.1.4</version.deploy.plugin>
     <version.toolchains.plugin>3.2.0</version.toolchains.plugin>
-    <version.spotless.plugin>2.43.0</version.spotless.plugin>
+    <version.spotless.plugin>3.7.0</version.spotless.plugin>
     <version.palantir.format>2.50.0</version.palantir.format>
     <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
-    <version.checkstyle.tool>10.21.0</version.checkstyle.tool>
-    <version.spotbugs.plugin>4.8.6.6</version.spotbugs.plugin>
-    <version.japicmp.plugin>0.23.1</version.japicmp.plugin>
+    <version.checkstyle.tool>13.6.0</version.checkstyle.tool>
+    <version.spotbugs.plugin>4.10.2.0</version.spotbugs.plugin>
+    <version.japicmp.plugin>0.26.1</version.japicmp.plugin>
 
     <!-- japicmp is INACTIVE during Phase 0; activated from v0.1.0 (Phase 1). -->
     <japicmp.skip>true</japicmp.skip>
 
     <!-- Test-only dependencies (Phase 1 trace harness). Test scope only; never
          enter the published thinlet-core jar (it stays runtime-dependency-free). -->
-    <version.junit>5.11.4</version.junit>
-    <version.assertj>3.27.3</version.assertj>
+    <version.junit>5.14.4</version.junit>
+    <version.assertj>3.27.7</version.assertj>
   </properties>
 
   <dependencyManagement>
