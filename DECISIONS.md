@@ -843,3 +843,58 @@ threading model in Phase 3. **Net source-diff: none** — only `pom.xml` and the
 SpotBugs filter changed. japicmp 0.26.1 is profile-gated (`-Papicheck`), so its
 behavior is validated by CI's `api-compat` job, not the local build. (Cross-ref
 D13/D29/D31.)
+
+## D33 — Cross-JDK trace diff: persist per-JDK traces, report (don't gate) the drift
+**Date:** 2026-06-20
+
+The D31 test matrix proves each JDK runtime renders within ±2px of the single
+committed baseline golden, but only as pass/fail — the actual per-JDK render is
+computed in memory and discarded, so we have no view of *where* / *how much* the
+runtimes drift (the `FontMetrics` sub-pixel variance D7 absorbs). This decision
+adds the **cross-JDK trace diff**: persist each runtime's trace, then aggregate
+into a divergence report. It is the Phase-2 roadmap item and the data source the
+later `trace-curator` / backend-portability docs will curate. Engineering
+reference: `project-docs/backend-portability/cross-jdk-trace-diff.md`.
+
+**The regression gate is left untouched (the "are we discarding data?" answer).**
+`TraceComparator.compare()` emits only *over-tolerance* numeric mismatches — the
+correct contract for the regression gate, which we do not change. The gap is not
+that the gate drops data but that the per-JDK `Trace` is never *persisted*
+(nothing is irretrievable — renders are deterministic, per the self-consistency
+test). So the slice is purely additive: (a) a dump mode persists each runtime's
+full trace, and (b) a new report-only `TraceComparator.deltas()` enumerates
+*every* numeric difference (incl. sub-tolerance) plus any structural/categorical
+mismatch, used only by the report. The gate's behavior and output are byte-identical.
+
+**Informational, not a second gate (chosen).** The report never fails CI. The
+per-JDK golden tests already enforce ±2px-vs-baseline on every runtime; a separate
+cross-JDK gate would be both redundant and *stricter* in a way we don't want to
+assert (two runtimes can each sit +2/−2 vs baseline — 4px apart — yet both are
+"identical within tolerance" by D7). The report's job is to *surface* drift, and a
+position exceeding tolerance is a finding to triage into a `perOp`
+`trace-tolerance.json` entry (D7's reserved hook), not to silence.
+
+**Report is a regenerable artifact, not committed (chosen).** Consistent with
+D7's "side metadata is a sidecar CI artifact." `CrossJdkTraceDiff` writes
+`report.md` + `report.json` to `target/`; CI publishes them as the
+`trace-diff-report` artifact. Committed curation is deferred to the `trace-curator`
+slice, which will read `report.json`.
+
+**CI data flow.** The runtimes run as separate jobs with no shared filesystem, so
+traces move as artifacts. `build` (21) and `test` (8/11/17) add
+`-Dtrace.dump.dir=target/trace-dump/jdk-N` (gating the otherwise-inert
+`GoldenTraceDumpMode`) and upload `trace-dump-jdk-N`. A new `trace-diff` job
+(`needs: [build, test]`) downloads them and runs the aggregator on a **plain
+JDK-21 runner** — it renders nothing, so it needs no dev container / Xvfb /
+toolchain. The new test classes are system-property-gated (mirroring
+`GoldenTraceRecordMode`'s `-Dtrace.record`), so a normal `verify` never runs them.
+
+**Validation.** End-to-end locally on JDK 21: the dump wrote 41 traces (the 1 skip
+is `chart.xml`, which has no golden), and the aggregator reported 0px spread vs the
+goldens (the baseline was recorded on a JDK-21-equivalent). A fault-injection check
+(synthetic `jdk-8`/`jdk-11` dumps perturbed +3px / +1px at one `drawString`)
+confirmed the report flags the 3px position as over-tolerance, keeps the 1px
+sub-tolerance drift in the per-runtime column, and reports structural/categorical
+identical. `./mvnw -B -DskipTests verify` stays green (new test sources pass
+Spotless/Checkstyle 13/SpotBugs; goldens and the gate output unchanged). True
+multi-JDK data comes from CI. (Cross-ref D7/D24/D25/D31.)

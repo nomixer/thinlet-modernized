@@ -52,12 +52,17 @@ behavior-identical until the source differentiates, so they wait for Phase 3
   CI's single `test-jdk8` job is now a `fail-fast: false` matrix `test` job (D31).
   JDK 25 is deferred. The test libraries are pinned to JUnit 5.x / AssertJ 3.x
   (they run on the oldest test JDK), guarded by Dependabot `ignore` rules (D31).
-- Per-signature `trace-tolerance.json` tuning where cross-JDK metrics require it
-  (implement the reserved `perOp` hook rather than widen `defaultPx` or
-  re-record; D7).
-- Cross-JDK trace diff.
+- ✅ Cross-JDK trace diff (D33): per-JDK trace dumps (`GoldenTraceDumpMode`) +
+  artifacts + an informational `trace-diff` CI job aggregating them via
+  `CrossJdkTraceDiff` into a `report.md`/`report.json` divergence report
+  (`project-docs/backend-portability/cross-jdk-trace-diff.md`). Report-only
+  `TraceComparator.deltas()`; the regression gate is unchanged.
+- Per-signature `trace-tolerance.json` tuning where the cross-JDK diff shows
+  metrics require it (implement the reserved `perOp` hook rather than widen
+  `defaultPx` or re-record; D7).
 - A `trace-curator` agent populates `project-docs/backend-portability/`
-  (rendering primitives, layout algorithms, input surface) from the trace JSON.
+  (rendering primitives, layout algorithms, input surface) from the trace JSON
+  and the cross-JDK `report.json`.
 
 ## Phase 3 — Internal refactors / Enhanced Thinlet ⬜
 
