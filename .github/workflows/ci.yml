@@ -37,14 +37,14 @@ jobs:
           - { maven_jdk: 21 }
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Cache the Maven local repo *and* the wrapper distribution. Both live
       # under .m2 inside the bind-mounted workspace (via MAVEN_USER_HOME below),
       # which the dev-container user can write to — unlike the root-owned
       # thinlet-m2 named volume at ~/.m2. (See DECISIONS.md D14 / cache note.)
       - name: Cache Maven repository and wrapper
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .m2
           key: m2-${{ matrix.maven_jdk }}-${{ hashFiles('**/pom.xml', '.mvn/wrapper/maven-wrapper.properties') }}
@@ -57,7 +57,7 @@ jobs:
       # Log in to GHCR so the lean CI image layers can be cached across runs
       # (cacheFrom pulls them; the main-branch run pushes the updated cache).
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -96,10 +96,10 @@ jobs:
           - { jdk: 25, release: 21 }
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Cache Maven repository and wrapper
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .m2
           key: m2-jdk${{ matrix.jdk }}-${{ hashFiles('**/pom.xml', '.mvn/wrapper/maven-wrapper.properties') }}
@@ -107,7 +107,7 @@ jobs:
             m2-jdk${{ matrix.jdk }}-
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -146,13 +146,13 @@ jobs:
       packages: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # setup-java writes ~/.m2/settings.xml with a server whose id matches the
       # apicheck profile's repository (github-nomixer), reading credentials from
       # the env vars below; the Maven wrapper reads that settings.xml by default.
       - name: Set up JDK 21 + GitHub Packages read auth
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
