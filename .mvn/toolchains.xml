@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  JDK toolchains for the per-version build+test matrix (DECISIONS.md D14/D25/D30).
+  Passed via `-t .mvn/toolchains.xml` with the `crossjdk` profile so
+  maven-toolchains-plugin selects the row's JDK (`-Djdk.target=N`) and surefire
+  forks the golden-trace tests on it, while Maven itself keeps running on the base
+  JDK (21). The compiler stays on the JVM-21 javac (release N, Model A / D30).
+  The jdkHome paths are provided by the dev-container image (.devcontainer/Dockerfile).
+-->
+<toolchains>
+  <toolchain>
+    <type>jdk</type>
+    <provides>
+      <version>8</version>
+    </provides>
+    <configuration>
+      <jdkHome>/opt/jdk8</jdkHome>
+    </configuration>
+  </toolchain>
+  <toolchain>
+    <type>jdk</type>
+    <provides>
+      <version>11</version>
+    </provides>
+    <configuration>
+      <jdkHome>/opt/jdk11</jdkHome>
+    </configuration>
+  </toolchain>
+  <toolchain>
+    <type>jdk</type>
+    <provides>
+      <version>17</version>
+    </provides>
+    <configuration>
+      <jdkHome>/opt/jdk17</jdkHome>
+    </configuration>
+  </toolchain>
+  <toolchain>
+    <type>jdk</type>
+    <provides>
+      <version>21</version>
+    </provides>
+    <configuration>
+      <jdkHome>/opt/jdk21</jdkHome>
+    </configuration>
+  </toolchain>
+  <toolchain>
+    <type>jdk</type>
+    <provides>
+      <version>25</version>
+    </provides>
+    <configuration>
+      <jdkHome>/opt/jdk25</jdkHome>
+    </configuration>
+  </toolchain>
+</toolchains>

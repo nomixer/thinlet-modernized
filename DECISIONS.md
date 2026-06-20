@@ -655,3 +655,71 @@ breaks in `thinlet-core`.
   missing-class errors, and that the default `verify` still passes and makes no
   GitHub Packages request. The GitHub Packages **read** auth itself is exercised
   only in CI (no token locally, by design).
+
+## D30 — Per-version artifacts: build+test the matrix now, publish Java 8 only
+**Date:** 2026-06-20
+
+**Supersedes D1.** D1 framed the deliverable as a *single* maximally-portable
+Java-8 jar proven to run unchanged on JDK 8–25 via a cross-JDK matrix. The
+release axis is now **one jar per Java version** (8 / 11 / 17 / 21 / 25) — each a
+real build for that version, eventually compiled on / differentiated for its own
+JDK. This promotes D2's `-javaN` artifact from an unused escape hatch to the
+normal release axis and dissolves the "`--release 8` single target" framing of
+D5/D14 (the single Java-8 jar is now just the first row of the matrix, not the
+whole story).
+
+Because the library source is still fully Java-8-compatible, every per-version
+jar is **behavior-identical today** — only the bytecode level differs — until
+Phase 3 ("Enhanced Thinlet") differentiates them. So the chosen sequencing is
+**build the capability now, publish later**:
+
+- **Stand up the per-version build+test matrix now.** Each of JDK 8/11/17/21/25
+  compiles and passes the golden traces. A `crossjdk` profile (generalizing the
+  old `jdk8-tests`, D25) + a consolidated `.mvn/toolchains.xml` listing all five
+  `/opt/jdkN` (installed in `.devcontainer/Dockerfile`) make
+  `maven-toolchains-plugin` select the row's JDK so surefire forks the traces on
+  it. CI's single `test-jdk8` job becomes a `fail-fast: false` matrix `test` job.
+- **Keep publishing only the Java 8 jar** (`release.yml` / D28 untouched). Five
+  functionally identical jars would be redundant; start publishing 11/17/21 (then
+  25) once Phase 3 differentiates them.
+
+**Compile model = A (compile on the JVM-21 javac, run on the target JDK).** Each
+row compiles with `--release N` on the base JDK-21 `javac` (genuine version-N
+bytecode + API surface via `ct.sym`), then surefire forks the tests onto JDK N.
+The build never invokes the target JDK's own `javac`. This is exactly what the
+green `jdk8-tests` row already did — it compiled `--release 8`, which is only
+possible because compilation stayed on the JVM-21 `javac` (`javac 8` rejects
+`--release`). Model A keeps one clean parameterized profile with no JDK-8
+`source/target`-vs-`release` special case. (The stronger "run each JDK's own
+`javac`" — Model B — is deferred; it becomes relevant when Phase 3 source
+diverges per version. The JDK-8 row remains the canary: if a future
+`maven-compiler-plugin` started honoring the jdk toolchain for *compilation*, the
+8 row's `--release 8` would break on `javac 8` and that row would go red.)
+
+**JDK-25 caveat (load-bearing).** `javac` can only target releases **≤ its own
+version**, so the JDK-21 build `javac` cannot emit `--release 25`. Under Model A
+the 25 row compiles at **`--release 21`** (the build JVM's max) and runs the
+golden traces on the **JDK 25 runtime**. That validates the real question for the
+row — does the 2005 behavior hold on the newest JDK's runtime within the D7 ±2px
+tolerance — but the "25 jar" is Java-21 bytecode, **not** genuine class-file-69
+Java-25 bytecode. Genuine `--release 25` requires a JDK-25 `javac` (bumping the
+build JVM, or compiling that row on JDK 25 — a Model-B exception), deferred to
+Phase 3 when per-version jars actually differentiate and publish. Acceptable now
+because we publish only the Java 8 jar and all per-version jars are
+behavior-identical today.
+
+**Build/lint JVM stays JDK 21 — and why.** The build/lint JVM is deliberately
+**decoupled** from library compatibility: compatibility now comes from the
+per-version build+test matrix, not from a single `--release 8` target. JDK 21 is
+kept for toolchain maturity — palantir-java-format (needs 17+), Checkstyle 10,
+SpotBugs, japicmp, and the MS `:1-21-bookworm` base image — none of which run on
+JDK 8 (cross-ref D5/D14). Using *later*-than-8 language features in the source is
+a Phase 3 concern, not this slice.
+
+**Determinism / open items.** The image now installs **five** floating Adoptium
+`latest/N/ga` JDKs (plus the floating MS `:1-21` base) — more floating sources,
+which strengthens the D16 case for a self-owned, digest-pinned multi-JDK base;
+not fixed here. The 11/17/21/25 rows are first-time golden runs against the
+single baseline (D7 — no per-JDK goldens): a row exceeding ±2px gets a documented
+`perOp` tolerance entry (implementing the reserved `TraceComparator` hook), not a
+re-record or a widened `defaultPx`.
