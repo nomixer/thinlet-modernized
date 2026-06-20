@@ -1,11 +1,12 @@
 name: CI
 
 # Three jobs: `build` runs the full verify (Spotless/Checkstyle/SpotBugs + tests)
-# with Maven on JDK 21 (the modern plugins need JDK 11+); `test` is the per-version
-# build+test matrix (JDK 8/11/17/21/25) — Maven still on 21, compiling --release N
-# on the JVM-21 javac (Model A), but surefire forks the test suite (incl. the
-# golden traces) on each target JDK via toolchains; `api-compat` is the japicmp
-# binary-compatibility gate. See DECISIONS.md D14/D25/D29/D30.
+# with Maven on JDK 21 (the modern plugins need JDK 11+) — this is also the JDK 21
+# *test runtime* row. `test` is the cross-JDK test matrix (runtimes 8/11/17):
+# Maven still on 21, compiling the one portable `--release 8` jar, but surefire
+# forks the test suite (incl. the golden traces) onto each target JDK via
+# toolchains. Together `build` + `test` cover runtimes 8/11/17/21. `api-compat`
+# is the japicmp binary-compatibility gate. See DECISIONS.md D14/D25/D29/D31.
 
 on:
   push:
@@ -31,8 +32,9 @@ jobs:
       matrix:
         # Maven itself runs on JDK 21 (the modern lint/format plugins require
         # JDK 11+); the published artifact is Java 8 bytecode via --release 8.
-        # The per-version build+test matrix (surefire via toolchains) is the
-        # separate `test` job below (DECISIONS.md D30).
+        # This job is also the JDK 21 test-runtime row (surefire runs the golden
+        # traces on the base JVM). The cross-JDK test matrix (runtimes 8/11/17
+        # via toolchains) is the separate `test` job below (DECISIONS.md D31).
         include:
           - { maven_jdk: 21 }
     steps:
@@ -83,17 +85,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Per-version build+test rows (DECISIONS.md D30). `release` is the
-        # --release level compiled on the JVM-21 javac (Model A); `jdk` is the
-        # JDK surefire forks the golden traces onto. JDK 21's javac cannot target
-        # release 25, so the 25 row compiles release 21 and exercises the JDK 25
-        # *runtime* — genuine release-25 bytecode is a Phase-3 follow-up (D30).
+        # Cross-JDK test-runtime rows (DECISIONS.md D31). Every row compiles the
+        # same one portable `--release 8` jar on the JVM-21 javac, then surefire
+        # forks the golden traces onto the JDK named by `jdk`. The JDK 21 runtime
+        # is covered by the `build` job above (Maven's own base JVM), so it is not
+        # repeated here. (JDK 25 is deferred — see D31.)
         include:
-          - { jdk: 8, release: 8 }
-          - { jdk: 11, release: 11 }
-          - { jdk: 17, release: 17 }
-          - { jdk: 21, release: 21 }
-          - { jdk: 25, release: 21 }
+          - { jdk: 8 }
+          - { jdk: 11 }
+          - { jdk: 17 }
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -114,11 +114,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # Maven runs on the image's base JDK (21) for the lint/format plugins and
-      # compiles --release ${{ matrix.release }} on its javac (Model A);
+      # compiles the one portable jar at --release 8 on its javac;
       # maven-toolchains-plugin (-Pcrossjdk -Djdk.target=N) makes surefire fork
       # the golden-trace suite on the JDK installed at /opt/jdkN (see Dockerfile).
       # The file.encoding=UTF-8 pin in thinlet-core's surefire config keeps
-      # decoding consistent across JDKs. See DECISIONS.md D14/D25/D30. Pulls the
+      # decoding consistent across JDKs. See DECISIONS.md D14/D25/D31. Pulls the
       # cached image but does not push it (the build job does).
       - name: Run tests on JDK ${{ matrix.jdk }} (toolchains) inside the Dev Container
         uses: devcontainers/ci@v0.3
@@ -130,7 +130,6 @@ jobs:
           runCmd: >-
             MAVEN_USER_HOME="$PWD/.m2" ./mvnw -B -Dmaven.repo.local=.m2/repository
             -Pcrossjdk -Djdk.target=${{ matrix.jdk }}
-            -Dmaven.compiler.release=${{ matrix.release }}
             -t .mvn/toolchains.xml test
 
   api-compat:

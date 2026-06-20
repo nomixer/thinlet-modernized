@@ -30,12 +30,25 @@ The original library is preserved verbatim in the frozen
 A single Java-8-targeted artifact is validated to behave identically —
 *within a defined metric tolerance* (see below) — across:
 
-| JDK | 8 | 11 | 17 | 21 | 25 |
-|-----|---|----|----|----|----|
+| JDK | 8 | 11 | 17 | 21 |
+|-----|---|----|----|----|
 
 The build runs on a modern LTS JDK (21) and targets Java 8 bytecode via
-`--release 8`; tests run on a real JDK 8 via Maven toolchains. CI exercises the
-full matrix per-JDK in Dev Containers.
+`--release 8`; CI then runs that one jar's test suite on real JDK 8/11/17
+runtimes via Maven toolchains, with the JDK 21 runtime covered by the build job
+itself — so the matrix is *runtime* coverage, not a per-JDK rebuild. (JDK 25 is
+deferred for now.)
+
+**Why one jar instead of one per JDK.** From a single Java-8 source, compiling
+for a newer JDK yields a *behavior-identical* jar that is merely **less**
+portable (it won't load on older JVMs) — no speed or behavior gain. So the
+deliverable stays one maximally-portable Java-8 jar; what's worth proving is that
+it *runs* the same across JDKs, which is a property of the test runtime, not the
+bytecode level. Per-JDK artifacts only become worthwhile once the source actually
+differs per version ("Enhanced Thinlet", Phase 3). This is also why the **build**
+tooling (formatter, Checkstyle, etc.) can track the latest releases freely, while
+the **test** libraries (JUnit, AssertJ) are pinned to the majors that still run
+on the oldest test JDK — JUnit 5.x / AssertJ 3.x. See `DECISIONS.md` (D31).
 
 **"Identical within tolerance," not "byte-identical."** Pinned fonts fix the
 glyph source, but the JDK's pixel-metric math (`FontMetrics` etc.) can differ

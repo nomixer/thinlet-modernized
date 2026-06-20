@@ -1,9 +1,10 @@
 # Dev Container image for thinlet-modernized.
 #
-# The CI matrix reuses this exact Dockerfile per JDK target, passing
-# --build-arg JDK_VERSION=<8|11|17|21|25>; only the JDK switches, the rest of
-# the image (fonts, fontconfig, Xvfb, pre-commit) is identical so font metrics
-# share one glyph source across the matrix.
+# One image serves the whole CI matrix: a single base JDK (21, where Maven and
+# the modern lint/format plugins run) plus the extra test-runtime JDKs installed
+# below at /opt/jdkN. The cross-JDK test matrix forks surefire onto those via
+# toolchains (DECISIONS.md D31) — the image is not rebuilt per JDK, so fonts,
+# fontconfig, Xvfb, and pre-commit share one glyph source across every row.
 ARG JDK_VERSION=21
 FROM mcr.microsoft.com/devcontainers/java:1-${JDK_VERSION}-bookworm
 
@@ -35,14 +36,15 @@ RUN find /etc/apt/sources.list.d -type f -exec grep -lq 'dl\.yarnpkg\.com' {} \;
         pipx \
  && rm -rf /var/lib/apt/lists/*
 
-# Extra JDKs for the per-version build+test matrix (DECISIONS.md D14/D25/D30):
-# Maven itself runs on the base JDK (21) for the modern lint/format plugins,
-# while surefire forks each matrix row's golden-trace tests on the matching JDK
-# via maven-toolchains-plugin (-Pcrossjdk -Djdk.target=N). Installed at the fixed
-# paths /opt/jdkN so .mvn/toolchains.xml can reference them. All matrix rows share
-# this one image (base JDK 21 + these five JDKs); only the toolchain target varies
-# per row. Exact-version pinning is the open item tracked in DECISIONS.md D16.
-RUN for v in 8 11 17 21 25; do \
+# Extra JDKs for the cross-JDK test matrix (DECISIONS.md D14/D25/D31): Maven
+# itself runs on the base JDK (21) for the modern lint/format plugins and emits
+# the one portable --release 8 jar, while surefire forks each matrix row's
+# golden-trace tests on the matching JDK via maven-toolchains-plugin
+# (-Pcrossjdk -Djdk.target=N). Installed at the fixed paths /opt/jdkN so
+# .mvn/toolchains.xml can reference them. Runtimes 8/11/17 are installed here;
+# the JDK 21 runtime is the base image itself (the `build` job's row). Exact-
+# version pinning is the open item tracked in DECISIONS.md D16.
+RUN for v in 8 11 17; do \
       mkdir -p /opt/jdk${v} \
    && curl -fsSL "https://api.adoptium.net/v3/binary/latest/${v}/ga/linux/x64/jdk/hotspot/normal/eclipse" \
         | tar -xz -C /opt/jdk${v} --strip-components=1 \

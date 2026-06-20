@@ -38,18 +38,20 @@ Status: ✅ done · ⏳ in progress · ⬜ not started
   It is profile-gated and off by default, so the default `./mvnw verify` stays
   token-free; `v0.1.1+` are now checked for accidental API breaks (PR #17).
 
-## Phase 2 — Per-version build+test matrix + backend-portability docs ⏳
+## Phase 2 — Cross-JDK test matrix + backend-portability docs ⏳
 
-The release axis pivoted from D1's single portable Java-8 jar to **one jar per
-Java version** (8 / 11 / 17 / 21 / 25): build+test the matrix now, publish only
-the Java 8 jar until Phase 3 differentiates them (**D30**, supersedes D1).
+The deliverable stays D1's **single, maximally-portable Java-8 jar** (`--release
+8`); what's added is proof it *runs* identically across JDK runtimes. D30's
+"one jar per Java version" pivot was reverted: per-version jars are
+behavior-identical until the source differentiates, so they wait for Phase 3
+(**D31**, supersedes D30).
 
-- ⏳ Per-version build+test matrix (JDK 8/11/17/21/25): the `crossjdk` profile +
-  consolidated `.mvn/toolchains.xml` compile `--release N` on the JVM-21 javac
-  (Model A) and fork the golden traces onto each JDK; CI's single `test-jdk8` job
-  becomes a `fail-fast: false` matrix `test` job (D30). The JDK-25 row compiles
-  release 21 (the build JVM's max) and exercises the JDK-25 runtime; genuine
-  release-25 bytecode is a follow-up (D30).
+- ⏳ Cross-JDK **test** matrix (runtimes JDK 8/11/17 via toolchains; JDK 21 via
+  the base-JVM `build` job): the `crossjdk` profile + `.mvn/toolchains.xml` keep
+  the compile at `--release 8` and fork the golden traces onto each target JDK;
+  CI's single `test-jdk8` job is now a `fail-fast: false` matrix `test` job (D31).
+  JDK 25 is deferred. The test libraries are pinned to JUnit 5.x / AssertJ 3.x
+  (they run on the oldest test JDK), guarded by Dependabot `ignore` rules (D31).
 - Per-signature `trace-tolerance.json` tuning where cross-JDK metrics require it
   (implement the reserved `perOp` hook rather than widen `defaultPx` or
   re-record; D7).

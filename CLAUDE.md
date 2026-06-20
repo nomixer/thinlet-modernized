@@ -49,11 +49,15 @@ absorbed by the coordinate tolerance, not asserted directly.
 - **Build:** `./mvnw -B verify` (Spotless/palantir-java-format + Checkstyle +
   SpotBugs gate verify). **Build/lint JDK 21**, decoupled from library
   compatibility (the modern lint/format plugins need 17+; compatibility comes from
-  the per-version matrix, not the build JVM — D30). **Per-version model (D30,
-  supersedes D1):** one jar per Java version (8/11/17/21/25), built+tested via the
-  `crossjdk` profile (compile `--release N` on the JVM-21 javac, fork tests onto
-  JDK N via `.mvn/toolchains.xml`); the published jar stays Java 8 only until
-  Phase 3 differentiates them. `thinlet-core` stays **runtime-dependency-free** —
+  `--release 8` plus the cross-JDK test matrix, not the build JVM — D31).
+  **Single-jar + cross-JDK test model (D31, supersedes D30):** one portable
+  Java-8 jar (`--release 8` on the JVM-21 javac), whose test suite the `crossjdk`
+  profile forks onto JDK 8/11/17 via `.mvn/toolchains.xml` (JDK 21 runtime = the
+  base-JVM build job). Per-version *jars* are deferred to Phase 3 when the source
+  differentiates. **Build-JVM tooling may modernize freely; the *test-runtime*
+  libraries are pinned** to the majors that run on the oldest test JDK — JUnit
+  5.x / AssertJ 3.x (enforced by Dependabot `ignore` rules). `thinlet-core` stays
+  **runtime-dependency-free** —
   any test deps are test-scope only and never enter the published jar.
 - **Display (D22):** the harness runs on a controlled **Xvfb `:99`** (pinned
   fonts, no window manager) so chrome never perturbs pixel metrics; never the

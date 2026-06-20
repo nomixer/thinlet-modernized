@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  JDK toolchains for the per-version build+test matrix (DECISIONS.md D14/D25/D30).
+  JDK toolchains for the cross-JDK test matrix (DECISIONS.md D14/D25/D31).
   Passed via `-t .mvn/toolchains.xml` with the `crossjdk` profile so
   maven-toolchains-plugin selects the row's JDK (`-Djdk.target=N`) and surefire
   forks the golden-trace tests on it, while Maven itself keeps running on the base
-  JDK (21). The compiler stays on the JVM-21 javac (release N, Model A / D30).
+  JDK (21) and the compiler emits the one portable release-8 jar on the JVM-21
+  javac. Only the *test* runtime varies per row. Runtimes 8/11/17 are listed here;
+  the JDK 21 runtime is covered by the base-JVM `build` job (no toolchain needed).
   The jdkHome paths are provided by the dev-container image (.devcontainer/Dockerfile).
 -->
 <toolchains>
@@ -33,24 +35,6 @@
     </provides>
     <configuration>
       <jdkHome>/opt/jdk17</jdkHome>
-    </configuration>
-  </toolchain>
-  <toolchain>
-    <type>jdk</type>
-    <provides>
-      <version>21</version>
-    </provides>
-    <configuration>
-      <jdkHome>/opt/jdk21</jdkHome>
-    </configuration>
-  </toolchain>
-  <toolchain>
-    <type>jdk</type>
-    <provides>
-      <version>25</version>
-    </provides>
-    <configuration>
-      <jdkHome>/opt/jdk25</jdkHome>
     </configuration>
   </toolchain>
 </toolchains>
