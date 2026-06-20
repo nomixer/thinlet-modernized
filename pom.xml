@@ -268,13 +268,14 @@
   </build>
 
   <profiles>
-    <!-- Per-version build+test matrix (DECISIONS.md D30, generalizes D14/D25).
+    <!-- Cross-JDK test matrix (DECISIONS.md D31, generalizes D14/D25).
          maven-toolchains-plugin selects the target JDK (-Djdk.target=N) so surefire
-         forks the golden-trace tests on it; Maven itself stays on the base JDK (21).
-         Compilation stays on the JVM-21 javac via -Dmaven.compiler.release=N
-         (Model A): the build never invokes the target JDK's javac, so there is no
-         JDK-8 "release" flag caveat. Pass the toolchains with `-t .mvn/toolchains.xml`.
-         Used by CI's matrix `test` job for rows 8/11/17/21/25. -->
+         forks the golden-trace tests on it; Maven itself stays on the base JDK (21)
+         and compilation stays on the JVM-21 javac at the default release 8 (the
+         one portable jar — not parameterized per row), so the build never invokes
+         the target JDK's javac. Pass the toolchains with `-t .mvn/toolchains.xml`.
+         Used by CI's matrix `test` job for runtimes 8/11/17 (JDK 21 = the base-JVM
+         build job). -->
     <profile>
       <id>crossjdk</id>
       <build>

@@ -11,6 +11,17 @@ updates:
       maven-build-plugins:
         patterns:
           - "*"
+    # The test libraries run on the *oldest* test JDK (8/11), so they are pinned
+    # below the majors that drop Java 8/11 support: JUnit 6 requires Java 17+ and
+    # AssertJ 4 requires Java 17+. Hold them on JUnit 5.x / AssertJ 3.x until the
+    # cross-JDK test floor rises (DECISIONS.md D31). Minor/patch bumps still flow.
+    ignore:
+      - dependency-name: "org.junit:junit-bom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "org.junit.jupiter:*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "org.assertj:*"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions used by the CI workflow.
   - package-ecosystem: github-actions

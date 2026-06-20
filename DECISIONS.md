@@ -723,3 +723,80 @@ not fixed here. The 11/17/21/25 rows are first-time golden runs against the
 single baseline (D7 — no per-JDK goldens): a row exceeding ±2px gets a documented
 `perOp` tolerance entry (implementing the reserved `TraceComparator` hook), not a
 re-record or a widened `defaultPx`.
+
+## D31 — Revert to one portable Java-8 jar + a cross-JDK *test* matrix; pin the test libs
+**Date:** 2026-06-20
+
+**Supersedes D30; restores D1's single-artifact framing.** D30 made the release
+axis "one jar **per Java version**" (8/11/17/21/25). On reflection that was the
+wrong call *for this phase*, and this decision reverts it. The deliverable is
+again a **single, maximally-portable Java-8 jar** (compile `--release 8` on the
+JDK-21 javac), validated to behave identically — within the D7 ±2px tolerance —
+across JDK **runtimes**. The valuable axis is runtime coverage, not bytecode
+level.
+
+**Why per-version jars were redundant now.** From one Java-8-compatible source,
+`--release 8/11/17/21` produce **behavior-identical** artifacts that differ only
+in the class-file version header (plus invisible codegen such as `invokedynamic`
+string-concat). A higher-`--release` jar is strictly **less** portable — it
+refuses to load on older JVMs — for **zero** behavioral or performance gain on
+any given JVM. So building five jars from one source yields one useful jar plus
+four that are identical-but-less-portable. Per-version *jars* only earn their
+keep once the **source** differs per version, i.e. Phase 3 ("Enhanced Thinlet").
+Until then the portable Java-8 jar already runs everywhere the others would, and
+runs the same.
+
+**What we keep from D30.** The cross-JDK *test* machinery built for D30 stays and
+is simply re-pointed from "build N jars" to "run the one jar's tests on N
+runtimes": the `crossjdk` profile + `.mvn/toolchains.xml` still make
+maven-toolchains-plugin fork surefire (golden traces included) onto each target
+JDK, while Maven stays on the base JDK 21. The compile is no longer
+parameterized — every row compiles the same `--release 8` output; only the
+*test* JVM varies. So D30's Model-A discussion and its JDK-25 `--release` caveat
+are moot here (we don't emit per-version bytecode), and they return only with
+Phase 3.
+
+- **Test runtimes: 8, 11, 17 via toolchains; 21 via the `build` job.** CI's
+  `test` matrix forks runtimes 8/11/17; the `build` job (Maven on JDK 21) is
+  itself the JDK 21 runtime row, so it isn't repeated. Together they cover
+  8/11/17/21. **JDK 25 is deferred** — kept off the validated set for now (it was
+  always a runtime-only row under D30 anyway). `.devcontainer/Dockerfile` now
+  installs three extra JDKs (8/11/17), not five.
+- **Publishing is unchanged.** Still the single Java-8 jar (`release.yml` / D28
+  untouched, japicmp / D29 untouched). D30 already published only Java 8, so this
+  reversion changes nothing downstream.
+
+**Build/lint JVM stays JDK 21 (unchanged from D5/D14/D30).** The build JVM is
+decoupled from library compatibility: portability comes from `--release 8` plus
+the cross-JDK *test* matrix, and the modern tooling (palantir-java-format,
+Checkstyle, SpotBugs, japicmp, the MS `:1-21` base) needs 17+. The key
+distinction this decision leans on: **build-JVM tooling may modernize freely;
+only the *test-runtime* libraries are constrained**, because they execute on the
+oldest test JDK.
+
+**Pin the test libraries to the Java-8/11-compatible majors.** JUnit 6 and
+AssertJ 4 both require Java **17+** at runtime, so they cannot run on the JDK
+8/11 test rows. JUnit is therefore pinned to the **5.x** line and AssertJ to
+**3.x** (minor/patch bumps within those majors are fine). This is enforced
+mechanically by Dependabot `ignore` rules (`.github/dependabot.yml`) on
+`version-update:semver-major` for `org.junit:junit-bom`, `org.junit.jupiter:*`,
+and `org.assertj:*`. The pin lifts on its own terms only when the cross-JDK test
+floor rises above 11 (a future decision), not as a silent dependency bump.
+
+**Relationship to PR #20 (the Dependabot group bump that surfaced this).** PR #20
+bundled ten plugin bumps, nine of them safe build-JVM tooling, plus the one
+load-bearing problem: `junit-bom 5.11.4 → 6.1.0`, which would have broken the JDK
+8/11 test rows. (Its `assertj-core 3.27.3 → 3.27.7` was a safe in-major minor.)
+The ignore rules above prevent the JUnit-6 proposal from recurring; the safe
+plugin bumps are taken separately so each gets its own CI pass — notably
+Checkstyle 10→13 and Spotless 2→3, which run on the build JVM but can trip new
+rules / reformatting against the verbatim 2005 source (D13). PR #20 is closed as
+superseded; Dependabot reproposes the safe set against the new ignore rules.
+
+**Net effect.** Simpler tooling (three extra JDKs, not five; no `--release`
+parameterization), fully modern build tooling, the same cross-JDK runtime
+fidelity D30 bought, and a published artifact that is maximally portable rather
+than one of five behavior-identical jars. Per-version *artifacts* return in Phase
+3 when the source actually differentiates — at which point D30's Model-A/Model-B
+and `--release 25` analysis is the right starting point. (Cross-ref
+D1/D2/D5/D7/D14/D25/D28/D29/D30.)
