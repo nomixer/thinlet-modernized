@@ -26,7 +26,7 @@
 # Deliberate non-UTF-8 2005 artifact: the i18n demo is ISO-8859-2 (declared in
 # its XML prolog). Thinlet's parser reads XML with the platform-default charset,
 # so these bytes are behavior-relevant test input — preserve them verbatim, no
-# EOL or encoding normalization. See project-docs/encoding-inventory.md, DECISIONS.md
+# EOL or encoding normalization. See project-docs/ENCODING-INVENTORY.md, DECISIONS.md
 # D9/D12/D26.
 thinlet-core/src/test/resources/corpus/drafts/internationalization.xml -text
 thinlet-drafts/src/main/resources/thinlet/drafts/internationalization.xml -text

@@ -1,7 +1,7 @@
 # Input surface
 
 > **First cut — source-derived, not trace-backed.** Unlike
-> `rendering-primitives.md` and `layout-algorithms.md`, this inventory is **not**
+> `RENDERING-PRIMITIVES.md` and `LAYOUT-ALGORITHMS.md`, this inventory is **not**
 > curated from the committed golden traces: the harness records the **paint
 > stream** (`TracingGraphics2D`) and the **resolved layout** (`LayoutTrace`) only,
 > so there is **no input-event trace to curate from** (see `DECISIONS.md` **D34**).
@@ -11,7 +11,7 @@
 > is described by event ids, handler routing, and resulting widget state — all
 > categorical/structural, not pixel metrics. Line refs are against
 > `thinlet-core/src/main/java/thinlet/Thinlet.java` and were spot-checked at
-> authoring; `.claude/paint-pipeline-map.md` covers paint/layout/model only, so
+> authoring; `.claude/PAINT-PIPELINE-MAP.md` covers paint/layout/model only, so
 > this doc is greenfield.
 
 Three purposes:
@@ -123,7 +123,7 @@ Thinlet *observably does* when driven. Closing that gap needs an executable
 Phase 3) and reframed — its primary purpose is a **same-JDK refactor-safety net** over
 the untested ~26% input surface above; cross-JDK input comparison is a later layer on
 top. The design, validated by a landed feasibility probe (D36,
-`input-harness-probe.md`), is deliberately small:
+`INPUT-HARNESS-PROBE.md`), is deliberately small:
 
 1. **An input driver** — a test-side component that synthesizes a *scripted* sequence
    of AWT events and pushes them through Thinlet's real `protected processEvent` on the

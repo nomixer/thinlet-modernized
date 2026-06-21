@@ -32,7 +32,7 @@ import java.util.Map;
 /**
  * A {@link Graphics2D} that delegates everything to a backing graphics while
  * recording the drawing primitives Thinlet uses (see
- * {@code .claude/paint-pipeline-map.md}). Wrapping the {@code Graphics} handed to
+ * {@code .claude/PAINT-PIPELINE-MAP.md}). Wrapping the {@code Graphics} handed to
  * Thinlet's public {@code paint(Graphics)} captures the whole draw stream with
  * zero edits to {@code Thinlet.java}.
  *

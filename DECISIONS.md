@@ -158,13 +158,13 @@ only, zero production-code edits). Concretely:
   idioms, etc.), enumerated in `config/spotbugs/exclude.xml`.
 - A few SpotBugs findings are **candidate genuine bugs** (null-param deref and
   unclosed-stream paths in the XML parser, `FileChooser` null path). They are
-  accepted for the Phase-0 baseline and earmarked for `KNOWN_QUIRKS.md` entries
+  accepted for the Phase-0 baseline and earmarked for `KNOWN-QUIRKS.md` entries
   locked by tests in Phase 1 — not fixed in Phase 0.
 
 As internal refactors (Phase 3) and Enhanced Thinlet address these, exclude
 entries are removed so the linters fail on regressions again.
 
-Status (2026-06-15): Phase 1 triage done (see KNOWN_QUIRKS.md). The parser
+Status (2026-06-15): Phase 1 triage done (see KNOWN-QUIRKS.md). The parser
 null-source NPE is locked as Q1 with tests. The parser "unclosed-stream"
 findings (`OBL_*`, `OS_OPEN_STREAM`) were judged non-reproducible — the parser's
 `Reader` is closed in a `finally` on every practical path — so they are tracked,
@@ -536,7 +536,7 @@ Policy:
   behavior-relevant — Thinlet's parser reads XML with the platform-default
   charset, so the raw bytes drive rendering and the goldens — and are **not**
   transcoded. They are now annotated `-text` in `.gitattributes` (no EOL/encoding
-  normalization) and catalogued in `project-docs/encoding-inventory.md`, which also
+  normalization) and catalogued in `project-docs/ENCODING-INVENTORY.md`, which also
   documents how to re-run the scan and how to determine any file's codeset.
 
 Deliberately *not* doing a bulk UTF-8 conversion: transcoding the ISO-8859-2 i18n
@@ -558,14 +558,14 @@ Three documentation homes, kept strictly separate so each has one clear purpose:
 - **`project-docs/` — modernization/project documentation** authored for this
   fork: `ROADMAP.md` (the phase plan, previously only an external/uncommitted
   doc), `backend-portability/` (porting reference, populated by the trace-curator
-  agent — moved here from `docs/`), and `encoding-inventory.md` (D26, moved here
+  agent — moved here from `docs/`), and `ENCODING-INVENTORY.md` (D26, moved here
   from `docs/`). Durable; not Claude-meta.
 - **`.claude/` — Claude orientation/meta only.** Deletable, tracked in
   `.claude/MANIFEST.md`; only the root `CLAUDE.md` lives outside it.
 
 This supersedes the earlier placement of `backend-portability/` and
-`encoding-inventory.md` under `docs/`. References updated (`.gitattributes`,
-`.claude/paint-pipeline-map.md`, D26). The rule is also recorded in `CLAUDE.md`
+`ENCODING-INVENTORY.md` under `docs/`. References updated (`.gitattributes`,
+`.claude/PAINT-PIPELINE-MAP.md`, D26). The rule is also recorded in `CLAUDE.md`
 so future sessions keep `docs/` for Thinlet's own documentation.
 
 ## D28 — Release/publish mechanism: tag-driven deploy to GitHub Packages
@@ -854,7 +854,7 @@ runtimes drift (the `FontMetrics` sub-pixel variance D7 absorbs). This decision
 adds the **cross-JDK trace diff**: persist each runtime's trace, then aggregate
 into a divergence report. It is the Phase-2 roadmap item and the data source the
 later `trace-curator` / backend-portability docs will curate. Engineering
-reference: `project-docs/backend-portability/cross-jdk-trace-diff.md`.
+reference: `project-docs/backend-portability/CROSS-JDK-TRACE-DIFF.md`.
 
 **The regression gate is left untouched (the "are we discarding data?" answer).**
 `TraceComparator.compare()` emits only *over-tolerance* numeric mismatches — the
@@ -922,8 +922,8 @@ multi-JDK data comes from CI. (Cross-ref D7/D24/D25/D31.)
 dumps and the informational cross-JDK divergence report) is the `trace-curator`
 work the ROADMAP reserves: populate `project-docs/backend-portability/` from the
 trace data. The three docs there
-(`rendering-primitives.md`, `layout-algorithms.md`, `input-surface.md`) had been
-Phase-0 stubs awaiting this slice; `cross-jdk-trace-diff.md` (D33) was already
+(`RENDERING-PRIMITIVES.md`, `LAYOUT-ALGORITHMS.md`, `INPUT-SURFACE.md`) had been
+Phase-0 stubs awaiting this slice; `CROSS-JDK-TRACE-DIFF.md` (D33) was already
 complete. This decision records *how* the curation was started and its scope.
 
 **Decision.**
@@ -934,12 +934,12 @@ complete. This decision records *how* the curation was started and its scope.
    `.claude/` meta artifact, registered in `.claude/MANIFEST.md`), *and* the two
    trace-backed docs are authored now from the committed goldens
    (`thinlet-core/src/test/resources/trace/{demo,drafts,amazon}/*.json`):
-   `rendering-primitives.md` from the `calls` vocabulary (the 11 observed
-   `Graphics2D` ops), `layout-algorithms.md` from the `layout` widget bounds (26
+   `RENDERING-PRIMITIVES.md` from the `calls` vocabulary (the 11 observed
+   `Graphics2D` ops), `LAYOUT-ALGORITHMS.md` from the `layout` widget bounds (26
    widget classes) cross-referenced to `doLayout` (`Thinlet.java:193`) via
-   `.claude/paint-pipeline-map.md`.
+   `.claude/PAINT-PIPELINE-MAP.md`.
 
-2. **`input-surface.md` is deferred, not written.** The golden-trace harness
+2. **`INPUT-SURFACE.md` is deferred, not written.** The golden-trace harness
    records the **paint stream** (`TracingGraphics2D`) and **resolved layout**
    (`LayoutTrace`) only — it captures **no AWT input events**, so there is no
    trace to curate an input inventory from. Writing it from memory would violate
@@ -949,7 +949,7 @@ complete. This decision records *how* the curation was started and its scope.
    Phase-2 work.
 
 3. **Cross-JDK drift is cited by mechanism, not by number.** The docs reference
-   `cross-jdk-trace-diff.md` and the D7 ±2 px `FontMetrics` absorption but commit
+   `CROSS-JDK-TRACE-DIFF.md` and the D7 ±2 px `FontMetrics` absorption but commit
    **no per-JDK figures**: the real multi-runtime `report.json` is produced only
    in CI (JDK 8/11/17 are not present in the authoring container — the toolchains
    point at `/opt/jdk{8,11,17}`, image-provided). Any position that exceeds
@@ -974,11 +974,11 @@ and re-checked against, the committed goldens
 spot-checked against the verbatim import; the docs contain no per-JDK numeric
 drift claim. (Cross-ref D7/D27/D33.)
 
-## D35 — input-surface.md as a source-derived first cut; matrix close-out; perOp posture
+## D35 — INPUT-SURFACE.md as a source-derived first cut; matrix close-out; perOp posture
 
 **Date:** 2026-06-21. **Status:** accepted. **Phase:** 2.
 
-**Context.** D34 left `input-surface.md` deferred because the golden-trace harness
+**Context.** D34 left `INPUT-SURFACE.md` deferred because the golden-trace harness
 records the paint stream (`TracingGraphics2D`) and resolved layout (`LayoutTrace`)
 only — there is no input-event trace to curate from. D34 named two future paths:
 extend the harness, or a source-derived pass over `Thinlet.java`'s listeners. With
@@ -988,7 +988,7 @@ now, with the trace-backed route explicitly acknowledged as later work.
 
 **Decision.**
 
-1. **Write `input-surface.md` from source, labelled as such.** The doc inventories
+1. **Write `INPUT-SURFACE.md` from source, labelled as such.** The doc inventories
    Thinlet's AWT input surface read directly from
    `thinlet-core/src/main/java/thinlet/Thinlet.java`: `enableEvents` (`:124`) and
    the `processEvent` dispatcher (`:3605`) over mouse (`handleMouseEvent` `:4673`),
@@ -1014,7 +1014,7 @@ now, with the trace-backed route explicitly acknowledged as later work.
    locally; the posture is now recorded on the ROADMAP rather than left ambiguous.
 
 **Records the need, builds nothing.** A source-derived doc cannot show whether
-input *behavior* diverges across JDKs. `input-surface.md` and the ROADMAP therefore
+input *behavior* diverges across JDKs. `INPUT-SURFACE.md` and the ROADMAP therefore
 name the **input-capture harness** as the prerequisite and an explicit Phase-3
 deliverable: an input driver (scripted AWT events into a headless Thinlet on Xvfb
 `:99`), a dispatch recorder (the input counterpart to `TracingGraphics2D`/
@@ -1026,9 +1026,9 @@ state into golden input-traces), and replay fixtures fed through D33's per-JDK d
 `Thinlet.java` edits, no golden re-record, no `trace-tolerance.json` change, no test
 changes. Build is unaffected (`thinlet-core` Java/goldens untouched);
 `./mvnw -B -DskipTests verify` stays green. This entry *resolves* D34's
-`input-surface.md` deferral.
+`INPUT-SURFACE.md` deferral.
 
-**Validation.** Every `Thinlet.java` line ref cited in `input-surface.md` was
+**Validation.** Every `Thinlet.java` line ref cited in `INPUT-SURFACE.md` was
 spot-checked against the verbatim import at authoring; the doc commits no per-JDK
 numeric drift claim; `trace-tolerance.json` is unchanged. (Cross-ref D7/D27/D33/D34.)
 
@@ -1077,7 +1077,7 @@ handler action, re-paint trace diff + run-to-run determinism, and — the seam m
 likely to fail headless — **keyboard + synthetic focus** (typing into a focused field).
 Findings (incl. the priming `MOUSE_MOVED`, paint-time bound computation, and synthetic
 `FOCUS_GAINED`) and the gate are recorded in
-`project-docs/backend-portability/input-harness-probe.md`. Recommendation there:
+`project-docs/backend-portability/INPUT-HARNESS-PROBE.md`. Recommendation there:
 **feasible — proceed to the MVP**; cross-JDK (8/11/17) determinism is delegated to the
 `crossjdk` CI matrix (those JDKs are absent in the authoring container).
 
@@ -1086,7 +1086,7 @@ golden re-record, no `trace-tolerance.json` change; `thinlet-core` stays
 runtime-dependency-free and the existing golden tests are unaffected. The probe lives in
 package `thinlet.trace` (not `thinlet.input`) to reuse the package-private trace types
 without widening Phase 1 visibility. The MVP (broader fixtures/scenarios; graduating
-`input-surface.md` to trace-backed) is **not** built here — it waits on acceptance of
+`INPUT-SURFACE.md` to trace-backed) is **not** built here — it waits on acceptance of
 this gate. Deferred regardless: list/tree/combo scroll-offset targeting, drag
 pseudo-events, tooltip/auto-repeat timers, keyboard type-ahead timing.
 
@@ -1154,10 +1154,43 @@ runtime-dependency-free; existing golden tests unaffected. Cross-JDK input deter
 container). Still deferred (per D36): list/tree/combo scroll-offset *item* targeting, drag
 pseudo-events, tooltip/auto-repeat timers, and **keyboard type-ahead** (wall-clock +
 text-width dependent → non-deterministic and FontMetrics-sensitive, so excluded). No
-`KNOWN_QUIRKS` change — no scenario surfaced a locked quirk.
+`KNOWN-QUIRKS` change — no scenario surfaced a locked quirk.
 
 **Validation.** Input group green on JDK 21 — 16 tests across `InputSmokeTest` (4),
 `InputListTest` (4), `InputTreeTest` (4), `InputComboBoxTest` (2), `InputScrollTest` (2);
 `./mvnw -B verify` green (0 Checkstyle, 0 SpotBugs, Spotless clean; input suite + existing
 goldens pass). Same-JDK confirmed by deterministic test + direct observation; cross-JDK
 pending CI. (Cross-ref D7/D22/D31/D36.)
+
+## D38 — Markdown filename casing convention (`UPPERCASE-WITH-HYPHENS.md`)
+
+**Date:** 2026-06-21. **Status:** accepted. **Phase:** 2 (housekeeping).
+
+**Context.** Project-authored markdown had drifted in casing — most docs were lowercase
+(`encoding-inventory.md`, the `backend-portability/` set, `.claude/paint-pipeline-map.md`)
+and `KNOWN_QUIRKS.md` used an underscore separator. The maintainer's convention is a single
+consistent style for authored markdown.
+
+**Decision.**
+
+1. **Authored markdown filenames are `UPPERCASE-WITH-HYPHENS.md`** — uppercase, hyphen
+   separators (no underscores, camelCase, or spaces).
+2. **Exceptions** kept as-is because an ecosystem or the harness fixes the name:
+   `README.md`, `CLAUDE.md` (auto-loaded by Claude Code), and Claude Code **agent files**
+   under `.claude/agents/*.md` (the `subagent_type` is tied to the lowercase filename — so
+   `.claude/agents/trace-curator.md` stays lowercase).
+3. **Renames applied** (`git mv`, history preserved): `KNOWN_QUIRKS.md` →
+   `KNOWN-QUIRKS.md`; `project-docs/encoding-inventory.md` → `ENCODING-INVENTORY.md`;
+   `project-docs/backend-portability/{cross-jdk-trace-diff,input-surface,input-harness-probe,layout-algorithms,rendering-primitives}.md`
+   → their `UPPER-CASE` forms; `.claude/paint-pipeline-map.md` → `.claude/PAINT-PIPELINE-MAP.md`.
+   The ephemeral `.claude/SESSION-HANDOFF.md` (a chat seed file) was deleted in the same
+   pass and its `.claude/MANIFEST.md` row removed.
+4. **References updated repo-wide**, including **inside historical D1–D37 entries** — a
+   deliberate, maintainer-approved exception to this log's append-only discipline (chosen so
+   no cross-reference dangles). No file is loaded by code/build by name; every reference is
+   prose or a comment (docs, config XML comments, test Javadoc), so the renames are
+   functionally inert. The convention is also recorded in `CLAUDE.md`.
+
+**Scope / non-goals.** Docs/comments only — no `Thinlet.java` change, no test behavior
+change, no golden re-record. The `.claude/agents/trace-curator.md` *file* is not renamed
+(exception above); its internal doc links are handled separately. (Cross-ref D27 doc layout.)

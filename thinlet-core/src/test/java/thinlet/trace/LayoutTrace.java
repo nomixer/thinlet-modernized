@@ -11,7 +11,7 @@ import thinlet.Thinlet;
  * bounds. Widgets are {@code Object[]} chains {@code [key, value, next]} with
  * interned-string keys; we traverse them directly (matching keys with {@code
  * equals}) rather than touch Thinlet's private accessors. See
- * {@code .claude/paint-pipeline-map.md}.
+ * {@code .claude/PAINT-PIPELINE-MAP.md}.
  */
 final class LayoutTrace {
 
