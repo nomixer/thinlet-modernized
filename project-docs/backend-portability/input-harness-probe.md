@@ -1,8 +1,9 @@
 # Input-capture harness — feasibility probe findings (Phase 2.x gate)
 
-**Status:** probe complete on the base JVM (JDK 21); cross-JDK confirmation pending CI.
-**Recommendation:** **feasible — proceed to the first real build (MVP).** See the gate at the
-end.
+**Status:** probe complete *and* **MVP landed (D37)** on the base JVM (JDK 21); cross-JDK
+confirmation pending CI. **Recommendation (was):** feasible — proceed to the MVP; this has
+since shipped. The probe findings below are the historical spike record; the **MVP
+graduation** section at the end records what the suite became (and the renamed classes).
 
 > A *feasibility probe* (XP "spike") is a short, throwaway investigation that answers one
 > risky question and produces a decision, not shippable code. This note is that decision
@@ -82,3 +83,52 @@ sound and small. **Recommendation: accept Phase 2.x feasibility and authorise th
 broaden fixtures/scenarios, keep the black-box + re-paint assertions, and lean on the `crossjdk`
 matrix for the cross-version determinism signal. If CI surfaces a cross-JDK divergence
 (especially in focus/keyboard), that becomes the first MVP finding to absorb.
+
+## MVP graduation (D37)
+
+The gate was accepted and the MVP shipped (test scope only; no `Thinlet.java` change). The
+probe artifacts were graduated, not duplicated:
+
+- `InputProbeDriver` → **`InputDriver`** — keeps the validated gestures (`click`/`type`/
+  `focusGained`/`paint`) and adds: `press(keyCode, modifiers)` + Arrow/Home/End/Enter
+  helpers (keyboard navigation), `scroll(widget, notches)` (mouse wheel), and a generalized
+  `property(widget, key)` / `viewRect(widget)` `Object[]` reader.
+- `InputProbeHandler` → **`InputHandler`**; `input/probe.xml` → **`input/smoke.xml`**.
+- `InputProbeTest` (4 cases) → **`InputSmokeTest`**, joined by per-widget classes
+  **`InputListTest`** (click, Arrow/Home/End, Shift-extend multi-select), **`InputTreeTest`**
+  (click-select, Right/Left expand/collapse, Down-descend), **`InputComboBoxTest`** (click
+  opens popup; Down+Enter commits), **`InputScrollTest`** (wheel-down advances `:view.y`;
+  wheel-up at top is a no-op). Fixtures: `input/{list,tree,combobox,scroll}.xml`.
+- **Tag:** `@Tag("input")` (selector only). The classes **run by default** in `./mvnw -B
+  verify` — there is no `<excludedGroups>` — which is the point of a regression gate.
+  Selectable in isolation with `-Dgroups=input`. (The probe's `@Tag("input-probe")` is
+  retired with `InputProbeTest`.)
+
+**Two findings beyond the probe (both source-confirmed and now encoded in the driver):**
+
+5. **Keyboard dispatch is split by event type.** Thinlet processes a key only when
+   `control == (id == KEY_PRESSED)` (`Thinlet.java:3827`, where `control` is true for
+   control-char/action keys or Ctrl-down). So navigation/control keys (Arrows, Home/End,
+   PageUp/Down, Enter, Esc) are handled **only on `KEY_PRESSED`** — `InputDriver.press`
+   sends `KEY_PRESSED` with `CHAR_UNDEFINED` so `keychar >= 0xffff` forces the control
+   branch and the keycode is read. Printable characters **including the space bar** (`0x20`
+   is *not* a control char) are handled **only on `KEY_TYPED`** — they go through `type(…)`,
+   and space is deliberately *not* a `press` helper.
+6. **Wheel scroll needs a real `MouseWheelEvent`.** Thinlet detects the wheel by
+   `getID() == MOUSE_WHEEL` and reads `getWheelRotation()` reflectively (`:3802`), so a
+   plain `MouseEvent` won't do; `scroll` constructs a `java.awt.event.MouseWheelEvent` and
+   primes it with the same `MOUSE_MOVED` `click` uses (the wheel path reads `mouseinside`'s
+   `:port` with no fallback hit-test). Neither scroll offset (`:view`) nor combobox
+   open-state (`:combolist`) has a public getter, so both are read off the `Object[]` model
+   like `LayoutTrace` reads `"bounds"`; scroll is asserted on **direction**, never a pixel.
+
+**Assertion model.** Public getters are the primary, JDK-invariant assertion; an ephemeral
+**same-JVM** before/after `TraceComparator.compare(…, 0.0)` corroborates a visible change,
+and run-to-run determinism is proven once in `InputSmokeTest`. There are **no committed
+input golden files** (input state is read live), and `trace-tolerance.json` is unchanged
+(its ±2px is for cross-JDK *paint* goldens, not these same-JVM input diffs).
+
+**Still deferred** (unchanged from the probe limits): a standalone `thinlet-testkit` module
+(reactor-cycle constraint — D37), fully trace-backed `input-surface.md`, scroll-offset
+*item* targeting, drag pseudo-events, tooltip/auto-repeat timers, and keyboard type-ahead
+(wall-clock + text-width dependent).

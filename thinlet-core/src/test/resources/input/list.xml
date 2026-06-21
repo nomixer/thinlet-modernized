@@ -1,0 +1,15 @@
+<panel columns="1" gap="4" top="4" left="4" right="4" bottom="4">
+	<list name="lst" selection="single" weightx="1" weighty="1">
+		<item text="Item-A" />
+		<item text="Item-B" />
+		<item text="Item-C" />
+		<item text="Item-D" />
+		<item text="Item-E" />
+	</list>
+	<list name="mlst" selection="multiple" weightx="1" weighty="1">
+		<item text="Multi-A" />
+		<item text="Multi-B" />
+		<item text="Multi-C" />
+		<item text="Multi-D" />
+	</list>
+</panel>

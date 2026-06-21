@@ -1,4 +1,4 @@
-/* Thinlet (modernized) — Phase 2.x input-capture feasibility probe (test scope). */
+/* Thinlet (modernized) — Phase 2.x input-capture regression suite (test scope). */
 package thinlet.trace;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,23 +10,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import thinlet.Thinlet;
 
 /**
- * Phase 2.x feasibility probe: can scripted AWT input be driven through Thinlet's
- * real {@code processEvent} funnel, headless on Xvfb {@code :99}, with
- * deterministic, assertable outcomes? Findings feed the acceptance gate documented
- * in {@code project-docs/backend-portability/input-harness-probe.md}.
- *
- * <p>The mouse + determinism cases are hard assertions (the confident seams); the
- * keyboard/focus case is the empirical unknown the probe exists to settle.
+ * Smoke layer of the input-capture regression net (the graduated D36 feasibility
+ * probe): scripted AWT input through Thinlet's real {@code processEvent} funnel,
+ * headless on Xvfb {@code :99}, asserted black-box. Establishes the load-bearing
+ * driver properties the widget suites build on — mouse hit-testing, action
+ * dispatch, the re-paint trace signal, run-to-run determinism, and keyboard typing.
  */
-@Tag("input-probe")
+@Tag("input")
 @ExtendWith(XvfbDisplayExtension.class)
-class InputProbeTest {
+class InputSmokeTest {
 
-    private static final String FIXTURE = "/input/probe.xml";
+    private static final String FIXTURE = "/input/smoke.xml";
 
     @Test
     void mouseClickTogglesCheckbox_blackBoxGetter() throws IOException {
-        InputProbeDriver d = InputProbeDriver.load(FIXTURE, new InputProbeHandler());
+        InputDriver d = InputDriver.load(FIXTURE, new InputHandler());
         Thinlet t = d.thinlet();
         Object c1 = d.find("c1");
         assertThat(c1).as("checkbox c1 resolved by name").isNotNull();
@@ -39,8 +37,8 @@ class InputProbeTest {
 
     @Test
     void mouseClickFiresButtonAction_handlerDispatch() throws IOException {
-        InputProbeHandler handler = new InputProbeHandler();
-        InputProbeDriver d = InputProbeDriver.load(FIXTURE, handler);
+        InputHandler handler = new InputHandler();
+        InputDriver d = InputDriver.load(FIXTURE, handler);
         d.click(d.find("b1"));
         assertThat(handler.clicked)
                 .as("the button's action binding fired all the way to the handler")
@@ -49,7 +47,7 @@ class InputProbeTest {
 
     @Test
     void rePaintTraceChangesAfterClick_andIsDeterministic() throws IOException {
-        InputProbeDriver d = InputProbeDriver.load(FIXTURE, new InputProbeHandler());
+        InputDriver d = InputDriver.load(FIXTURE, new InputHandler());
         Trace before = d.paint();
         d.click(d.find("c1"));
         Trace after = d.paint();
@@ -58,7 +56,7 @@ class InputProbeTest {
                 .isNotEmpty();
 
         // Determinism: an independent identical run reaches the same post-click trace.
-        InputProbeDriver d2 = InputProbeDriver.load(FIXTURE, new InputProbeHandler());
+        InputDriver d2 = InputDriver.load(FIXTURE, new InputHandler());
         d2.click(d2.find("c1"));
         Trace after2 = d2.paint();
         assertThat(TraceComparator.compare(after, after2, 0.0))
@@ -68,7 +66,7 @@ class InputProbeTest {
 
     @Test
     void keyboardTypingUpdatesTextfield_afterSyntheticFocus() throws IOException {
-        InputProbeDriver d = InputProbeDriver.load(FIXTURE, new InputProbeHandler());
+        InputDriver d = InputDriver.load(FIXTURE, new InputHandler());
         Thinlet t = d.thinlet();
         Object t1 = d.find("t1");
         d.focusGained(); // headless requestFocus() delivers no FOCUS_GAINED; synthesize it

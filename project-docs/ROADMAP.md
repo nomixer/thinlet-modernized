@@ -72,7 +72,7 @@ behavior-identical until the source differentiates, so they wait for Phase 3
   because the harness records paint + layout only; its **trace-backed** extension
   is tracked as the Phase 2.x deliverable (below).
 
-## Phase 2.x — Input-capture harness (gate before Phase 3) ⏳
+## Phase 2.x — Input-capture harness (gate before Phase 3) ✅ (MVP landed; cross-JDK pending CI)
 
 The Phase 1/2 golden net is **paint + layout only** — it never dispatches input, so
 ~26% of `Thinlet.java` (the `processEvent`/`handleMouseEvent`/`processKeyPress`/…
@@ -91,9 +91,23 @@ never "confirmed behavior-preserving" (**D36**).
 - **Design is black-box and small.** No dispatch/routing recorder — it would re-lock
   the internals refactoring is meant to change (D36); the cross-JDK input *diff* is a
   later layer on top, not the primary goal (correcting D35's cross-JDK-first framing).
-- **Gate:** Phase 3 does not start until Phase 2.x is accepted. On acceptance the MVP
-  broadens fixtures/scenarios and graduates `input-surface.md` from source-derived to
-  trace-backed.
+- **MVP landed (D37).** The probe graduated into a named-scenario regression net:
+  `InputDriver` (+ keyboard `press`/Arrow-Home-End-Enter, mouse-wheel `scroll`, and an
+  `Object[]` `property`/`viewRect` reader) drives `InputSmokeTest` + per-widget
+  `InputList`/`Tree`/`ComboBox`/`Scroll` tests (`@Tag("input")`, run by default). Scenarios
+  cover list selection (click/Arrow/Home/End/Shift-extend), tree select + keyboard
+  expand/collapse/descend, combobox open + keyboard commit, and wheel scrolling — each
+  asserted via public getters + an ephemeral same-JVM re-paint `Trace` diff (no input
+  goldens). 16 tests green on JDK 21; cross-JDK (8/11/17) determinism is on the `crossjdk`
+  CI matrix.
+- **Gate:** met for same-JDK — Phase 3 input-touching refactors may proceed against this
+  net (cross-JDK confirmation pending CI). Two findings recorded in D37: the Thinlet
+  KEY_PRESSED-vs-KEY_TYPED dispatch split, and the `MouseWheelEvent` requirement.
+- **Deferred to Phase 3 (D37):** extracting the harness into a standalone
+  `thinlet-testkit` Maven module — it hits a `thinlet-core(test) → testkit →
+  thinlet-core(main)` reactor cycle, so it waits for a second consumer. Also deferred (per
+  D36): graduating `input-surface.md` to fully trace-backed, scroll-offset item targeting,
+  drag pseudo-events, and keyboard type-ahead.
 
 ## Phase 3 — Internal refactors / Enhanced Thinlet ⬜ (blocked on Phase 2.x)
 

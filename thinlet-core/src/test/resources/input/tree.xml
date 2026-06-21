@@ -1,0 +1,12 @@
+<panel columns="1" gap="4" top="4" left="4" right="4" bottom="4">
+	<tree name="tr" selection="single" weightx="1" weighty="1">
+		<node name="na" text="Node A" expanded="false">
+			<node name="na1" text="Node A1" />
+			<node name="na2" text="Node A2" />
+		</node>
+		<node name="nb" text="Node B" expanded="true">
+			<node name="nb1" text="Node B1" />
+			<node name="nb2" text="Node B2" />
+		</node>
+	</tree>
+</panel>
