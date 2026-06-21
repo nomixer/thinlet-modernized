@@ -1,45 +1,52 @@
 # Session handoff — current status (deletable meta)
 
-> Orientation pointer for resuming work (this session or a fresh one). Captures the
-> *live* state the repo's permanent docs don't: what's in flight and the open decision.
-> Safe to delete once Phase 2.x is accepted/merged. Source of truth remains the repo
-> (`DECISIONS.md`, `ROADMAP.md`); this only records "where we are right now."
+> Orientation pointer for resuming work in a fresh session. The repo's permanent
+> docs (`DECISIONS.md`, `ROADMAP.md`, `input-harness-probe.md`) are the source of
+> truth; this just says "where we are right now" and "what to do next." Safe to
+> delete (ideally fold its removal into the MVP slice).
 
-**As of:** 2026-06-21. **Branch:** `claude/confident-curie-rbymwo`. **PR:** #28 (open, into `main`).
+**As of:** 2026-06-21. **Branch:** `claude/confident-curie-rbymwo` (reset to `main`
+before the MVP slice). **Last merged:** PR #28 (squash `d9b63a0`).
 
 ## Where we are
 
-At the **Phase 2.x acceptance gate**. The input-capture **feasibility probe has landed**
-(D36) and is green on JDK 21; the decision to proceed to the first real build (the MVP) is
-**pending**.
+Phase 2.x's **feasibility probe is merged to `main`** and its feasibility is
+**accepted**. The next step is the **MVP** (the first real build of the input-capture
+harness). **Phase 3 stays blocked until the MVP lands.**
 
-## What's done and pushed (PR #28 = D35 + D36)
+## What's done (on `main`)
 
 - **D36 — feasibility probe** (test scope): `InputProbeDriver`/`InputProbeTest`/
-  `InputProbeHandler` + `input/probe.xml` under `thinlet-core/src/test/java/thinlet/trace/`.
-  Drives scripted AWT input through the real `processEvent` headless on Xvfb `:99`; asserts
-  black-box via getters + re-paint `Trace` diffs. All four seams green & deterministic
-  (mouse→state, click→action, re-paint determinism, **keyboard+synthetic focus**).
-  `./mvnw -B verify` green (51 tests, 0 Checkstyle, 0 SpotBugs).
-- **D35 — Phase 2.0 close-out** also rides this PR (source-derived `input-surface.md`, matrix
-  bullet ✅, `perOp` posture) — it had not been merged before this branch continued.
-- Docs: `ROADMAP.md` (Phase 2.0 ✅, Phase 2.x ⏳ gate, Phase 3 blocked), `DECISIONS.md`
-  **D36**, `input-surface.md` retargeted, `CLAUDE.md` current-work.
-- **Gate artifact:** `project-docs/backend-portability/input-harness-probe.md`.
+  `InputProbeHandler` + `thinlet-core/src/test/resources/input/probe.xml`, under
+  package `thinlet.trace`. Drives scripted AWT input through the real `processEvent`
+  headless on Xvfb `:99`, asserts black-box via getters + re-paint `Trace` diffs.
+- **Cross-JDK confirmed.** PR #28 CI was green on **JDK 8/11/17/21** — headless input
+  determinism (incl. keyboard + synthetic focus) holds across the LTS line, not just 21.
+- **D35** — Phase 2.0 close-out also landed (source-derived `input-surface.md`, matrix
+  bullet ✅, `perOp` posture).
 
-## Open decisions (for the user)
+## Next: build the Phase 2.x MVP
 
-1. **Accept Phase 2.x → authorise the MVP?** Recommendation in the findings note: yes
-   (feasible). Options: accept & start MVP / accept & pause for cross-JDK CI / not yet.
-2. **MVP scope** (post-acceptance): broaden fixtures/scenarios (list/tree/combo, drag),
-   graduate `input-surface.md` to trace-backed. Deferred regardless: drag pseudo-events,
-   tooltip/auto-repeat timers, keyboard type-ahead timing.
+Scope (per `input-harness-probe.md` + D36): broaden fixtures/scenarios beyond the probe
+— list/tree/combo selection, scroll, more keyboard nav — keep the **black-box** stance
+(public getters + re-paint `Trace` diffs; **no dispatch recorder**), run under the
+`crossjdk` matrix, and **graduate `input-surface.md` from source-derived to
+trace-backed**. Deferred regardless: drag pseudo-events, tooltip/auto-repeat timers,
+keyboard type-ahead timing (wall-clock at `Thinlet.java:4500`).
 
-## Caveats / next checks
+## Building blocks + gotchas to reuse (learned by the probe)
 
-- **Cross-JDK (8/11/17) is unproven locally** (only JDK 21 in the container) — it rides the
-  `crossjdk` CI matrix on PR #28. Check that run; a focus/keyboard divergence there is the
-  first MVP finding to absorb.
-- **History note:** the branch carries a pre-squash D34 commit (D34 merged via #27), so PR
-  #28's file view may show already-merged D34 files; net change is only D35 + D36. A clean
-  rebase/force-push was intentionally **not** done without explicit approval.
+- **Driver pattern:** `InputProbeDriver` — subclass `Thinlet` to reach `protected
+  processEvent`; target by `find(name)`; sum the `Object[]` `"bounds"` chain (à la
+  `LayoutTrace`) for coordinates (no public bounds getter).
+- **Three load-bearing gotchas:** (1) widget bounds are computed during `paint()`, so
+  paint once after `setSize` before reading coordinates; (2) `MOUSE_PRESSED`/`RELEASED`
+  don't hit-test — prime each click with a `MOUSE_MOVED`; (3) headless `requestFocus()`
+  delivers no `FOCUS_GAINED` — synthesize one before keyboard input.
+- **Reuse:** `GoldenTraceRecorder.pumpEventQueue()`, `TracingGraphics2D`, `Trace`,
+  `TraceComparator` (tol 0 for determinism), `XvfbDisplayExtension`.
+
+## Open decision for the user (MVP session)
+
+MVP fixture/scenario breadth and whether to keep the probe tests or fold them into the
+MVP suite. Recommendation: keep the probe as the smoke layer; build the MVP alongside.
