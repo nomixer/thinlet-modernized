@@ -46,7 +46,7 @@ The deliverable stays D1's **single, maximally-portable Java-8 jar** (`--release
 behavior-identical until the source differentiates, so they wait for Phase 3
 (**D31**, supersedes D30).
 
-- ⏳ Cross-JDK **test** matrix (runtimes JDK 8/11/17 via toolchains; JDK 21 via
+- ✅ Cross-JDK **test** matrix (runtimes JDK 8/11/17 via toolchains; JDK 21 via
   the base-JVM `build` job): the `crossjdk` profile + `.mvn/toolchains.xml` keep
   the compile at `--release 8` and fork the golden traces onto each target JDK;
   CI's single `test-jdk8` job is now a `fail-fast: false` matrix `test` job (D31).
@@ -57,16 +57,20 @@ behavior-identical until the source differentiates, so they wait for Phase 3
   `CrossJdkTraceDiffTest` into a `report.md`/`report.json` divergence report
   (`project-docs/backend-portability/cross-jdk-trace-diff.md`). Report-only
   `TraceComparator.deltas()`; the regression gate is unchanged.
-- Per-signature `trace-tolerance.json` tuning where the cross-JDK diff shows
-  metrics require it (implement the reserved `perOp` hook rather than widen
-  `defaultPx` or re-record; D7).
-- ⏳ A `trace-curator` agent populates `project-docs/backend-portability/`
+- Per-signature `trace-tolerance.json` tuning: **posture set, no entries** (D35).
+  `perOp` stays empty (`{ "defaultPx": 2.0, "perOp": {} }`) until CI's cross-JDK
+  diff surfaces a position that exceeds tolerance; only such a *finding* earns a
+  `perOp` entry — never a `defaultPx` widening or a re-record (D7). The hook is
+  reserved and report-only; JDK 8/11/17 are absent in the authoring container, so
+  no entry can be authored locally.
+- ✅ A `trace-curator` agent populates `project-docs/backend-portability/`
   (rendering primitives, layout algorithms, input surface) from the trace JSON
   and the cross-JDK `report.json`. First cut done (D34): `rendering-primitives.md`
   and `layout-algorithms.md` curated from the committed goldens; the agent is
-  codified at `.claude/agents/trace-curator.md`. `input-surface.md` is **deferred**
-  — the harness records paint + layout only, so there is no input-event trace to
-  curate from yet.
+  codified at `.claude/agents/trace-curator.md`. `input-surface.md` is a
+  **source-derived first cut** (D35), read from `Thinlet.java`'s event handling
+  because the harness records paint + layout only; its **trace-backed** extension
+  is tracked as a Phase 3 deliverable (below).
 
 ## Phase 3 — Internal refactors / Enhanced Thinlet ⬜
 
@@ -76,3 +80,11 @@ behavior-identical until the source differentiates, so they wait for Phase 3
   the parser null-source NPE; the `FileChooser` fallback null deref).
 - HiDPI / alternative rendering backends, informed by the backend-portability
   docs.
+- **Input-capture harness** (D35) — the prerequisite for any cross-JDK
+  input-behavior comparison, which `input-surface.md` (source-derived) cannot
+  provide: an **input driver** (injects scripted AWT events into a headless
+  Thinlet on Xvfb `:99`), a **dispatch recorder** (the input counterpart to
+  `TracingGraphics2D`/`LayoutTrace`, serializing the handler routing + resulting
+  focus/selection/caret/scroll state into golden input-traces), and **replay
+  fixtures** fed through D33's per-JDK dump + `CrossJdkTraceDiffTest`. Lets
+  `input-surface.md` graduate from source-derived to trace-backed.

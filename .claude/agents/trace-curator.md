@@ -46,9 +46,11 @@ layout), **D33** (cross-JDK trace diff), **D34** (this curation slice).
 - `project-docs/backend-portability/layout-algorithms.md` — each `doLayout`
   pass: trigger, inputs, the `{x,y,w,h}` outputs, AWT touchpoints; widget-class
   coverage.
-- `project-docs/backend-portability/input-surface.md` — **deferred** until an
-  input-event trace exists or an explicit source-derived pass is requested (the
-  harness records paint + layout only).
+- `project-docs/backend-portability/input-surface.md` — **source-derived first
+  cut (D35)**: read from `Thinlet.java`'s event handling (the harness records
+  paint + layout only, so there is no input-event trace). The **trace-backed
+  extension** — an input driver + dispatch recorder + replay fixtures feeding the
+  D33 cross-JDK diff — is still future work, tracked on the ROADMAP.
 
 ## Method
 

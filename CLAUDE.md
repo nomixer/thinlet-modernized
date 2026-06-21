@@ -39,7 +39,8 @@ serializer and a `LayoutTrace`, run headless, recording golden traces over the
 vendored corpus (`thinlet-core/src/test/resources/corpus/{demo,drafts,amazon}/`).
 Phase 2 adds the cross-JDK trace diff (D33) and the `trace-curator` curation of
 `project-docs/backend-portability/` (D34, first cut: rendering + layout;
-input-surface deferred). The harness design below remains load-bearing.
+input-surface is a source-derived first cut per D35, with the trace-backed input
+harness tracked as future work). The harness design below remains load-bearing.
 
 Load-bearing design = **D7 trace-tolerance model**: method-name + arg
 type/arity **structural-exact**; booleans/colors/strings/enums

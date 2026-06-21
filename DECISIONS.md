@@ -973,3 +973,61 @@ and re-checked against, the committed goldens
 (`grep -ho '"op"…' / '"class"…' | sort -u`); cited `Thinlet.java` line refs
 spot-checked against the verbatim import; the docs contain no per-JDK numeric
 drift claim. (Cross-ref D7/D27/D33.)
+
+## D35 — input-surface.md as a source-derived first cut; matrix close-out; perOp posture
+
+**Date:** 2026-06-21. **Status:** accepted. **Phase:** 2.
+
+**Context.** D34 left `input-surface.md` deferred because the golden-trace harness
+records the paint stream (`TracingGraphics2D`) and resolved layout (`LayoutTrace`)
+only — there is no input-event trace to curate from. D34 named two future paths:
+extend the harness, or a source-derived pass over `Thinlet.java`'s listeners. With
+the cross-JDK **test** matrix (D31) and trace diff (D33) both landed, this is the
+last open Phase-2 documentation item. The maintainer chose the source-derived pass
+now, with the trace-backed route explicitly acknowledged as later work.
+
+**Decision.**
+
+1. **Write `input-surface.md` from source, labelled as such.** The doc inventories
+   Thinlet's AWT input surface read directly from
+   `thinlet-core/src/main/java/thinlet/Thinlet.java`: `enableEvents` (`:124`) and
+   the `processEvent` dispatcher (`:3605`) over mouse (`handleMouseEvent` `:4673`),
+   the synthetic `DRAG_ENTERED`/`DRAG_EXITED` popup events (`:70`–`:71`), the
+   reflection-guarded mouse wheel (`:3796`), keyboard (`processKeyPress` `:3907`)
+   including Thinlet's reflective focus-traversal takeover
+   (`setFocusTraversalKeysEnabled(false)` `:117`), focus (`:3873`/`:3879`), and
+   component-resize (`:3886`). It also records the *enabled-but-ignored* ids
+   (`KEY_RELEASED`, `MOUSE_CLICKED`). Its provenance banner states plainly that it
+   is **source-derived, not trace-backed, not cross-JDK-validated**, and that the
+   D7 ±2 px tolerance model is N/A for input (categorical/structural, not pixels).
+
+2. **Close out the cross-JDK test-matrix item.** The `crossjdk` profile +
+   `.mvn/toolchains.xml` + the `fail-fast: false` matrix `test` job (JDK 8/11/17,
+   plus JDK 21 via the base `build` job) are in place (D31), so the ROADMAP bullet
+   moves ⏳ → ✅.
+
+3. **Fix the `perOp` posture without inventing entries.** `trace-tolerance.json`
+   stays byte-unchanged (`{ "defaultPx": 2.0, "perOp": {} }`). `perOp` remains
+   empty until CI's cross-JDK diff surfaces an over-tolerance position; only such a
+   *finding* earns an entry — never a `defaultPx` widening or a re-record (D7).
+   JDK 8/11/17 are absent in the authoring container, so no entry can be authored
+   locally; the posture is now recorded on the ROADMAP rather than left ambiguous.
+
+**Records the need, builds nothing.** A source-derived doc cannot show whether
+input *behavior* diverges across JDKs. `input-surface.md` and the ROADMAP therefore
+name the **input-capture harness** as the prerequisite and an explicit Phase-3
+deliverable: an input driver (scripted AWT events into a headless Thinlet on Xvfb
+`:99`), a dispatch recorder (the input counterpart to `TracingGraphics2D`/
+`LayoutTrace`, serializing handler routing + resulting focus/selection/caret/scroll
+state into golden input-traces), and replay fixtures fed through D33's per-JDK dump
++ `CrossJdkTraceDiffTest`. This slice builds none of it.
+
+**Scope / non-goals.** Documentation only — **zero** product or behavior change: no
+`Thinlet.java` edits, no golden re-record, no `trace-tolerance.json` change, no test
+changes. Build is unaffected (`thinlet-core` Java/goldens untouched);
+`./mvnw -B -DskipTests verify` stays green. This entry *resolves* D34's
+`input-surface.md` deferral.
+
+**Validation.** Every `Thinlet.java` line ref cited in `input-surface.md` was
+spot-checked against the verbatim import at authoring; the doc commits no per-JDK
+numeric drift claim; `trace-tolerance.json` is unchanged. (Cross-ref D7/D27/D33/D34.)
