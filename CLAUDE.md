@@ -31,15 +31,23 @@ Public artifacts, unsupported.
 - **`.claude/`** — Claude orientation/meta only; deletable, tracked in
   `.claude/MANIFEST.md`. Only the root `CLAUDE.md` lives outside it.
 
-## Current work — Phase 2
+## Current work — Phase 2.x (input-capture harness)
 
-Cross-JDK test matrix + backend-portability docs (ROADMAP Phase 2). The Phase 1
-golden-trace harness has landed: a `TracingGraphics2D` recorder + deterministic
-serializer and a `LayoutTrace`, run headless, recording golden traces over the
-vendored corpus (`thinlet-core/src/test/resources/corpus/{demo,drafts,amazon}/`).
-Phase 2 adds the cross-JDK trace diff (D33) and the `trace-curator` curation of
-`project-docs/backend-portability/` (D34, first cut: rendering + layout;
-input-surface deferred). The harness design below remains load-bearing.
+Phase 2.0 is **complete** (cross-JDK test matrix + backend-portability docs): the
+Phase 1 golden-trace harness (a `TracingGraphics2D` recorder + deterministic
+serializer and a `LayoutTrace`, run headless over the vendored corpus
+`thinlet-core/src/test/resources/corpus/{demo,drafts,amazon}/`), the cross-JDK trace
+diff (D33), and the `trace-curator` curation of `project-docs/backend-portability/`
+(D34 rendering + layout; `input-surface.md` source-derived per D35). The harness design
+below remains load-bearing.
+
+**Phase 2.x** (ROADMAP) is the **input-capture harness**, a gate before Phase 3: the
+golden net is paint + layout only, so the input surface of `Thinlet.java` is untested,
+and a regression net must capture that baseline *before* any input-touching refactor
+(D36). A feasibility probe has landed (D36 — scripted AWT events through the real
+`processEvent`, headless on Xvfb `:99`, asserted black-box via getters + re-paint trace
+diffs; green on JDK 21); findings + acceptance gate in
+`project-docs/backend-portability/input-harness-probe.md`.
 
 Load-bearing design = **D7 trace-tolerance model**: method-name + arg
 type/arity **structural-exact**; booleans/colors/strings/enums

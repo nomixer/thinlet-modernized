@@ -38,7 +38,7 @@ Status: ✅ done · ⏳ in progress · ⬜ not started
   It is profile-gated and off by default, so the default `./mvnw verify` stays
   token-free; `v0.1.1+` are now checked for accidental API breaks (PR #17).
 
-## Phase 2 — Cross-JDK test matrix + backend-portability docs ⏳
+## Phase 2 — Cross-JDK test matrix + backend-portability docs ✅
 
 The deliverable stays D1's **single, maximally-portable Java-8 jar** (`--release
 8`); what's added is proof it *runs* identically across JDK runtimes. D30's
@@ -46,7 +46,7 @@ The deliverable stays D1's **single, maximally-portable Java-8 jar** (`--release
 behavior-identical until the source differentiates, so they wait for Phase 3
 (**D31**, supersedes D30).
 
-- ⏳ Cross-JDK **test** matrix (runtimes JDK 8/11/17 via toolchains; JDK 21 via
+- ✅ Cross-JDK **test** matrix (runtimes JDK 8/11/17 via toolchains; JDK 21 via
   the base-JVM `build` job): the `crossjdk` profile + `.mvn/toolchains.xml` keep
   the compile at `--release 8` and fork the golden traces onto each target JDK;
   CI's single `test-jdk8` job is now a `fail-fast: false` matrix `test` job (D31).
@@ -57,18 +57,45 @@ behavior-identical until the source differentiates, so they wait for Phase 3
   `CrossJdkTraceDiffTest` into a `report.md`/`report.json` divergence report
   (`project-docs/backend-portability/cross-jdk-trace-diff.md`). Report-only
   `TraceComparator.deltas()`; the regression gate is unchanged.
-- Per-signature `trace-tolerance.json` tuning where the cross-JDK diff shows
-  metrics require it (implement the reserved `perOp` hook rather than widen
-  `defaultPx` or re-record; D7).
-- ⏳ A `trace-curator` agent populates `project-docs/backend-portability/`
+- Per-signature `trace-tolerance.json` tuning: **posture set, no entries** (D35).
+  `perOp` stays empty (`{ "defaultPx": 2.0, "perOp": {} }`) until CI's cross-JDK
+  diff surfaces a position that exceeds tolerance; only such a *finding* earns a
+  `perOp` entry — never a `defaultPx` widening or a re-record (D7). The hook is
+  reserved and report-only; JDK 8/11/17 are absent in the authoring container, so
+  no entry can be authored locally.
+- ✅ A `trace-curator` agent populates `project-docs/backend-portability/`
   (rendering primitives, layout algorithms, input surface) from the trace JSON
   and the cross-JDK `report.json`. First cut done (D34): `rendering-primitives.md`
   and `layout-algorithms.md` curated from the committed goldens; the agent is
-  codified at `.claude/agents/trace-curator.md`. `input-surface.md` is **deferred**
-  — the harness records paint + layout only, so there is no input-event trace to
-  curate from yet.
+  codified at `.claude/agents/trace-curator.md`. `input-surface.md` is a
+  **source-derived first cut** (D35), read from `Thinlet.java`'s event handling
+  because the harness records paint + layout only; its **trace-backed** extension
+  is tracked as the Phase 2.x deliverable (below).
 
-## Phase 3 — Internal refactors / Enhanced Thinlet ⬜
+## Phase 2.x — Input-capture harness (gate before Phase 3) ⏳
+
+The Phase 1/2 golden net is **paint + layout only** — it never dispatches input, so
+~26% of `Thinlet.java` (the `processEvent`/`handleMouseEvent`/`processKeyPress`/…
+event surface) has no automated coverage. A regression net only certifies a refactor
+when it captures the baseline **before** the change, so for any input-touching Phase 3
+work this net is **now or never**: without it those refactors stay "smoke-tested,"
+never "confirmed behavior-preserving" (**D36**).
+
+- **Probe first, then the first real build (MVP), behind an acceptance gate.** The
+  feasibility probe has landed (D36): scripted AWT events driven through the real
+  `protected processEvent` on headless Xvfb `:99`, targeted by `find(name)`, asserted
+  **black-box** via public getters + re-paint `Trace` diffs (reusing the Phase 1
+  `TracingGraphics2D`/`TraceComparator`). All green on JDK 21; cross-JDK (8/11/17)
+  determinism is delegated to the `crossjdk` CI matrix. Findings + gate:
+  `project-docs/backend-portability/input-harness-probe.md`.
+- **Design is black-box and small.** No dispatch/routing recorder — it would re-lock
+  the internals refactoring is meant to change (D36); the cross-JDK input *diff* is a
+  later layer on top, not the primary goal (correcting D35's cross-JDK-first framing).
+- **Gate:** Phase 3 does not start until Phase 2.x is accepted. On acceptance the MVP
+  broadens fixtures/scenarios and graduates `input-surface.md` from source-derived to
+  trace-backed.
+
+## Phase 3 — Internal refactors / Enhanced Thinlet ⬜ (blocked on Phase 2.x)
 
 - Remove SpotBugs exclusions as the code is cleaned, so the linters fail on
   regressions again (D13).

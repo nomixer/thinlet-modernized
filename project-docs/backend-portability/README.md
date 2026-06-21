@@ -17,7 +17,7 @@ Purpose (documentation only — no behavior change in this project):
 |------|--------------|--------|
 | [`rendering-primitives.md`](rendering-primitives.md) | every `Graphics2D` call in the trace `calls` arrays | populated (first cut) |
 | [`layout-algorithms.md`](layout-algorithms.md) | `LayoutTrace` widget bounds + `doLayout` dispatch | populated (first cut) |
-| [`input-surface.md`](input-surface.md) | AWT events Thinlet consumes | **deferred** — no input-event capture in the harness yet |
+| [`input-surface.md`](input-surface.md) | AWT events Thinlet consumes | source-derived (first cut) |
 
 The [`cross-jdk-trace-diff.md`](cross-jdk-trace-diff.md) reference documents the
 tooling that captures and compares the per-runtime traces (JDK 8/11/17/21) into a
