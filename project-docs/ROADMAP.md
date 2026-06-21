@@ -26,7 +26,7 @@ Status: ✅ done · ⏳ in progress · ⬜ not started
   serializer (D7 tolerance), `LayoutTrace`, Xvfb `:99` ownership; goldens for
   41/42 corpus files; self-consistency + regression tests (D24, PR #9).
 - ✅ Quirk-locking: the D13 candidate bugs triaged; the parser null-source NPE
-  locked as `KNOWN_QUIRKS` Q1 (PR #10).
+  locked as `KNOWN-QUIRKS` Q1 (PR #10).
 - ✅ JDK-8 cross-JDK execution row via `maven-toolchains-plugin`; `file.encoding`
   pinned to UTF-8 for cross-JDK determinism (D14/D25, PR #11).
 - ✅ Encoding audit + inventory (D26, PR #13); `project-docs/` established (D27).
@@ -55,7 +55,7 @@ behavior-identical until the source differentiates, so they wait for Phase 3
 - ✅ Cross-JDK trace diff (D33): per-JDK trace dumps (`GoldenTraceDumpModeTest`) +
   artifacts + an informational `trace-diff` CI job aggregating them via
   `CrossJdkTraceDiffTest` into a `report.md`/`report.json` divergence report
-  (`project-docs/backend-portability/cross-jdk-trace-diff.md`). Report-only
+  (`project-docs/backend-portability/CROSS-JDK-TRACE-DIFF.md`). Report-only
   `TraceComparator.deltas()`; the regression gate is unchanged.
 - Per-signature `trace-tolerance.json` tuning: **posture set, no entries** (D35).
   `perOp` stays empty (`{ "defaultPx": 2.0, "perOp": {} }`) until CI's cross-JDK
@@ -65,9 +65,9 @@ behavior-identical until the source differentiates, so they wait for Phase 3
   no entry can be authored locally.
 - ✅ A `trace-curator` agent populates `project-docs/backend-portability/`
   (rendering primitives, layout algorithms, input surface) from the trace JSON
-  and the cross-JDK `report.json`. First cut done (D34): `rendering-primitives.md`
-  and `layout-algorithms.md` curated from the committed goldens; the agent is
-  codified at `.claude/agents/trace-curator.md`. `input-surface.md` is a
+  and the cross-JDK `report.json`. First cut done (D34): `RENDERING-PRIMITIVES.md`
+  and `LAYOUT-ALGORITHMS.md` curated from the committed goldens; the agent is
+  codified at `.claude/agents/trace-curator.md`. `INPUT-SURFACE.md` is a
   **source-derived first cut** (D35), read from `Thinlet.java`'s event handling
   because the harness records paint + layout only; its **trace-backed** extension
   is tracked as the Phase 2.x deliverable (below).
@@ -87,7 +87,7 @@ never "confirmed behavior-preserving" (**D36**).
   **black-box** via public getters + re-paint `Trace` diffs (reusing the Phase 1
   `TracingGraphics2D`/`TraceComparator`). All green on JDK 21; cross-JDK (8/11/17)
   determinism is delegated to the `crossjdk` CI matrix. Findings + gate:
-  `project-docs/backend-portability/input-harness-probe.md`.
+  `project-docs/backend-portability/INPUT-HARNESS-PROBE.md`.
 - **Design is black-box and small.** No dispatch/routing recorder — it would re-lock
   the internals refactoring is meant to change (D36); the cross-JDK input *diff* is a
   later layer on top, not the primary goal (correcting D35's cross-JDK-first framing).
@@ -106,14 +106,14 @@ never "confirmed behavior-preserving" (**D36**).
 - **Deferred to Phase 3 (D37):** extracting the harness into a standalone
   `thinlet-testkit` Maven module — it hits a `thinlet-core(test) → testkit →
   thinlet-core(main)` reactor cycle, so it waits for a second consumer. Also deferred (per
-  D36): graduating `input-surface.md` to fully trace-backed, scroll-offset item targeting,
+  D36): graduating `INPUT-SURFACE.md` to fully trace-backed, scroll-offset item targeting,
   drag pseudo-events, and keyboard type-ahead.
 
 ## Phase 3 — Internal refactors / Enhanced Thinlet ⬜ (blocked on Phase 2.x)
 
 - Remove SpotBugs exclusions as the code is cleaned, so the linters fail on
   regressions again (D13).
-- Deliberately fix the locked quirks per their `KNOWN_QUIRKS` dispositions (e.g.
+- Deliberately fix the locked quirks per their `KNOWN-QUIRKS` dispositions (e.g.
   the parser null-source NPE; the `FileChooser` fallback null deref).
 - HiDPI / alternative rendering backends, informed by the backend-portability
   docs.

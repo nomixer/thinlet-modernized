@@ -20,7 +20,7 @@ import thinlet.Thinlet;
 
 /**
  * Test-scope input driver for the Phase 2.x input-capture regression suite (cf.
- * {@code project-docs/backend-portability/input-harness-probe.md}). It synthesizes
+ * {@code project-docs/backend-portability/INPUT-HARNESS-PROBE.md}). It synthesizes
  * AWT input events and pushes them through Thinlet's real {@code protected
  * processEvent} funnel on a headless Thinlet, so the suite exercises the same
  * dispatch path a live user would, not internal handler shortcuts.

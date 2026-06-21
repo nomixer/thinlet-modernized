@@ -129,6 +129,6 @@ input golden files** (input state is read live), and `trace-tolerance.json` is u
 (its ±2px is for cross-JDK *paint* goldens, not these same-JVM input diffs).
 
 **Still deferred** (unchanged from the probe limits): a standalone `thinlet-testkit` module
-(reactor-cycle constraint — D37), fully trace-backed `input-surface.md`, scroll-offset
+(reactor-cycle constraint — D37), fully trace-backed `INPUT-SURFACE.md`, scroll-offset
 *item* targeting, drag pseudo-events, tooltip/auto-repeat timers, and keyboard type-ahead
 (wall-clock + text-width dependent).

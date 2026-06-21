@@ -14,14 +14,14 @@ import thinlet.Thinlet;
 import thinlet.trace.XvfbDisplayExtension;
 
 /**
- * Locks KNOWN_QUIRKS.md Q1: the 2005 XML parser throws {@link
+ * Locks KNOWN-QUIRKS.md Q1: the 2005 XML parser throws {@link
  * NullPointerException} when handed an unreadable source, instead of a
  * descriptive {@link java.io.IOException}. A {@code null} stream reaches {@code
  * new InputStreamReader(...)} in the core parser; {@code parse(String)} can
  * produce that {@code null} when the path is neither a classpath resource nor a
  * valid URL (the source even carries a {@code "thows nullpointerexception"}
  * comment there). These tests assert the <em>current</em> behavior — see
- * KNOWN_QUIRKS.md — so it cannot drift silently.
+ * KNOWN-QUIRKS.md — so it cannot drift silently.
  */
 @Tag("documents-current-behavior")
 @ExtendWith(XvfbDisplayExtension.class)

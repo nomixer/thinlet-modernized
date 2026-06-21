@@ -6,7 +6,7 @@
 > `LayoutTrace` widget-bounds half of each trace), cross-referenced to
 > `Thinlet.java`'s `doLayout` dispatch. The `{x, y, w, h}` bounds are the
 > **tolerant numeric** column (±2 px); the widget `class` is categorical-exact.
-> See `DECISIONS.md` **D7** and `cross-jdk-trace-diff.md`.
+> See `DECISIONS.md` **D7** and `CROSS-JDK-TRACE-DIFF.md`.
 
 Each layout pass: its trigger, inputs, outputs (the bounds recorded per widget),
 and the AWT touchpoints a porting backend must replace.
@@ -78,7 +78,7 @@ exact observed set (verify with
 
 - `getPreferredSize` → child measurement; relies on `FontMetrics` for any text.
 - `FontMetrics.getHeight()/getAscent()/stringWidth()/charWidth()` — text extents
-  (call sites enumerated in `.claude/paint-pipeline-map.md`). **The drift source.**
+  (call sites enumerated in `.claude/PAINT-PIPELINE-MAP.md`). **The drift source.**
 - `Dimension`, `Rectangle`, `Insets` — value types for sizes/bounds/padding.
 - `setRectangle`/`getRectangle` (`Thinlet.java:7482`/`:7494`) — bounds stored on
   the widget under `"bounds"`.
@@ -93,7 +93,7 @@ Bounds are derived from `FontMetrics`-measured preferred sizes, so the same
 JDK-variable text math that perturbs `drawString` coordinates perturbs widget
 `{x,y,w,h}` — within D7's ±2 px tolerance. Structure (which widgets exist, their
 nesting and `class`) is exact across runtimes; only the numbers drift. The
-informational cross-JDK report (`cross-jdk-trace-diff.md`) quantifies it.
+informational cross-JDK report (`CROSS-JDK-TRACE-DIFF.md`) quantifies it.
 **No fixed per-JDK figures are committed here** — the multi-runtime report is
 CI-only (JDK 8/11/17 absent in the authoring container), and an over-tolerance
 bound is a `perOp` `trace-tolerance.json` candidate (D7), not prose.

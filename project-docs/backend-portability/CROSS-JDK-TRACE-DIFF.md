@@ -15,7 +15,7 @@ An **informational**, regenerable report (not committed) with two faces:
   where, any position exceeding tolerance, drift ranked by drawing op, and a
   per-runtime delta-vs-baseline table.
 - `report.json` — the same data structured for tooling (the eventual
-  `trace-curator` will read this to populate `rendering-primitives.md` etc.).
+  `trace-curator` will read this to populate `RENDERING-PRIMITIVES.md` etc.).
 
 It never gates a build. The per-JDK golden regression tests already enforce
 "±2px vs the baseline golden" on each runtime; this report exists to *surface*

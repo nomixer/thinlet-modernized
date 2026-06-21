@@ -15,10 +15,10 @@ Purpose (documentation only — no behavior change in this project):
 
 | File | Sourced from | Status |
 |------|--------------|--------|
-| [`rendering-primitives.md`](rendering-primitives.md) | every `Graphics2D` call in the trace `calls` arrays | populated (first cut) |
-| [`layout-algorithms.md`](layout-algorithms.md) | `LayoutTrace` widget bounds + `doLayout` dispatch | populated (first cut) |
-| [`input-surface.md`](input-surface.md) | AWT events Thinlet consumes | source-derived (first cut) |
+| [`RENDERING-PRIMITIVES.md`](RENDERING-PRIMITIVES.md) | every `Graphics2D` call in the trace `calls` arrays | populated (first cut) |
+| [`LAYOUT-ALGORITHMS.md`](LAYOUT-ALGORITHMS.md) | `LayoutTrace` widget bounds + `doLayout` dispatch | populated (first cut) |
+| [`INPUT-SURFACE.md`](INPUT-SURFACE.md) | AWT events Thinlet consumes | source-derived (first cut) |
 
-The [`cross-jdk-trace-diff.md`](cross-jdk-trace-diff.md) reference documents the
+The [`CROSS-JDK-TRACE-DIFF.md`](CROSS-JDK-TRACE-DIFF.md) reference documents the
 tooling that captures and compares the per-runtime traces (JDK 8/11/17/21) into a
 divergence report — the quantified `FontMetrics` drift the curator will draw on.

@@ -6,7 +6,7 @@
   2005 production code is NOT edited to satisfy them. SpotBugs runs against a
   documented LEGACY BASELINE: the idiomatic 2005 patterns below are accepted in
   the `thinlet.*` classes. Genuine bugs among them (e.g. null-param deref and
-  unclosed-stream paths in the XML parser) are triaged into KNOWN_QUIRKS.md and
+  unclosed-stream paths in the XML parser) are triaged into KNOWN-QUIRKS.md and
   locked by tests during Phase 1 — not fixed here. See DECISIONS.md D13.
 
   As Enhanced Thinlet (future) addresses these, entries are removed so SpotBugs
@@ -61,7 +61,7 @@
       <Bug pattern="CT_CONSTRUCTOR_THROW"/>
       <Bug pattern="RV_RETURN_VALUE_IGNORED"/>
       <!-- Candidate genuine bugs — XML parser null-param + stream cleanup.
-           Accepted for the Phase-0 baseline; to be locked as KNOWN_QUIRKS
+           Accepted for the Phase-0 baseline; to be locked as KNOWN-QUIRKS
            entries with tests in Phase 1. -->
       <Bug pattern="NP_NULL_PARAM_DEREF"/>
       <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>

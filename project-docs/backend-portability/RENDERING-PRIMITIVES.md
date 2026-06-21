@@ -8,7 +8,7 @@
 > posture: a call's **method name and argument arity/types are exact** across
 > JDK runtimes; **categorical** args (colors, fonts, strings) are exact; only
 > **numeric** coordinate/size args are tolerant (±2 px). See `DECISIONS.md` **D7**
-> and `cross-jdk-trace-diff.md`.
+> and `CROSS-JDK-TRACE-DIFF.md`.
 
 Three purposes:
 
@@ -120,7 +120,7 @@ The geometry above is stable in *structure* across JDK 8/11/17/21 — same ops,
 same order, same categorical values. The numeric coordinates drift slightly
 between runtimes because `FontMetrics` pixel math is JDK-variable; D7's ±2 px
 tolerance absorbs it, and the informational cross-JDK report
-(`cross-jdk-trace-diff.md`) quantifies *where* it lands. **No fixed per-JDK
+(`CROSS-JDK-TRACE-DIFF.md`) quantifies *where* it lands. **No fixed per-JDK
 figures are committed here**: the multi-runtime report is produced only in CI
 (JDK 8/11/17 are not present in the doc-authoring container), and any position
 that ever exceeds tolerance is a finding to triage into a `perOp`

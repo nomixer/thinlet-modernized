@@ -3,8 +3,8 @@ name: trace-curator
 description: >-
   Curates the backend-portability inventory (project-docs/backend-portability/)
   from the committed golden traces and the cross-JDK divergence report. Use when
-  asked to populate or refresh rendering-primitives.md / layout-algorithms.md /
-  input-surface.md, or to fold a new cross-JDK finding into the docs or the
+  asked to populate or refresh RENDERING-PRIMITIVES.md / LAYOUT-ALGORITHMS.md /
+  INPUT-SURFACE.md, or to fold a new cross-JDK finding into the docs or the
   trace-tolerance config. Documentation-only: it never changes Thinlet's behavior.
 tools: Read, Grep, Glob, Bash, Edit, Write
 model: inherit
@@ -33,20 +33,20 @@ layout), **D33** (cross-JDK trace diff), **D34** (this curation slice).
    (`defaultPx`, `perOp`).
 3. **Cross-JDK report** — `report.json` from `CrossJdkTraceDiffTest`
    (CI artifact `trace-diff-report`; regenerable per
-   `project-docs/backend-portability/cross-jdk-trace-diff.md`). Read it **only if
+   `project-docs/backend-portability/CROSS-JDK-TRACE-DIFF.md`). Read it **only if
    you actually have it in hand.**
 4. **Source + map** — `thinlet-core/src/main/java/thinlet/Thinlet.java` and the
-   line-referenced `.claude/paint-pipeline-map.md`, for call-site citations.
+   line-referenced `.claude/PAINT-PIPELINE-MAP.md`, for call-site citations.
 
 ## Outputs
 
-- `project-docs/backend-portability/rendering-primitives.md` — every observed
+- `project-docs/backend-portability/RENDERING-PRIMITIVES.md` — every observed
   `Graphics2D` op: what it draws, representative `Thinlet.java` call sites,
   backend-state implications, Canvas/WebGPU/WASM equivalents, per-DPR notes.
-- `project-docs/backend-portability/layout-algorithms.md` — each `doLayout`
+- `project-docs/backend-portability/LAYOUT-ALGORITHMS.md` — each `doLayout`
   pass: trigger, inputs, the `{x,y,w,h}` outputs, AWT touchpoints; widget-class
   coverage.
-- `project-docs/backend-portability/input-surface.md` — **source-derived first
+- `project-docs/backend-portability/INPUT-SURFACE.md` — **source-derived first
   cut (D35)**: read from `Thinlet.java`'s event handling (the harness records
   paint + layout only, so there is no input-event trace). The **trace-backed
   extension** — an input driver + dispatch recorder + replay fixtures feeding the
@@ -63,7 +63,7 @@ layout), **D33** (cross-JDK trace diff), **D34** (this curation slice).
    the corpus never exercises (e.g. `drawRect`), say so explicitly — the doc's
    spine is the *observed* surface.
 3. **Cite call sites.** Map each op/pass to `Thinlet.java` line refs via
-   `.claude/paint-pipeline-map.md`; spot-check the refs still resolve.
+   `.claude/PAINT-PIPELINE-MAP.md`; spot-check the refs still resolve.
 4. **Use real examples.** Pull concrete tuples from named goldens (e.g. the
    four-`drawLine` button border in `demo/calculator.json`).
 5. **Respect the tolerance posture.** Method/arg structure and categorical args
@@ -75,7 +75,7 @@ layout), **D33** (cross-JDK trace diff), **D34** (this curation slice).
 - **Docs only.** No `Thinlet.java` edits, no behavior change, no golden re-record.
 - **No unsourced numbers.** Do not commit per-JDK drift figures unless a real
   `report.json` is in hand; otherwise cite the *mechanism*
-  (`cross-jdk-trace-diff.md`) and the ±2 px absorption. JDK 8/11/17 are typically
+  (`CROSS-JDK-TRACE-DIFF.md`) and the ±2 px absorption. JDK 8/11/17 are typically
   absent outside CI.
 - **Over-tolerance is a finding, not prose.** A position exceeding tolerance goes
   into a `perOp` entry in `trace-tolerance.json` (D7's reserved hook) — never

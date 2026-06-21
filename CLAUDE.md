@@ -13,10 +13,10 @@ Public artifacts, unsupported.
 
 - **`DECISIONS.md`** — append-only decision log (D1–D…). **The authority.** When
   this file and any external/pasted doc disagree, the repo wins.
-- **`KNOWN_QUIRKS.md`** — locked 2005 bugs/quirks (populated during Phase 1).
+- **`KNOWN-QUIRKS.md`** — locked 2005 bugs/quirks (populated during Phase 1).
 - **`README.md`** — project posture, build instructions, attribution.
 - **`project-docs/ROADMAP.md`** — the phase plan (Phases 0–3, done vs. pending).
-- **`.claude/paint-pipeline-map.md`** — engineering reference for
+- **`.claude/PAINT-PIPELINE-MAP.md`** — engineering reference for
   `Thinlet.java`'s paint/layout pipeline, drawing vocabulary, FontMetrics
   surface, and `Object[]` widget model. Background for the Phase 1 golden-trace
   harness; lives under `.claude/`, outside the product source tree.
@@ -27,9 +27,12 @@ Public artifacts, unsupported.
   later docs reflecting enhancements the maintainer makes to Thinlet. **Never put
   project/modernization or Claude docs here.**
 - **`project-docs/`** — modernization/project documentation authored for this
-  fork: `ROADMAP.md`, `backend-portability/`, `encoding-inventory.md`.
+  fork: `ROADMAP.md`, `backend-portability/`, `ENCODING-INVENTORY.md`.
 - **`.claude/`** — Claude orientation/meta only; deletable, tracked in
   `.claude/MANIFEST.md`. Only the root `CLAUDE.md` lives outside it.
+- **Markdown filenames** — author project docs as `UPPERCASE-WITH-HYPHENS.md` (D38).
+  Exceptions kept lowercase/fixed by ecosystem or the harness: `README.md`, `CLAUDE.md`,
+  and Claude Code agent files under `.claude/agents/*.md`.
 
 ## Current work — Phase 2.x (input-capture harness)
 
@@ -38,7 +41,7 @@ Phase 1 golden-trace harness (a `TracingGraphics2D` recorder + deterministic
 serializer and a `LayoutTrace`, run headless over the vendored corpus
 `thinlet-core/src/test/resources/corpus/{demo,drafts,amazon}/`), the cross-JDK trace
 diff (D33), and the `trace-curator` curation of `project-docs/backend-portability/`
-(D34 rendering + layout; `input-surface.md` source-derived per D35). The harness design
+(D34 rendering + layout; `INPUT-SURFACE.md` source-derived per D35). The harness design
 below remains load-bearing.
 
 **Phase 2.x** (ROADMAP) is the **input-capture harness**, a gate before Phase 3: the
@@ -51,7 +54,7 @@ keyboard `press`/type), and `InputSmokeTest` + per-widget `InputList`/`Tree`/`Co
 expand/collapse, and scrolling **black-box** via public getters + ephemeral same-JVM
 re-paint trace diffs (no input goldens). Green on JDK 21; cross-JDK (8/11/17) is on the
 `crossjdk` CI matrix. Findings + acceptance gate in
-`project-docs/backend-portability/input-harness-probe.md`. Deferred (D37): extracting the
+`project-docs/backend-portability/INPUT-HARNESS-PROBE.md`. Deferred (D37): extracting the
 harness into a standalone `thinlet-testkit` module (reactor-cycle constraint — waits for a
 second consumer).
 
@@ -85,7 +88,7 @@ absorbed by the coordinate tolerance, not asserted directly.
 ## Working agreements
 
 - Develop on a feature branch; **PR into `main`** (direct pushes are blocked);
-  squash-merge. Every PR leaves `DECISIONS.md` / `KNOWN_QUIRKS.md` accurate
+  squash-merge. Every PR leaves `DECISIONS.md` / `KNOWN-QUIRKS.md` accurate
   as-of-merge — no follow-up tidy-up PR.
 - Watch CI to green after pushing (webhooks deliver failures, not successes).
 - **Precise language:** a non-exhaustive look is a *smoke test*, not
