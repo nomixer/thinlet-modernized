@@ -90,6 +90,14 @@ absorbed by the coordinate tolerance, not asserted directly.
 - Develop on a feature branch; **PR into `main`** (direct pushes are blocked);
   squash-merge. Every PR leaves `DECISIONS.md` / `KNOWN-QUIRKS.md` accurate
   as-of-merge — no follow-up tidy-up PR.
+- **Consult before opening a PR.** Push the feature branch, then ask the maintainer
+  before opening the PR — PRs aren't auto-created (but they *are* the normal path;
+  this is a "check first," not a ban).
+- **Remote branch deletion is the maintainer's to do.** The Claude-on-the-web
+  sandbox can push branches but cannot delete remote refs (the git proxy returns
+  403, and no API/MCP tool is exposed), so don't retry remote-branch deletion from a
+  session — the maintainer prunes merged branches (GitHub Branches page), and the
+  repo's "Automatically delete head branches" setting handles it on merge.
 - Watch CI to green after pushing (webhooks deliver failures, not successes).
 - **Precise language:** a non-exhaustive look is a *smoke test*, not
   "verified/confirmed". Reserve "confirmed" for a named source of truth /
