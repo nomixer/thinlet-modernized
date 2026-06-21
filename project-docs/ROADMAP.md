@@ -38,7 +38,7 @@ Status: ✅ done · ⏳ in progress · ⬜ not started
   It is profile-gated and off by default, so the default `./mvnw verify` stays
   token-free; `v0.1.1+` are now checked for accidental API breaks (PR #17).
 
-## Phase 2 — Cross-JDK test matrix + backend-portability docs ⏳
+## Phase 2 — Cross-JDK test matrix + backend-portability docs ✅
 
 The deliverable stays D1's **single, maximally-portable Java-8 jar** (`--release
 8`); what's added is proof it *runs* identically across JDK runtimes. D30's
@@ -70,9 +70,32 @@ behavior-identical until the source differentiates, so they wait for Phase 3
   codified at `.claude/agents/trace-curator.md`. `input-surface.md` is a
   **source-derived first cut** (D35), read from `Thinlet.java`'s event handling
   because the harness records paint + layout only; its **trace-backed** extension
-  is tracked as a Phase 3 deliverable (below).
+  is tracked as the Phase 2.x deliverable (below).
 
-## Phase 3 — Internal refactors / Enhanced Thinlet ⬜
+## Phase 2.x — Input-capture harness (gate before Phase 3) ⏳
+
+The Phase 1/2 golden net is **paint + layout only** — it never dispatches input, so
+~26% of `Thinlet.java` (the `processEvent`/`handleMouseEvent`/`processKeyPress`/…
+event surface) has no automated coverage. A regression net only certifies a refactor
+when it captures the baseline **before** the change, so for any input-touching Phase 3
+work this net is **now or never**: without it those refactors stay "smoke-tested,"
+never "confirmed behavior-preserving" (**D36**).
+
+- **Probe first, then the first real build (MVP), behind an acceptance gate.** The
+  feasibility probe has landed (D36): scripted AWT events driven through the real
+  `protected processEvent` on headless Xvfb `:99`, targeted by `find(name)`, asserted
+  **black-box** via public getters + re-paint `Trace` diffs (reusing the Phase 1
+  `TracingGraphics2D`/`TraceComparator`). All green on JDK 21; cross-JDK (8/11/17)
+  determinism is delegated to the `crossjdk` CI matrix. Findings + gate:
+  `project-docs/backend-portability/input-harness-probe.md`.
+- **Design is black-box and small.** No dispatch/routing recorder — it would re-lock
+  the internals refactoring is meant to change (D36); the cross-JDK input *diff* is a
+  later layer on top, not the primary goal (correcting D35's cross-JDK-first framing).
+- **Gate:** Phase 3 does not start until Phase 2.x is accepted. On acceptance the MVP
+  broadens fixtures/scenarios and graduates `input-surface.md` from source-derived to
+  trace-backed.
+
+## Phase 3 — Internal refactors / Enhanced Thinlet ⬜ (blocked on Phase 2.x)
 
 - Remove SpotBugs exclusions as the code is cleaned, so the linters fail on
   regressions again (D13).
@@ -80,11 +103,3 @@ behavior-identical until the source differentiates, so they wait for Phase 3
   the parser null-source NPE; the `FileChooser` fallback null deref).
 - HiDPI / alternative rendering backends, informed by the backend-portability
   docs.
-- **Input-capture harness** (D35) — the prerequisite for any cross-JDK
-  input-behavior comparison, which `input-surface.md` (source-derived) cannot
-  provide: an **input driver** (injects scripted AWT events into a headless
-  Thinlet on Xvfb `:99`), a **dispatch recorder** (the input counterpart to
-  `TracingGraphics2D`/`LayoutTrace`, serializing the handler routing + resulting
-  focus/selection/caret/scroll state into golden input-traces), and **replay
-  fixtures** fed through D33's per-JDK dump + `CrossJdkTraceDiffTest`. Lets
-  `input-surface.md` graduate from source-derived to trace-backed.

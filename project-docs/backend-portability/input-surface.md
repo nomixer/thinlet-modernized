@@ -115,31 +115,29 @@ calling out so a backend does not invent behavior for them:
 - **Reflection-guarded wheel** — the wheel mask/branch exist only when the runtime
   exposes `MOUSE_WHEEL` (`:81`/`:82`); a backend wires the wheel unconditionally.
 
-## Capturing input cross-JDK (the required future harness)
+## Capturing input behavior (the input-capture harness — Phase 2.x)
 
-This doc is **source-derived** and therefore **cannot** show whether input
-*behavior* diverges across JDK 8/11/17/21 — it only records what the source is
-wired to do. Demonstrating (or ruling out) divergence the way
-`rendering-primitives.md` and `layout-algorithms.md` do for paint/layout requires
-**new executable artifacts the current harness does not have**:
+This doc is **source-derived**: it records what the source is wired to do, not what
+Thinlet *observably does* when driven. Closing that gap needs an executable
+**input-capture harness**, which D36 resequenced into **Phase 2.x** (a gate before
+Phase 3) and reframed — its primary purpose is a **same-JDK refactor-safety net** over
+the untested ~26% input surface above; cross-JDK input comparison is a later layer on
+top. The design, validated by a landed feasibility probe (D36,
+`input-harness-probe.md`), is deliberately small:
 
-1. **An input driver** — a test-side component that injects a *scripted* sequence
-   of AWT events (mouse press/move/drag/release, key press/typed, focus
-   gain/loss, wheel) into a headless Thinlet on the pinned Xvfb `:99` (D22), the
-   input analogue of how the corpus drives paint today.
-2. **A dispatch recorder** — the input counterpart to
-   `TracingGraphics2D`/`LayoutTrace`: it serializes *what Thinlet does in
-   response* (which `handleMouseEvent`/`processKeyPress` branch fired; the
-   resulting focus / selection / caret / scroll state) into a deterministic golden
-   **input-trace** alongside the existing traces under
-   `thinlet-core/src/test/resources/trace/`.
-3. **Replayable trace fixtures** — committed scripted-input fixtures plus their
-   golden input-traces, run through D33's existing per-JDK dump
-   (`GoldenTraceDumpModeTest`) + `CrossJdkTraceDiffTest` so input behavior is
-   diffed across JDK 8/11/17/21 exactly as paint and layout are now.
+1. **An input driver** — a test-side component that synthesizes a *scripted* sequence
+   of AWT events and pushes them through Thinlet's real `protected processEvent` on the
+   pinned Xvfb `:99` (D22), targeting widgets by `find(name)`.
+2. **Black-box assertions, reusing Phase 1** — outcomes are read through public getters
+   (`getBoolean`/`getString`/`getSelectedIndex`/`getInteger`) and **re-paint `Trace`
+   diffs** via the existing `TracingGraphics2D`/`TraceComparator`. There is **no
+   dispatch/routing recorder** (D36 cut it: recording internal handler routing would
+   re-lock the internals a refactor is meant to change, and the probe needed none).
+3. **Replayable fixtures** — committed scripted-input fixtures whose post-event state is
+   asserted same-JDK and, as a later layer, diffed across JDK 8/11/17/21 via the
+   `crossjdk` matrix.
 
-This is the **only** route to real LTS-version input comparison and is tracked as
-an explicit future deliverable (ROADMAP Phase 3; `DECISIONS.md` **D34**/**D35**).
+Tracked as the **Phase 2.x** deliverable (ROADMAP; `DECISIONS.md` **D34**/**D35**/**D36**).
 
 ## Cross-JDK note
 
