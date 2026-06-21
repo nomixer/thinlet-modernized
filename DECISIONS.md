@@ -1093,3 +1093,71 @@ pseudo-events, tooltip/auto-repeat timers, keyboard type-ahead timing.
 **Validation.** `./mvnw -B verify` green on JDK 21 (0 Checkstyle, 0 SpotBugs; probe +
 existing goldens pass). Same-JDK feasibility is confirmed by deterministic test and
 direct observation; cross-JDK is explicitly pending CI. (Cross-ref D7/D22/D31/D33/D34/D35.)
+
+## D37 — Input-capture regression MVP: named-scenario gate (getters + ephemeral re-paint diff); probe graduated; library extraction deferred
+
+**Date:** 2026-06-21. **Status:** accepted. **Phase:** 2.
+
+**Context.** D36 landed the feasibility probe and recommended *proceed to the MVP*.
+This slice builds that MVP — the actual regression net that gates Phase 3 — turning the
+single-fixture probe into a named-scenario suite over the previously uncovered input
+surface (`processEvent`/`handleMouseEvent`/`processKeyPress`/`processScroll`).
+
+**Decision.**
+
+1. **Named-scenario gate, not corpus replay.** The net is a curated set of black-box
+   scenarios covering `list` selection (click, Arrow/Home/End, Shift-extend multi-select),
+   `tree` selection + keyboard expand/collapse + descent, `combobox` popup-open + keyboard
+   commit, and mouse-wheel `scroll`. (Driving the vendored corpus through input was
+   rejected — the corpus binds demo handlers and asserts nothing about input.)
+
+2. **Assertions = public getters (primary) + ephemeral re-paint `Trace` diff
+   (corroboration); no committed input goldens.** The getter
+   (`getSelectedIndex`/`getSelectedItem(s)`/`getBoolean`/`getString`/`getCount`) is the
+   exact, JDK-invariant assertion; a same-JVM before/after `TraceComparator.compare(…,0.0)`
+   corroborates "something visibly changed," and run-to-run determinism is proven once in
+   the smoke layer. There is **no input golden file** to re-record — input state is read
+   live, so the net cannot drift the way a stored baseline could.
+
+3. **Probe folded into the suite.** `InputProbeDriver`→`InputDriver` (adds `press(keyCode,
+   modifiers)` + Arrow/Home/End/Enter helpers, `scroll`, and a generalized `property`/
+   `viewRect` `Object[]` reader); `InputProbeHandler`→`InputHandler`; `probe.xml`→
+   `smoke.xml`; the four probe cases become `InputSmokeTest`. New per-widget classes:
+   `InputListTest`, `InputTreeTest`, `InputComboBoxTest`, `InputScrollTest`. All carry
+   `@Tag("input")` and **run by default** in `./mvnw -B verify` (the net must gate every
+   build); since no `<excludedGroups>` exists, default execution needs no pom change — the
+   tag is a manual selector only (`-Dgroups=input`).
+
+4. **Two driver findings beyond D36.** (a) **Keyboard dispatch split:** Thinlet runs
+   `processKeyPress` only when `control == (id == KEY_PRESSED)` (`:3827`), so
+   navigation/control keys (Arrows/Home/End/PageUp-Down/Enter/Esc) must be **KEY_PRESSED**
+   with `CHAR_UNDEFINED`, while printable characters **including the space bar** (0x20 is
+   not a control char) go through **KEY_TYPED** — hence space stays out of the `press`
+   helpers. (b) **Wheel scroll** needs a real `java.awt.event.MouseWheelEvent` (Thinlet
+   reads `getWheelRotation()` reflectively, `:3802`) plus the same priming `MOUSE_MOVED`
+   as `click`. Neither scroll offset (`:view`) nor combobox open-state (`:combolist`) has
+   a public getter, so both are read off the `Object[]` model exactly as `LayoutTrace`
+   reads `"bounds"`; scroll is asserted on **direction**, never an exact pixel.
+
+5. **Library extraction deferred (was floated this slice).** The harness stays in package
+   `thinlet.trace`, test scope, on the current layout. A standalone `thinlet-testkit`
+   Maven module was rejected *for now*: it must depend on `thinlet-core` (it subclasses
+   `Thinlet` for `processEvent`), so any consumer creates a `thinlet-core(test) → testkit
+   → thinlet-core(main)` reactor cycle — breaking it forces relocating the Phase 1 golden
+   suite + the Xvfb/`crossjdk` CI wiring into the new module, far larger than this MVP.
+   Revisit in Phase 3 when a second consumer actually exists.
+
+**Scope / non-goals.** **Test-scope only** — no `Thinlet.java` change, no golden
+re-record, no `trace-tolerance.json` change; `thinlet-core` stays
+runtime-dependency-free; existing golden tests unaffected. Cross-JDK input determinism
+(8/11/17) is delegated to the `crossjdk` CI matrix (those JDKs are absent in the authoring
+container). Still deferred (per D36): list/tree/combo scroll-offset *item* targeting, drag
+pseudo-events, tooltip/auto-repeat timers, and **keyboard type-ahead** (wall-clock +
+text-width dependent → non-deterministic and FontMetrics-sensitive, so excluded). No
+`KNOWN_QUIRKS` change — no scenario surfaced a locked quirk.
+
+**Validation.** Input group green on JDK 21 — 16 tests across `InputSmokeTest` (4),
+`InputListTest` (4), `InputTreeTest` (4), `InputComboBoxTest` (2), `InputScrollTest` (2);
+`./mvnw -B verify` green (0 Checkstyle, 0 SpotBugs, Spotless clean; input suite + existing
+goldens pass). Same-JDK confirmed by deterministic test + direct observation; cross-JDK
+pending CI. (Cross-ref D7/D22/D31/D36.)
