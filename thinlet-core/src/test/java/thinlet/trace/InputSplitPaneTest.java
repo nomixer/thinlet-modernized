@@ -29,7 +29,9 @@ import thinlet.Thinlet;
 class InputSplitPaneTest {
 
     private static final String FIXTURE = "/input/splitpane.xml";
-    private static final int MAX = InputDriver.WIDTH - 5; // splitpane fills the window; divider range 0..MAX
+    private static final String VERT_FIXTURE = "/input/splitpane-vertical.xml";
+    private static final int MAX = InputDriver.WIDTH - 5; // horizontal split: divider range 0..MAX
+    private static final int MAX_V = InputDriver.HEIGHT - 5; // vertical split: divider range 0..MAX_V
 
     /** F8 transfers focus to the enclosing splitpane; then arrows/Home/End move the divider. */
     @Test
@@ -128,5 +130,78 @@ class InputSplitPaneTest {
         assertThat(t.getInteger(sp, "divider"))
                 .as("clamp is destructive: the 200 position is lost permanently, not restored on grow")
                 .isEqualTo(145);
+    }
+
+    /**
+     * Vertical orientation is the splitpane's other code path — the divider math
+     * switches from {@code bounds.width} to {@code bounds.height}. Up/Down are the
+     * natural keys here; the handler does not gate arrow direction by orientation, so
+     * Up steps back and Down steps forward just as Left/Right do on a horizontal split.
+     */
+    @Test
+    void keyboardMovesDividerVertical() throws IOException {
+        InputDriver d = InputDriver.load(VERT_FIXTURE, new InputHandler());
+        Thinlet t = d.thinlet();
+        Object sp = d.find("sp");
+        d.focusGained();
+        d.click(d.find("bT"));
+        d.press(KeyEvent.VK_F8);
+
+        d.press(KeyEvent.VK_HOME);
+        d.paint();
+        assertThat(t.getInteger(sp, "divider"))
+                .as("Home collapses the divider to 0")
+                .isZero();
+
+        d.press(KeyEvent.VK_END);
+        d.paint();
+        assertThat(t.getInteger(sp, "divider"))
+                .as("End drives the divider to the height-based max")
+                .isEqualTo(MAX_V);
+
+        d.press(KeyEvent.VK_UP);
+        d.paint();
+        assertThat(t.getInteger(sp, "divider"))
+                .as("Up steps the divider back by 10")
+                .isEqualTo(MAX_V - 10);
+
+        d.press(KeyEvent.VK_DOWN);
+        d.paint();
+        assertThat(t.getInteger(sp, "divider"))
+                .as("Down steps forward by 10, capped at max")
+                .isEqualTo(MAX_V);
+    }
+
+    /** Vertical drag uses the cursor's y; same handle-grab centering, scale-invariant. */
+    @Test
+    void dragMovesDividerVertical() throws IOException {
+        InputDriver d = InputDriver.load(VERT_FIXTURE, new InputHandler());
+        Thinlet t = d.thinlet();
+        Object sp = d.find("sp");
+        int strip = t.getInteger(sp, "divider") + 2;
+        d.dragInside(sp, 50, strip, 50, 300);
+        assertThat(t.getInteger(sp, "divider"))
+                .as("vertical divider follows the cursor y (300) minus the 2px grab offset")
+                .isEqualTo(298);
+    }
+
+    /** The drag clamps the divider to the 0 … width-5 range at both ends. */
+    @Test
+    void dragClampsAtEdges() throws IOException {
+        InputDriver low = InputDriver.load(FIXTURE, new InputHandler());
+        Object spLow = low.find("sp");
+        int stripLow = low.thinlet().getInteger(spLow, "divider") + 2;
+        low.dragInside(spLow, stripLow, 50, 1, 50); // drag to the far left edge
+        assertThat(low.thinlet().getInteger(spLow, "divider"))
+                .as("drag past the left edge clamps to 0")
+                .isZero();
+
+        InputDriver high = InputDriver.load(FIXTURE, new InputHandler());
+        Object spHigh = high.find("sp");
+        int stripHigh = high.thinlet().getInteger(spHigh, "divider") + 2;
+        high.dragInside(spHigh, stripHigh, 50, InputDriver.WIDTH - 1, 50); // drag to the far right edge
+        assertThat(high.thinlet().getInteger(spHigh, "divider"))
+                .as("drag past the right edge clamps to width-5")
+                .isEqualTo(MAX);
     }
 }

@@ -1,4 +1,4 @@
-/* Thinlet (modernized) — Phase 2.x input-capture regression suite (test scope). */
+/* Thinlet (modernized) — input-capture regression suite (test scope). */
 package thinlet.trace;
 
 import java.awt.AWTEvent;
@@ -22,7 +22,7 @@ import java.util.List;
 import thinlet.Thinlet;
 
 /**
- * Test-scope input driver for the Phase 2.x input-capture regression suite (cf.
+ * Test-scope input driver for the input-capture regression suite (cf.
  * {@code project-docs/backend-portability/INPUT-HARNESS-PROBE.md}). It synthesizes
  * AWT input events and pushes them through Thinlet's real {@code protected
  * processEvent} funnel on a headless Thinlet, so the suite exercises the same
