@@ -1194,3 +1194,57 @@ consistent style for authored markdown.
 **Scope / non-goals.** Docs/comments only — no `Thinlet.java` change, no test behavior
 change, no golden re-record. The `.claude/agents/trace-curator.md` *file* is not renamed
 (exception above); its internal doc links are handled separately. (Cross-ref D27 doc layout.)
+
+## D39 — Phase 2.y: broaden the input net (splitpane slice) + a font-scaling dimension
+
+**Date:** 2026-06-22. **Status:** accepted. **Phase:** 2.y.
+
+**Context.** The input MVP (D37) is deliberately minimal (list/tree/combobox/scroll +
+smoke). Per D36, the net's value is capturing a baseline *before* an input-touching
+Phase 3 refactor, so widgets must be covered *now*, not mid-refactor. The maintainer also
+set the end-goal explicitly: the 2005 toolkit must behave **on 2026+ hardware**, of which
+the simplest deterministic slice is **font scaling** (a larger base font scales every
+FontMetrics-driven dimension without a real HiDPI device transform). Phase numbering stays
+**2.y** (not renumbered to a top-level phase: renumbering would re-point ~5 historical
+"Phase 3" references to "Phase 4" for little gain — the append-only log is a convention,
+not a hard rule, but there's no reason to churn it here).
+
+**Decision.**
+
+1. **Phase 2.y broadens the input net** to the remaining interactive widgets — `table`,
+   `tabbedpane`, `spinbox`, `slider`, menus/`popupmenu`, text editing
+   (`textfield`/`passwordfield`/`textarea` caret/selection), `dialog` focus, and
+   **`splitpane`** — reusing `InputDriver`, getter-asserted + ephemeral re-paint diff,
+   `@Tag("input")` (run by default). Shippable in **per-widget slices**, not one PR.
+2. **New driver gestures:** `dragInside` (divider/scrollbar drags), `resize` (real
+   `COMPONENT_RESIZED` re-layout), and a **`fontScale`** `load` parameter (the scaling
+   proxy). Two findings encoded in the driver: (a) Thinlet's `validate()` defers
+   re-layout by flagging a component dirty via a **negative `bounds.width`** — so gestures
+   whose handler reads `bounds` need a `paint()` between them (the test models the EDT's
+   inter-keystroke repaint); (b) `processEvent` dispatches `MOUSE_EXITED` on the *first*
+   drag event that leaves the grabbed component and only routes `MOUSE_DRAGGED` to it on
+   the next, so `dragInside` emits the destination drag **twice** (the OS streams many).
+3. **Font-scaling dimension:** at least the metric-sensitive widgets run at 1× and a
+   larger font (parameterized), asserting the **model outcome is scale-invariant**.
+   Honest scope: this is the metric half of scaling, **not** real device/HiDPI rendering
+   (the `GraphicsConfiguration` transform) — that stays Phase 3.
+4. **Quirk discipline (unchanged):** behaviors that are wrong-but-2005 are pinned with
+   `@Tag("documents-current-behavior")` + a `KNOWN-QUIRKS` entry and triaged for Enhanced
+   Thinlet — 2.y **characterizes/locks**, Phase 3 **fixes**.
+5. **First slice landed — splitpane** (`InputSplitPaneTest`, fixture `input/splitpane.xml`):
+   keyboard divider (F8-focus → Home/End/Left/Right), drag (divider = cursor − the 2px
+   handle-grab centering; verified scale-invariant at 1×/2×), auto-divider scales with
+   font, and the **resize quirk → `KNOWN-QUIRKS` Q2** (divider is absolute pixels:
+   non-proportional on grow, destructive clamp on shrink). Note checked-and-*not*-a-quirk:
+   the 2px drag offset centers the cursor on the 5px handle (correct), and the transient
+   negative `bounds.width` is the dirty-flag idiom (correct), not corruption.
+
+**Scope / non-goals.** Test-scope only — no `Thinlet.java` change, no golden re-record, no
+`trace-tolerance.json` change. Cross-JDK input determinism delegated to the `crossjdk`
+matrix. Still deferred: type-ahead, drag-reorder/drag-select, tooltip/auto-repeat timers,
+`thinlet-testkit` extraction, fully trace-backed `INPUT-SURFACE.md`, and **real HiDPI/device
+rendering** (Phase 3). (Cross-ref D7/D22/D36/D37.)
+
+**Validation.** `InputSplitPaneTest` — 5 tests green on JDK 21 (keyboard, drag ×2 scales,
+auto-divider scaling, resize quirk). `./mvnw -B verify` green (Spotless/Checkstyle/SpotBugs,
+full suite); cross-JDK 8/11/17 via CI.

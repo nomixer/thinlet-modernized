@@ -1,0 +1,10 @@
+<panel columns="1" gap="0">
+	<splitpane name="sp" orientation="horizontal" weightx="1" weighty="1">
+		<panel columns="1" gap="4" top="4" left="4" right="4" bottom="4">
+			<button name="bL" text="Left pane" />
+		</panel>
+		<panel columns="1" gap="4" top="4" left="4" right="4" bottom="4">
+			<button name="bR" text="Right pane" />
+		</panel>
+	</splitpane>
+</panel>

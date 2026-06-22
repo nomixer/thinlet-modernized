@@ -109,6 +109,31 @@ never "confirmed behavior-preserving" (**D36**).
   D36): graduating `INPUT-SURFACE.md` to fully trace-backed, scroll-offset item targeting,
   drag pseudo-events, and keyboard type-ahead.
 
+## Phase 2.y — Broaden the input net + font-scaling dimension ⏳ (splitpane slice landed)
+
+The MVP (D37) is deliberately minimal; per D36 the net must cover a widget *before* a
+Phase 3 refactor touches it, so 2.y broadens coverage — and adds the simplest deterministic
+**scaling** probe (a larger base font) toward the end-goal of "behaves on 2026+ hardware"
+(**D39**).
+
+- **Scope:** the remaining interactive widgets — `table`, `tabbedpane`, `spinbox`,
+  `slider`, menus/`popupmenu`, text editing (caret/selection), `dialog` focus, and
+  `splitpane` — reusing `InputDriver`, getter-asserted, `@Tag("input")`, shippable in
+  per-widget slices.
+- **New driver gestures (D39):** `dragInside` (divider/scrollbar drags; a drag needs ≥2
+  events because `processEvent` sends `MOUSE_EXITED` on the first), `resize` (real
+  `COMPONENT_RESIZED`), and a `fontScale` `load` parameter. Harness finding: `validate()`
+  defers re-layout via a negative-`bounds.width` dirty flag, so gestures reading `bounds`
+  re-`paint()` between steps.
+- **Font scaling:** metric-sensitive scenarios run at 1× and a larger font, asserting the
+  model outcome is **scale-invariant**. This is the *metric* half of scaling; real
+  device/HiDPI rendering stays Phase 3.
+- ✅ **Splitpane slice landed** (`InputSplitPaneTest`): keyboard divider, drag (scale-invariant),
+  auto-divider scales with font, and the resize quirk pinned as **`KNOWN-QUIRKS` Q2**
+  (absolute-pixel divider: non-proportional + destructive clamp), tagged
+  `documents-current-behavior` for an Enhanced-Thinlet fix.
+- **Remaining slices:** table, tabbedpane, spinbox/slider, menus, text editing, dialog focus.
+
 ## Phase 3 — Internal refactors / Enhanced Thinlet ⬜ (blocked on Phase 2.x)
 
 - Remove SpotBugs exclusions as the code is cleaned, so the linters fail on
