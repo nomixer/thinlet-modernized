@@ -54,6 +54,24 @@ Each entry, added as quirks are discovered during Phase 1+ test authoring:
   documents-current-behavior).
 - **Enhanced Thinlet disposition:** fix — throw a descriptive `IOException`.
 
+### Q2 — `splitpane` divider is absolute pixels: non-proportional + destructive clamp on resize
+- **What happens:** the divider position is an absolute pixel value (`divider`
+  property) that is only ever *clamped* on resize, never rescaled. Growing the
+  splitpane keeps the same pixel divider (the split ratio drifts); shrinking it
+  below the divider clamps the value to `width-5` and does **not** restore the
+  original position when the pane grows back — the value is lost.
+- **Why it's a quirk:** a 50/50 split is expected to track on resize, or at least
+  to survive a transient shrink. Both fail: resize is non-proportional, and the
+  shrink-clamp is destructive (permanent position loss). Surfaces on 2026 hardware
+  where window/scale changes are routine.
+- **Where:** `Thinlet.java` splitpane layout (~457-475): the `divider > maxdiv`
+  branch overwrites `divider` with `maxdiv`; there is no proportional rescale.
+- **Locked by:** `thinlet.trace.InputSplitPaneTest`
+  `#dividerIsAbsolutePixels_nonProportionalAndDestructiveClampOnResize` (tagged
+  documents-current-behavior).
+- **Enhanced Thinlet disposition:** fix — preserve the ratio on resize (or at least
+  restore the remembered divider after a transient shrink).
+
 ## Triaged for Enhanced Thinlet (not behavior-locked)
 
 These D13 candidate findings were investigated during Phase 1 but are *not* pinned

@@ -3,10 +3,13 @@ package thinlet.trace;
 
 import java.awt.AWTEvent;
 import java.awt.EventQueue;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -64,6 +67,17 @@ final class InputDriver {
     }
 
     static InputDriver load(String resource, Object handler) throws IOException {
+        return load(resource, handler, 1.0);
+    }
+
+    /**
+     * Loads a fixture with the base font scaled by {@code fontScale} (1.0 = normal).
+     * A larger font is the simplest deterministic proxy for display scaling: it
+     * grows every FontMetrics-driven dimension (row heights, text widths, preferred
+     * sizes, the splitpane's content-derived divider) without a real HiDPI device
+     * transform. Assertions stay getter-based, so this adds no cross-JDK fragility.
+     */
+    static InputDriver load(String resource, Object handler, double fontScale) throws IOException {
         Funnel thinlet = new Funnel();
         Object root;
         InputStream in = InputDriver.class.getResourceAsStream(resource);
@@ -77,6 +91,10 @@ final class InputDriver {
         }
         thinlet.add(root);
         thinlet.setSize(WIDTH, HEIGHT);
+        if (fontScale != 1.0) {
+            Font base = thinlet.getFont();
+            thinlet.setFont(base.deriveFont((float) (base.getSize2D() * fontScale)));
+        }
         pump();
         InputDriver driver = new InputDriver(thinlet, root);
         // Thinlet computes widget bounds during paint, not on resize. Run one
@@ -191,6 +209,43 @@ final class InputDriver {
                 notches));
     }
 
+    /**
+     * Drags inside {@code widget} from offset (fromX,fromY) to (toX,toY), both
+     * relative to the widget's top-left, as a primary-button MOUSE_PRESSED →
+     * MOUSE_DRAGGED → MOUSE_RELEASED. The priming MOUSE_MOVED sets {@code
+     * mouseinside}; the press must land on the target (e.g. a splitpane's divider
+     * strip), since press/drag reuse the hit-tested component rather than re-testing.
+     */
+    void dragInside(Object widget, int fromX, int fromY, int toX, int toY) {
+        Point o = origin(widget);
+        int fx = o.x + fromX;
+        int fy = o.y + fromY;
+        int tx = o.x + toX;
+        int ty = o.y + toY;
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_MOVED, when++, 0, fx, fy, 0, false));
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_PRESSED, when++, 0, fx, fy, 1, false));
+        // Two drags at the destination: when the cursor leaves the grabbed strip,
+        // processEvent dispatches MOUSE_EXITED on the first drag and only routes
+        // MOUSE_DRAGGED to the pressed component on the next — the OS streams many,
+        // we send the minimum two. (See processEvent's MOUSE_DRAGGED branch.)
+        for (int i = 0; i < 2; i++) {
+            dispatch(new MouseEvent(
+                    thinlet, MouseEvent.MOUSE_DRAGGED, when++, InputEvent.BUTTON1_DOWN_MASK, tx, ty, 0, false));
+        }
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_RELEASED, when++, 0, tx, ty, 1, false));
+    }
+
+    /**
+     * Resizes the root and re-runs layout through the real COMPONENT_RESIZED path
+     * (the same one a window resize takes), so resize-dependent behavior — e.g. the
+     * splitpane divider's clamp-on-shrink — is exercised exactly as in production.
+     */
+    void resize(int width, int height) {
+        thinlet.setSize(width, height);
+        dispatch(new ComponentEvent(thinlet, ComponentEvent.COMPONENT_RESIZED));
+        paint();
+    }
+
     /** Renders the current widget state to a Trace, reusing the Phase 1 recorder. */
     Trace paint() {
         BufferedImage img = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
@@ -234,6 +289,16 @@ final class InputDriver {
     }
 
     private Point center(Object widget) {
+        Point o = origin(widget);
+        Rectangle tb = bounds(widget);
+        if (tb == null) {
+            throw new IllegalStateException("target widget has no computed bounds");
+        }
+        return new Point(o.x + tb.width / 2, o.y + tb.height / 2);
+    }
+
+    /** Absolute top-left of a widget, summed from the Object[] "bounds" chain. */
+    private Point origin(Object widget) {
         int x = 0;
         int y = 0;
         for (Object w = widget; w != null; w = thinlet.getParent(w)) {
@@ -243,11 +308,7 @@ final class InputDriver {
                 y += b.y;
             }
         }
-        Rectangle tb = bounds(widget);
-        if (tb == null) {
-            throw new IllegalStateException("target widget has no computed bounds");
-        }
-        return new Point(x + tb.width / 2, y + tb.height / 2);
+        return new Point(x, y);
     }
 
     /** Reads the {@code "bounds"} Rectangle from the Object[] chain, like LayoutTrace. */
