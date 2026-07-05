@@ -38,3 +38,16 @@ tf  start=<anchor> end=<caret>  text="hello world"
 If clicking **does** move the caret on the real desktop, the synthetic driver has a
 fidelity gap to fix (prime `referencex`/`:offset` on press). If it **doesn't**, the
 behavior is as-is and no synthetic click-caret test is warranted.
+
+## Optional bonus: Robot cross-check with a real window manager
+
+The `@Tag("robot")` fidelity cross-check (`InputRobotFidelityTest`, D40) runs WM-less on
+Xvfb `:99` in CI. On a real desktop you can confirm it holds with real focus/activation:
+
+```sh
+./mvnw -pl thinlet-core test -Dtest=InputRobotFidelityTest
+```
+
+(This one *does* go through surefire, but Robot drives whatever display the fork uses, so
+on your desktop it exercises native focus/activation under your window manager.)
+
