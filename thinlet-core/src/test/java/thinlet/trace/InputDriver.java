@@ -2,6 +2,7 @@
 package thinlet.trace;
 
 import java.awt.AWTEvent;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Graphics2D;
@@ -131,6 +132,30 @@ final class InputDriver {
         dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_MOVED, when++, 0, p.x, p.y, 0, false));
         dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_PRESSED, when++, 0, p.x, p.y, 1, false));
         dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_RELEASED, when++, 0, p.x, p.y, 1, false));
+    }
+
+    /**
+     * Primary click at ({@code xOffset},{@code yOffset}) relative to the widget's
+     * top-left, so a test can aim at a specific spot — e.g. a character position in a
+     * text field — rather than the widget centre that {@link #click(Object)} uses. The
+     * MOUSE_MOVED prime is the same: Thinlet reuses the hit-tested {@code mouseinside}
+     * from motion rather than re-testing on press. Thinlet's text mouse-press path
+     * self-primes its caret reference ({@code setReference} + {@code :offset}=0 in
+     * {@code processField}), so the click alone repositions the caret — no extra state
+     * priming is needed, only an accurate absolute x.
+     */
+    void clickAt(Object widget, int xOffset, int yOffset) {
+        Point o = origin(widget);
+        int px = o.x + xOffset;
+        int py = o.y + yOffset;
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_MOVED, when++, 0, px, py, 0, false));
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_PRESSED, when++, 0, px, py, 1, false));
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_RELEASED, when++, 0, px, py, 1, false));
+    }
+
+    /** Convenience: {@link #clickAt(Object, int, int)} at the widget's vertical centre. */
+    void clickAt(Object widget, int xOffset) {
+        clickAt(widget, xOffset, size(widget).height / 2);
     }
 
     /** Types literal characters as KEY_TYPED events into the focus owner. */
@@ -314,6 +339,18 @@ final class InputDriver {
     /** Reads the {@code "bounds"} Rectangle from the Object[] chain, like LayoutTrace. */
     private Rectangle bounds(Object widget) {
         return (Rectangle) property(widget, "bounds");
+    }
+
+    /**
+     * Width/height of a widget's computed bounds, for choosing click offsets (there is
+     * no public size getter; read from the same {@code "bounds"} chain as everything else).
+     */
+    Dimension size(Object widget) {
+        Rectangle b = bounds(widget);
+        if (b == null) {
+            throw new IllegalStateException("target widget has no computed bounds");
+        }
+        return new Dimension(b.width, b.height);
     }
 
     private static void on(Runnable r) {

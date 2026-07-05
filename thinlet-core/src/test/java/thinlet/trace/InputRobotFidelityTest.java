@@ -77,6 +77,60 @@ class InputRobotFidelityTest {
                 .isEqualTo("hi");
     }
 
+    @Test
+    void nativeClickRepositionsCaret_matchesSyntheticDriver() throws Exception {
+        // Synthetic reference: type, then click at the left edge and far right. paint()
+        // re-validates between clicks (an edit/caret-click negates bounds.width as a dirty
+        // flag until the next layout — see InputTextEditTest).
+        InputDriver d = InputDriver.load(FIXTURE, new InputHandler());
+        Object t1 = d.find("t1");
+        d.focusGained();
+        d.click(t1);
+        d.type("hello world");
+        int len = 11;
+        d.paint();
+        int w = d.size(t1).width;
+        d.clickAt(t1, 2);
+        int synLeft = d.thinlet().getInteger(t1, "end");
+        d.paint();
+        d.clickAt(t1, w - 2);
+        int synRight = d.thinlet().getInteger(t1, "end");
+
+        int[] nativeOutcome = onShownFrame((thinlet, robot) -> {
+            Object field = thinlet.find("t1");
+            clickNative(robot, thinlet, field); // native focus + caret in the field
+            typeNative(
+                    robot,
+                    KeyEvent.VK_H,
+                    KeyEvent.VK_E,
+                    KeyEvent.VK_L,
+                    KeyEvent.VK_L,
+                    KeyEvent.VK_O,
+                    KeyEvent.VK_SPACE,
+                    KeyEvent.VK_W,
+                    KeyEvent.VK_O,
+                    KeyEvent.VK_R,
+                    KeyEvent.VK_L,
+                    KeyEvent.VK_D);
+            int caretLeft = caretAfterNativeClick(robot, thinlet, field, true);
+            int caretRight = caretAfterNativeClick(robot, thinlet, field, false);
+            return new int[] {caretLeft, caretRight};
+        });
+
+        // Exact interior indices are FontMetrics-dependent and pixel-fragile under Robot, so
+        // the fidelity assertion is the two JDK-tolerant clamps: a real click at the left
+        // edge collapses the caret to 0, and past the (short) text it clamps to the length —
+        // identical to the synthetic driver, confirming clickAt reproduces a genuine click.
+        assertThat(nativeOutcome[0])
+                .as("native click at the left edge -> caret 0, like the synthetic driver")
+                .isEqualTo(synLeft)
+                .isZero();
+        assertThat(nativeOutcome[1])
+                .as("native click past the text -> caret clamps to length, like the synthetic driver")
+                .isEqualTo(synRight)
+                .isEqualTo(len);
+    }
+
     // ---------------- native (Robot) harness ----------------
 
     @FunctionalInterface
@@ -131,6 +185,29 @@ class InputRobotFidelityTest {
         robot.setAutoDelay(40);
         robot.setAutoWaitForIdle(true);
         robot.waitForIdle();
+    }
+
+    /**
+     * Native click near a text field's left edge ({@code nearLeft}) or just past its right
+     * edge, returning the resulting caret ({@code end}). Polls for positive-width bounds
+     * first: a caret-setting click marks the field dirty (negated width) until the shown
+     * frame repaints, and a stale width would misplace the pointer.
+     */
+    private static int caretAfterNativeClick(Robot robot, Thinlet t, Object field, boolean nearLeft) {
+        Rectangle b = null;
+        for (int i = 0; i < 80 && (b == null || b.width <= 0); i++) {
+            b = abs(t, field);
+            if (b == null || b.width <= 0) {
+                robot.delay(25);
+            }
+        }
+        Point loc = t.getLocationOnScreen();
+        int x = nearLeft ? (b.x + 2) : (b.x + b.width - 2);
+        robot.mouseMove(loc.x + x, loc.y + b.y + b.height / 2);
+        robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
+        robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+        robot.waitForIdle();
+        return t.getInteger(field, "end");
     }
 
     /** Absolute-in-Thinlet bounds of a widget, summed from the Object[] "bounds" chain. */

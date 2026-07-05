@@ -1301,3 +1301,51 @@ not a second driver; expanding it (or switching the net to Robot) is explicitly 
 **Validation.** `InputTextEditTest` 10 green; `InputRobotFidelityTest` 2 green, on JDK 21.
 `./mvnw -B verify` green (Spotless/Checkstyle/SpotBugs, full suite). Cross-JDK 8/11/17 runs
 the input suite but not `@Tag("robot")`.
+
+## D41 — Resolve the D40 click→caret deferral (mouse click repositions the caret)
+
+**Date:** 2026-07-05. **Status:** accepted. **Phase:** 2.y.
+
+**Context.** D40 deferred one text path — mouse **click → caret index**
+(`getCaretLocation`) — on the hypothesis that a synthetic press could not reproduce it
+without priming the field's `:offset`/`referencex` state. A **manual probe on a real
+desktop** (scratch branch `manual/caret-probe`, not merged) settled it by direct
+observation: a real click lands the caret on the character boundary nearest the click
+(`hello world` → clicking before `llo`/`wor`/after `d` gives caret 2 / 6 / 11, with
+`start==end`).
+
+**Root cause of the deferral (corrected).** The hypothesis was wrong. `processField`'s
+MOUSE_PRESSED branch **self-primes** its reference — it calls `setReference(component,
+2+left, 2)` and reads `:offset` with a **0 default** (`Thinlet.java:5136-5148`) — so the
+caret math needs no pre-existing state. The synthetic click failed earlier only because
+`InputDriver.click` always aims the **widget centre**, which for a short string in a wide
+field lands past the text and clamps to `text.length()` (read at the time as "caret didn't
+move"). The real gap was aiming, plus the `validate()` dirty-flag idiom (an edit/caret
+click negates `bounds.width` until the next paint; a stale negative width makes the
+hit-test miss the field — the same artifact the splitpane keyboard tests handle with
+`paint()` between steps).
+
+**Decision.**
+
+1. **`InputDriver` gains `clickAt(widget, xOffset[, yOffset])`** (primary click at a chosen
+   spot, same MOUSE_MOVED prime as `click`) and **`size(widget)`** (bounds width/height,
+   read off the `Object[]` chain like the other geometry). No `Thinlet.java` change.
+2. **`InputTextEditTest` covers click→caret** with **FontMetrics-tolerant** assertions
+   (D7): a left-edge click collapses the caret to `0`; a click past the short text clamps
+   to the length; a left→right sweep is **monotonic non-decreasing**, every single click
+   **collapses the selection** (`start==end`), and **some interior click lands strictly
+   inside** the text (proves real positioning, not just the two clamps). A companion test
+   asserts a **press-drag selects** the press→release range. Exact per-pixel indices are
+   FontMetrics-dependent and deliberately **not** asserted.
+3. **Robot fidelity gains a native click→caret case** (`InputRobotFidelityTest`,
+   `@Tag("robot")`): native type + native clicks at the two edges, asserting the caret
+   clamps (`0` / length) **equal the synthetic driver's** — confirming `clickAt` reproduces
+   a genuine click. Interior indices are not matched natively (pixel-fragile under Robot).
+
+**Scope / non-goals.** Test-scope only; no `Thinlet.java` change, no golden re-record. The
+`manual/caret-probe` scratch branch stays unmerged (it is a manual harness, not a build
+artifact). (Cross-ref D7/D22/D37/D39/D40.)
+
+**Validation.** `InputTextEditTest` 12 green; `InputRobotFidelityTest` 3 green (native
+caret case ran twice, stable), on JDK 21. `./mvnw -B verify` green (Spotless/Checkstyle/
+SpotBugs, full suite). Cross-JDK 8/11/17 runs the input suite but not `@Tag("robot")`.
