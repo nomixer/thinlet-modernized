@@ -1,0 +1,8 @@
+<panel columns="1" gap="6" top="10" left="10" right="10" bottom="10">
+	<label text="Type text, then CLICK in the MIDDLE of it. Watch the console for the caret." />
+	<label text="Single-line textfield (pre-filled):" />
+	<textfield name="tf" text="hello world" columns="30" />
+	<label text="Multi-line textarea (type a couple of lines, then click mid-text):" />
+	<textarea name="ta" rows="5" columns="30" />
+	<label text="Close this window to quit." />
+</panel>
