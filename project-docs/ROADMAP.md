@@ -132,7 +132,16 @@ Phase 3 refactor touches it, so 2.y broadens coverage — and adds the simplest 
   auto-divider scales with font, and the resize quirk pinned as **`KNOWN-QUIRKS` Q2**
   (absolute-pixel divider: non-proportional + destructive clamp), tagged
   `documents-current-behavior` for an Enhanced-Thinlet fix.
-- **Remaining slices:** table, tabbedpane, spinbox/slider, menus, text editing, dialog focus.
+- ✅ **Text-editing slice landed** (`InputTextEditTest`, D40): `textfield`/`passwordfield`/
+  `textarea` via `processField` — typing, Backspace/Delete, caret nav, Shift-selection +
+  replace, Ctrl+A, boundary clamps, password real-text, textarea newline/join. Index-based
+  (font-invariant). Deferred: mouse click → caret index (`getCaretLocation`).
+- ✅ **Robot fidelity cross-check landed** (`InputRobotFidelityTest`, `@Tag("robot")`, D40):
+  a few gestures run through a real `java.awt.Robot` on Xvfb `:99` and asserted to match the
+  synthetic driver — validating the synthesized `FOCUS_GAINED` + the KEY_PRESSED/KEY_TYPED
+  split. Base JDK-21 only (excluded from the cross-JDK matrix).
+- **Remaining slices:** table, tabbedpane, spinbox/slider, menus, dialog focus (+ nested
+  splitpanes; and the deferred click→caret path a candidate for the Robot cross-check).
 
 ## Phase 3 — Internal refactors / Enhanced Thinlet ⬜ (blocked on Phase 2.x)
 
