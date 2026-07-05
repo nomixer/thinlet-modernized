@@ -131,6 +131,9 @@ jobs:
       # The file.encoding=UTF-8 pin in thinlet-core's surefire config keeps
       # decoding consistent across JDKs. See DECISIONS.md D14/D25/D31. Pulls the
       # cached image but does not push it (the build job does).
+      # -DexcludedGroups=robot: the @Tag("robot") native-Robot fidelity cross-check
+      # is a base-JDK-21 validation (D40); native focus/timing is out of scope for the
+      # cross-JDK matrix, so it is excluded here (it still runs in the JDK-21 build job).
       - name: Run tests on JDK ${{ matrix.jdk }} (toolchains) inside the Dev Container
         uses: devcontainers/ci@v0.3
         with:
@@ -141,6 +144,7 @@ jobs:
           runCmd: >-
             MAVEN_USER_HOME="$PWD/.m2" ./mvnw -B -Dmaven.repo.local=.m2/repository
             -Pcrossjdk -Djdk.target=${{ matrix.jdk }}
+            -DexcludedGroups=robot
             -DtraceDumpDir=target/trace-dump/jdk-${{ matrix.jdk }}
             -t .mvn/toolchains.xml test
 

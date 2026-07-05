@@ -1248,3 +1248,56 @@ rendering** (Phase 3). (Cross-ref D7/D22/D36/D37.)
 **Validation.** `InputSplitPaneTest` — 5 tests green on JDK 21 (keyboard, drag ×2 scales,
 auto-divider scaling, resize quirk). `./mvnw -B verify` green (Spotless/Checkstyle/SpotBugs,
 full suite); cross-JDK 8/11/17 via CI.
+
+## D40 — Text-editing slice + a `java.awt.Robot` fidelity cross-check for the input net
+
+**Date:** 2026-07-02. **Status:** accepted. **Phase:** 2.y.
+
+**Context.** Two things landed together. (1) The next Phase 2.y widget slice — **text
+editing** (the largest untested input path, `processField`). (2) The maintainer asked
+whether `java.awt.Robot` would give more faithful outcomes than the synthetic driver.
+
+**Analysis (Robot).** The synthetic `InputDriver` builds `MouseEvent`/`KeyEvent` and calls
+Thinlet's real `protected processEvent` — and **Thinlet's entire input logic begins at
+`processEvent`**. What Robot adds (native OS input → AWT pump → focus/activation → the OS
+keymap turning keycodes into keychars) is the layer *below* Thinlet — exactly the
+JDK/OS-variable part the D7 tolerance model is meant to *absorb*, not assert. So Robot
+would not exercise any Thinlet path the synthetic driver misses; its value is **validating
+the driver's shortcuts** (the synthesized `FOCUS_GAINED`, the KEY_PRESSED/KEY_TYPED split,
+the priming `MOUSE_MOVED`) against a genuine native path. Robot's costs here: it needs a
+realized/shown/focused Frame at screen coords, async focus/timing, OS-keymap keychars, and
+it does not run under true `-Djava.awt.headless=true` — all corrosive to the determinism
+that is the net's whole point.
+
+**Decision.**
+
+1. **Keep the synthetic `processEvent` driver as the primary net.** It is the right tool
+   for deterministic, cross-JDK, headless characterization of *Thinlet's* behavior.
+2. **Add a small Robot fidelity cross-check** (`InputRobotFidelityTest`, `@Tag("robot")`):
+   run representative gestures (native click → checkbox toggle; native focus + typing →
+   textfield) through a real `Robot` on a shown undecorated `Frame` on Xvfb `:99`, and
+   assert the model outcome **equals the synthetic driver's**. It runs on the **base
+   JDK-21 build** and is **excluded from the cross-JDK matrix** (`-DexcludedGroups=robot`
+   in `ci.yml`) — native focus/timing is out of scope there.
+3. **Findings from building it:** native focus **works** on WM-less Xvfb (the typing
+   outcome matches — confirming the synthesized `FOCUS_GAINED` is faithful); one gotcha
+   handled — **X keyboard auto-repeat** inflates a held key, so Robot presses+releases with
+   zero delay. Robot is ~5 s/test (real frame) vs sub-millisecond synthetic — another
+   reason it is a thin cross-check, not the net.
+4. **Text-editing slice** (`InputTextEditTest`, fixture `input/textedit.xml`): typing at
+   caret, Backspace/Delete, Home/End/arrow caret nav, Shift-selection + type-to-replace,
+   Ctrl+A select-all, selection delete, boundary clamps (no-ops), `passwordfield` stores
+   the real text (masking is paint-only), and `textarea` Enter-inserts-newline +
+   backspace-joins-lines. All index-based, hence font-invariant (no scaling dimension
+   needed here — splitpane carries it). **Deferred:** mouse click → caret index
+   (`getCaretLocation` needs the field's `:offset`/`referencex` state a bare synthetic
+   press doesn't prime) — a candidate for the Robot cross-check to validate.
+
+**Scope / non-goals.** Test-scope only (+ the `ci.yml` `excludedGroups` line); no
+`Thinlet.java` change, no golden re-record. Robot is a *validation layer around* the net,
+not a second driver; expanding it (or switching the net to Robot) is explicitly not done.
+(Cross-ref D7/D22/D36/D37/D39.)
+
+**Validation.** `InputTextEditTest` 10 green; `InputRobotFidelityTest` 2 green, on JDK 21.
+`./mvnw -B verify` green (Spotless/Checkstyle/SpotBugs, full suite). Cross-JDK 8/11/17 runs
+the input suite but not `@Tag("robot")`.

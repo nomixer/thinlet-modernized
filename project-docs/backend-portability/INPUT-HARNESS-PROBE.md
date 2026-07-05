@@ -131,4 +131,13 @@ input golden files** (input state is read live), and `trace-tolerance.json` is u
 **Still deferred** (unchanged from the probe limits): a standalone `thinlet-testkit` module
 (reactor-cycle constraint — D37), fully trace-backed `INPUT-SURFACE.md`, scroll-offset
 *item* targeting, drag pseudo-events, tooltip/auto-repeat timers, and keyboard type-ahead
-(wall-clock + text-width dependent).
+(wall-clock + text-width dependent). Added deferred (D40): **mouse click → caret index**
+(`getCaretLocation` needs the field's `:offset`/`referencex` state a bare synthetic press
+doesn't prime).
+
+**Robot fidelity cross-check (D40).** `InputRobotFidelityTest` (`@Tag("robot")`) runs a few
+gestures through a real `java.awt.Robot` on a shown `Frame` on Xvfb `:99` and asserts the
+outcome matches the synthetic driver — validating the synthesized `FOCUS_GAINED` and the
+KEY_PRESSED/KEY_TYPED split against a genuine native path. Base JDK-21 only (excluded from
+the cross-JDK matrix). Finding: native focus works WM-less; the one gotcha is X keyboard
+auto-repeat (press+release with zero delay).
