@@ -130,14 +130,20 @@ input golden files** (input state is read live), and `trace-tolerance.json` is u
 
 **Still deferred** (unchanged from the probe limits): a standalone `thinlet-testkit` module
 (reactor-cycle constraint — D37), fully trace-backed `INPUT-SURFACE.md`, scroll-offset
-*item* targeting, drag pseudo-events, tooltip/auto-repeat timers, and keyboard type-ahead
-(wall-clock + text-width dependent). Added deferred (D40): **mouse click → caret index**
-(`getCaretLocation` needs the field's `:offset`/`referencex` state a bare synthetic press
-doesn't prime).
+*item* targeting, tooltip/auto-repeat timers, and keyboard type-ahead (wall-clock +
+text-width dependent). **Resolved (D41):** the D40 **mouse click → caret index** deferral —
+a manual real-desktop probe confirmed a click lands the caret on the nearest character
+boundary, and `processField`'s press branch self-primes its reference (`setReference` +
+`:offset`=0), so `InputDriver.clickAt` only has to aim the press. `InputTextEditTest` now
+covers it with FontMetrics-tolerant assertions (left/right clamps, left→right monotonicity,
+an interior-landing existence check, and press-drag range selection), and the Robot
+cross-check matches the native click→caret clamps.
 
 **Robot fidelity cross-check (D40).** `InputRobotFidelityTest` (`@Tag("robot")`) runs a few
 gestures through a real `java.awt.Robot` on a shown `Frame` on Xvfb `:99` and asserts the
 outcome matches the synthetic driver — validating the synthesized `FOCUS_GAINED` and the
 KEY_PRESSED/KEY_TYPED split against a genuine native path. Base JDK-21 only (excluded from
 the cross-JDK matrix). Finding: native focus works WM-less; the one gotcha is X keyboard
-auto-repeat (press+release with zero delay).
+auto-repeat (press+release with zero delay). Extended (D41) with a native **click → caret**
+case: native type + native clicks at the two field edges, asserting the caret clamps
+(`0` / length) equal the synthetic driver's — the fidelity check for `clickAt`.

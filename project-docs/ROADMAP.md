@@ -135,13 +135,19 @@ Phase 3 refactor touches it, so 2.y broadens coverage — and adds the simplest 
 - ✅ **Text-editing slice landed** (`InputTextEditTest`, D40): `textfield`/`passwordfield`/
   `textarea` via `processField` — typing, Backspace/Delete, caret nav, Shift-selection +
   replace, Ctrl+A, boundary clamps, password real-text, textarea newline/join. Index-based
-  (font-invariant). Deferred: mouse click → caret index (`getCaretLocation`).
+  (font-invariant).
+- ✅ **Click → caret + drag-select landed** (`InputTextEditTest`, D41): resolves the D40
+  deferral. A manual real-desktop probe confirmed a click lands the caret on the nearest
+  character boundary; `InputDriver.clickAt`/`size` aim the press, and the tests assert the
+  FontMetrics-tolerant invariants (left/right clamps, left→right monotonicity, an interior
+  landing, press-drag range selection). Not asserted: pixel-exact indices (D7).
 - ✅ **Robot fidelity cross-check landed** (`InputRobotFidelityTest`, `@Tag("robot")`, D40):
   a few gestures run through a real `java.awt.Robot` on Xvfb `:99` and asserted to match the
   synthetic driver — validating the synthesized `FOCUS_GAINED` + the KEY_PRESSED/KEY_TYPED
-  split. Base JDK-21 only (excluded from the cross-JDK matrix).
+  split; extended (D41) with a native click→caret clamp check. Base JDK-21 only (excluded
+  from the cross-JDK matrix).
 - **Remaining slices:** table, tabbedpane, spinbox/slider, menus, dialog focus (+ nested
-  splitpanes; and the deferred click→caret path a candidate for the Robot cross-check).
+  splitpanes).
 
 ## Phase 3 — Internal refactors / Enhanced Thinlet ⬜ (blocked on Phase 2.x)
 
