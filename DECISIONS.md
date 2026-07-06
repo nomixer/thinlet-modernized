@@ -1349,3 +1349,53 @@ artifact). (Cross-ref D7/D22/D37/D39/D40.)
 **Validation.** `InputTextEditTest` 12 green; `InputRobotFidelityTest` 3 green (native
 caret case ran twice, stable), on JDK 21. `./mvnw -B verify` green (Spotless/Checkstyle/
 SpotBugs, full suite). Cross-JDK 8/11/17 runs the input suite but not `@Tag("robot")`.
+
+## D42 — Phase 3 opens: modernise the library internals behind the net; CI-autonomous workflow
+
+**Date:** 2026-07-06. **Status:** accepted. **Phase:** 3 (3a). **Supersedes:** the
+"modernize the toolchain, not the library" posture and the "consult before opening a PR"
+note (both in `CLAUDE.md`) for Phase 3 onward.
+
+**Context.** Phases 0–2 deliberately held *modernize the toolchain, not the library —
+preserve 2005 observable behavior exactly*. That was the right posture **while building the
+safety net** (golden-trace paint+layout + input-capture). The maintainer's actual goal is
+**modernise, then enhance**: restructure the 7,779-line `Thinlet.java` God class into
+idiomatic modern Java (Java 8 floor) on a clean base, then re-implement — cleanly — prior
+production enhancements (two custom `Thinlet.java` forks + apps, battle-tested supporting a
+global bank ~2006+; not runnable here, but diffable against the 2005 baseline). A full
+idiomatic rewrite / new public API is a later step, once real apps run on the modern base.
+Phase 3 is where the net finally gets *spent*.
+
+**Decision.**
+
+1. **Modernise the library internals** behind the net, holding **2005 observable behavior
+   AND the public API constant** (both non-negotiable). Supersedes "toolchain not library"
+   for Phase 3+. Enhancements (fixing quirks Q1/Q2, HiDPI, the fork functionality) are
+   deferred to a later phase, after 3a's clean base exists and real apps exercise it.
+2. **Sequencing is driven by net strength** (readiness assessment, this session). The
+   dominant obstacle is the **interned-String `==` contract** (~418 identity-compares vs
+   string literals — classname dispatch, part tokens, enum-like values), which leaks across
+   all subsystems and silently breaks any typed refactor with no compile error. Order:
+   **Cut 1** neutralise `==` behind semantics-preserving helpers → **Cut 2** paint → typed
+   Renderer (net captures the full primitive stream) → **Cut 3** DTD → typed descriptors +
+   accessor façade → **Cut 4** layout (a hub; second) → **Cut 5** `Object[]` model → typed
+   Widget (late) → **Cut 6** event/input/focus **last** (thinnest net; backfill
+   characterization tests first).
+3. **CI is the autonomous behavior net; the maintainer is not a manual dependency.**
+   `ci.yml` fires only on `pull_request`→`main` (push→`main` is blocked), so **Claude opens
+   the PRs** to run the golden+input net across JDK 8/11/17/21, running compile +
+   Spotless/Checkstyle/SpotBugs locally pre-push and driving each PR to green. This
+   supersedes the "consult before opening a PR" note for Phase 3. **Behavior-preserving cuts
+   must produce no golden/input diff** within ±2 px (D7). **Merge to `main` remains the
+   maintainer's** 1-click gate on the trunk unless explicitly delegated (opt-in: GitHub
+   auto-merge, squash-on-green). A faithful **local CI** loop (dev container) is a later
+   joint task.
+
+**Scope / non-goals.** 3a is behavior- and API-preserving refactoring only — no user-visible
+change, no golden re-record. No enhancement or quirk-fix lands in 3a (the parse-NPE→
+`IOException` fix, KNOWN-QUIRKS Q1, is the earmarked *first* enhancement, later).
+
+**Validation.** Per-cut, via the CI net: golden `GoldenTraceRegressionTest` + `@Tag("input")`
+suite green across JDK 8/11/17/21, no diff within tolerance for behavior-preserving cuts;
+local compile+lint pre-push. Cut 1's result lands in its own PR. Cross-ref D7, D31, D36/D37,
+KNOWN-QUIRKS Q1/Q2.

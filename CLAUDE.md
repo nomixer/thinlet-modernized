@@ -90,9 +90,13 @@ absorbed by the coordinate tolerance, not asserted directly.
 - Develop on a feature branch; **PR into `main`** (direct pushes are blocked);
   squash-merge. Every PR leaves `DECISIONS.md` / `KNOWN-QUIRKS.md` accurate
   as-of-merge — no follow-up tidy-up PR.
-- **Consult before opening a PR.** Push the feature branch, then ask the maintainer
-  before opening the PR — PRs aren't auto-created (but they *are* the normal path;
-  this is a "check first," not a ban).
+- **PR workflow — Phase 3+ is CI-autonomous (D42).** CI's behavior net runs only on
+  PRs→`main`, and the maintainer is **not** a manual verification dependency, so **Claude
+  opens PRs itself** to run the net and drives them to green (compile + Spotless / Checkstyle
+  / SpotBugs run locally pre-push). **Merge to `main` stays the maintainer's** 1-click gate on
+  the trunk unless delegated (opt-in "auto-merge" ⇒ GitHub squash-on-green). Supersedes the
+  earlier "consult before opening a PR" norm for Phase 3. Faithful **local CI** is a later
+  joint task.
 - **Remote branch deletion is the maintainer's to do.** The Claude-on-the-web
   sandbox can push branches but cannot delete remote refs (the git proxy returns
   403, and no API/MCP tool is exposed), so don't retry remote-branch deletion from a
