@@ -37,3 +37,7 @@ Thumbs.db
 *.log
 *.tmp
 hs_err_pid*
+
+# Dev container feature lock (generated locally by the devcontainer tooling;
+# features float per .devcontainer/devcontainer.json)
+.devcontainer/devcontainer-lock.json
