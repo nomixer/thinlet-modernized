@@ -44,10 +44,10 @@
     <version.jar.plugin>3.5.0</version.jar.plugin>
     <version.deploy.plugin>3.1.4</version.deploy.plugin>
     <version.toolchains.plugin>3.2.0</version.toolchains.plugin>
-    <version.spotless.plugin>3.7.0</version.spotless.plugin>
+    <version.spotless.plugin>3.8.0</version.spotless.plugin>
     <version.palantir.format>2.50.0</version.palantir.format>
     <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
-    <version.checkstyle.tool>13.6.0</version.checkstyle.tool>
+    <version.checkstyle.tool>13.7.0</version.checkstyle.tool>
     <version.spotbugs.plugin>4.10.2.0</version.spotbugs.plugin>
     <version.japicmp.plugin>0.26.1</version.japicmp.plugin>
 
