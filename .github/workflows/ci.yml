@@ -48,7 +48,7 @@ jobs:
       # which the dev-container user can write to — unlike the root-owned
       # thinlet-m2 named volume at ~/.m2. (See DECISIONS.md D14 / cache note.)
       - name: Cache Maven repository and wrapper
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: .m2
           key: m2-${{ matrix.maven_jdk }}-${{ hashFiles('**/pom.xml', '.mvn/wrapper/maven-wrapper.properties') }}
@@ -84,7 +84,7 @@ jobs:
       # Publish the JDK 21 render trace for the cross-JDK diff (DECISIONS.md D33).
       # The dump is gated by -Dtrace.dump.dir above, so it only runs here.
       - name: Upload JDK 21 trace dump
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: trace-dump-jdk-21
           path: thinlet-core/target/trace-dump/jdk-21
@@ -110,7 +110,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Cache Maven repository and wrapper
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: .m2
           key: m2-jdk${{ matrix.jdk }}-${{ hashFiles('**/pom.xml', '.mvn/wrapper/maven-wrapper.properties') }}
@@ -150,7 +150,7 @@ jobs:
 
       # Publish this runtime's render trace for the cross-JDK diff (DECISIONS.md D33).
       - name: Upload JDK ${{ matrix.jdk }} trace dump
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: trace-dump-jdk-${{ matrix.jdk }}
           path: thinlet-core/target/trace-dump/jdk-${{ matrix.jdk }}
@@ -212,7 +212,7 @@ jobs:
           java-version: "21"
 
       - name: Download per-JDK trace dumps
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: trace-dump-jdk-*
           path: trace-dumps
@@ -227,7 +227,7 @@ jobs:
           -DtraceDiffOut="$PWD/thinlet-core/target/trace-diff" test
 
       - name: Upload cross-JDK trace diff report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: trace-diff-report
           path: thinlet-core/target/trace-diff
