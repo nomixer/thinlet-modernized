@@ -4470,7 +4470,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         } else if (controldown) {
             if (((keycode == KeyEvent.VK_A) || (keycode == 0xBF))
                     && // KeyEvent.VK_SLASH
-                    (getString(component, "selection", "single") != "single")) { // select all
+                    (!is(getString(component, "selection", "single"), "single"))) { // select all
                 selectAll(component, true, recursive);
                 return true;
             } else if (keycode == 0xDC) { // KeyEvent.VK_BACK_SLASH // deselect all
