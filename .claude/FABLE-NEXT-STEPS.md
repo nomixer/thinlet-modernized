@@ -223,6 +223,8 @@ exact Cut 1 diff with `git show 7796f79`. (The pre-merge feature branch
 
 ## 9. Key references
 
+- **`project-docs/PHASE-3-GOALS.md`** — the Phase 3 **goals charter (seed)**: mission, goals,
+  non-goals, principles, success criteria, sub-phases. *Living doc — build on it or correct it.*
 - `DECISIONS.md` — **D42** (this pivot + workflow); D7 (±2 px tolerance); D31 (single jar +
   cross-JDK test matrix); D36/D37 (input net as refactor-safety net).
 - `KNOWN-QUIRKS.md` — Q1 (`parse()` NPE on unreadable source → the earmarked *first*
