@@ -1399,3 +1399,82 @@ change, no golden re-record. No enhancement or quirk-fix lands in 3a (the parse-
 suite green across JDK 8/11/17/21, no diff within tolerance for behavior-preserving cuts;
 local compile+lint pre-push. Cut 1's result lands in its own PR. Cross-ref D7, D31, D36/D37,
 KNOWN-QUIRKS Q1/Q2.
+
+## D43 — Fable review of the Phase 3 plan: Cut 1 verified; interning tripwire; 3a visibility discipline
+
+**Date:** 2026-07-07. **Status:** accepted. **Phase:** 3 (3a).
+
+**Context.** Before Phase 3 work began in earnest, the maintainer asked for an independent
+review of the D42 plan and of Cut 1 (`.claude/FABLE-NEXT-STEPS.md` §5). The review re-verified
+the Cut 1 sweep mechanically and audited the net / japicmp / CI structure. Outcome: **plan
+endorsed** — the refinements below, no resequencing.
+
+**Findings.**
+
+- **Cut 1 verified behavior/API-preserving.** Zero raw `== "…"` comparisons remained in live
+  code except one (below); wrapping is mechanically correct (operand order, parenthesization,
+  `!=` → `!is`) in all sampled regions; the model-core `entry[0] == key` compares are
+  correctly untouched. Corrected figures: **449** wrapped sites (396 `is` + 53 `!is`), not
+  ~418; the goldens cover **41/42** corpus files, not "40/41"; **7** comment lines were
+  cosmetically rewritten, not 3 (`.claude/FABLE-NEXT-STEPS.md` corrected in place).
+- **One seam escapee:** `(getString(component, "selection", "single") != "single")` in the
+  Ctrl+A select-all handler (~L4473) — a `!=` with a call-expression left operand the scripted
+  pass skipped; its siblings were wrapped. No behavior impact; wrapped in this slice.
+- **japicmp already gates public + protected** (no `<accessModifier>` configured → plugin
+  default `protected`; D29's `find(String)` demotion validation exercised exactly that), so
+  the subclass surface is covered with no config change. Reminder: it gates binary *breaks*
+  only — not source-incompatibilities and not *additions* (see Decision 3).
+- The `trace-tolerance.json` `perOp` hook is reserved but **not implemented** in
+  `TraceComparator` (it reads `defaultPx` only) — to be built if/when a cross-JDK finding
+  earns an entry; the D35 posture is unchanged.
+
+**Decision.**
+
+1. **Interning tripwire in `is()`.** The helper preserves the `==` contract but not its
+   silent failure mode: a refactor that breaks the interning chain (DTD literal pool,
+   `create()` re-canonicalization) flips comparisons to `false` with no compile error and no
+   test signal. With the `thinlet.strictIntern` system property `true`, `is()` now throws
+   `IllegalStateException` on a token that is `equals`-equal to the literal but not identical.
+   **The test net always runs strict** (surefire argLine — the D25/D33 channel; Maven knob
+   `strictIntern`, named distinctly per the D33 shadowing gotcha). Production default is off:
+   the `static final` flag makes the branch dead code and semantics byte-identical to `==`
+   (verified by direct observation, flag on and off). Deliberately a system-property flag,
+   **not** `assert`: a downstream app running `-ea` must see zero behavior change.
+   `InternTripwireTest` guards both the argLine delivery into (toolchain-forked) test JVMs
+   and the firing behavior; it runs behind `XvfbDisplayExtension` because `Thinlet` class
+   init reaches AWT and a failed init would poison the class for the whole fork. `is()` is
+   widened private → package-private for the test (invisible to japicmp). **A tripwire hit
+   in CI is a finding to triage** — a legitimate 2005 equals-but-not-interned path would be a
+   `KNOWN-QUIRKS` candidate — never a failure to silence. Armed *before* Cut 3, which touches
+   the interning chain itself.
+2. **Seam completeness.** The ~L4473 escapee is wrapped as `!is(...)`.
+3. **3a visibility discipline.** japicmp gates breaks, not additions: any new public type
+   published in a v0.1.x release becomes de-facto frozen API, and the Java-8 floor (no JPMS)
+   means subpackages force public types. Therefore **every class/member extracted during 3a
+   stays in package `thinlet`, package-private**; the clean subpackage layout belongs to the
+   later new-API phase.
+4. **Sequencing refinements** (charter `project-docs/PHASE-3-GOALS.md` updated). Cuts 2 and 3
+   are *overlappable*: Cut 2's prerequisites (the dev-container local CI loop — promoted to a
+   blocking prereq for Cut 2 iteration, since the bare host cannot run goldens faithfully —
+   and the interaction-state golden work) take real time, and Cut 3's descriptor-table core
+   can proceed behind `getDefinition` meanwhile; design the Renderer dispatch anticipating
+   typed descriptor keys. Interaction-state goldens need a **determinism design** first
+   (caret blink is timer-phase-dependent; hover/press are held-state captures). A fork
+   **catalog diff** runs as soon as the two fork sources arrive (expected 2026-07-08), to
+   *verify* — not assume — that Cuts 2–4 don't overlap the enhancement surface. Cut 6's
+   "backfill characterization tests" prerequisite **is** finishing Phase 2.y (verified
+   uncovered: menus/popupmenu, spinbox, slider, tabbedpane, tooltip, dialog drag/resize,
+   scrollbar mouse drag/track-click, Tab focus traversal, clipboard).
+
+**Scope / non-goals.** Production diff is minimal and inert by default: the tripwire branch
+(dead code unless the property is set), one wrapped comparison, `is()` private →
+package-private. No golden re-record, no `trace-tolerance.json` change, no quirk fix, no
+public-API change. Maintainer follow-up noted: confirm GitHub branch protection *requires*
+the gating CI checks (a server-side setting, not visible in-repo).
+
+**Validation.** Local gates green (Spotless, Checkstyle 0, SpotBugs, compile `--release 8`).
+Tripwire semantics verified by direct observation (headless probe: flag on → throws on
+de-interned token, all other cases unchanged; flag off → byte-identical to `==`).
+`InternTripwireTest` (3 tests) guards wiring + firing in every CI fork. The PR is itself the
+empirical check that no legitimate 2005 path feeds an equals-but-not-interned token through
+`is()` on JDK 8/11/17/21. (Cross-ref D7/D25/D29/D33/D35/D42.)
