@@ -14,6 +14,7 @@ project source and stay.
 | `CLAUDE.md` (repo root) | Session orientation, auto-loaded by Claude Code at startup. The only Claude file that must live outside `.claude/` (only the root `CLAUDE.md` is auto-loaded). | Yes — loses auto-orientation only |
 | `.claude/PAINT-PIPELINE-MAP.md` | Engineering reference for `Thinlet.java`'s paint/layout pipeline, drawing vocabulary, and widget model (Phase 1 golden-trace harness background). | Yes |
 | `.claude/agents/trace-curator.md` | Reusable agent definition codifying the trace-curation procedure that populates `project-docs/backend-portability/` from the committed goldens (D34). | Yes |
+| `.claude/FABLE-NEXT-STEPS.md` | Session handoff / review brief for Phase 3 Cut 1 (pivot, readiness assessment, Cut 1 detail + correctness evidence, open review questions). Transient — delete once the Fable review is folded in. | Yes |
 | `.claude/MANIFEST.md` | This file. | Yes |
 
 ## Policy (keep the repo tidy)

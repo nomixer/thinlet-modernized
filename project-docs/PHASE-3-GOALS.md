@@ -1,0 +1,127 @@
+# Phase 3 — Goals & Charter (seed)
+
+> **Status:** living seed document. **Build on it or correct it.** Fable and future work may
+> edit this freely as understanding sharpens. It is the readable *charter*; the authoritative
+> *decision* is **DECISIONS.md D42**, which this doc expands. A material change to the
+> goals/scope here should also be recorded as a new `DECISIONS.md` entry (adjusting/superseding
+> D42) so the append-only log stays the authority.
+>
+> **Created:** 2026-07-07 (Opus 4.8 session). Aligns with D42, `ROADMAP.md`, and the readiness
+> assessment summarized in `.claude/FABLE-NEXT-STEPS.md`.
+
+---
+
+## Mission (north star)
+
+**Modernise the Thinlet library internals into clean, idiomatic, typed modern Java — then
+enhance.** Turn the 7,779-line `Thinlet.java` God class into a maintainable base **without
+changing what it does**, so that (a) the maintainer's real applications can run on it and
+(b) the prior production enhancements can be re-implemented cleanly on top.
+
+## Why now (the pivot)
+
+Phases 0–2 built the safety net (golden-trace paint+layout + input-capture, cross-JDK
+8/11/17/21). The earlier posture — *"modernize the toolchain, not the library"* — was correct
+**while building the net**. Phase 3 is where the net finally gets **spent**: the library
+itself changes for the first time. This supersedes the "toolchain not library" posture
+(**D42**).
+
+## Goals — what Phase 3 delivers
+
+1. **Decompose the God class** into typed, cohesive subsystems (model · DTD/parse · layout ·
+   paint/renderer · event/input · focus), replacing the untyped `Object[]{key,value,next}`
+   model and the interned-`String` `==` contract with real types.
+2. **Preserve 2005 observable behavior exactly.** Every behavior-preserving cut produces
+   **no golden/input diff** (±2 px, D7), proven in CI across JDK 8/11/17/21.
+3. **Preserve the public API.** Apps compile and run unchanged; enforced by japicmp.
+4. **Java 8 floor.** No library language/API feature above Java 8 (enterprise / old-JRE reality).
+5. **Produce a clean base real apps can run on** — the maintainer's applications become
+   additional living test beds (sub-phase 3b).
+6. **Enable clean re-implementation of the prior enhancements** (from the two custom
+   `Thinlet.java` forks) on that base (sub-phase 3c).
+
+## Non-goals — explicitly out of scope for **3a** (the modernise sub-phase)
+
+- No user-visible change; no behavior change; **no golden re-record**.
+- **No quirk fixes.** Q1 (`parse()` NPE on unreadable source → `IOException`) and Q2
+  (splitpane divider) are deferred; Q1 is *earmarked as the first enhancement*, later.
+- **No new or changed public API.** A new API / full idiomatic rewrite is a later step (after
+  apps run on the clean base).
+- No new features or enhancement functionality during the modernise phase.
+
+## Principles / constraints
+
+- **Behavior + API are frozen through 3a** — both non-negotiable.
+- **Net before refactor.** No cut lands without the net that guards it; where the net is thin,
+  shore up coverage *first* (see blind spots below).
+- **Net-strength-driven sequencing.** Modernise the best-covered subsystems first (paint), the
+  thinnest-covered last (event/input).
+- **Small, verifiable cuts.** Each cut is an independent, behavior-preserving PR that CI proves
+  green.
+- **CI-autonomous workflow (D42).** Claude runs local gates (compile + Spotless/Checkstyle/
+  SpotBugs) and drives CI; the maintainer is not a manual verification dependency. Merge to
+  `main` stays the maintainer's gate unless delegated.
+- **Tolerance discipline (D7/D35).** The regression gate is ±2 px; `perOp` tolerance stays
+  empty until CI's cross-JDK diff surfaces a real over-tolerance position — never widen
+  `defaultPx`, never re-record to make a diff go away.
+
+## Success criteria — how we know 3a is done
+
+- The God class is decomposed into **typed subsystems**; the untyped `Object[]` model and the
+  interned-`String` `==` contract are **gone** (replaced by types).
+- The golden + input net is **still green** across JDK 8/11/17/21, with **no behavior diff**
+  accumulated across all cuts.
+- **japicmp shows the public API unchanged.**
+- The maintainer's real apps **run unchanged** on the modern base (the 3b gate).
+
+## Sub-phase structure
+
+- **3a — Modernise internals** (current). Behavior + API locked. No user-visible change.
+- **3b — Stand the real apps up** on the clean base; they become living test beds that cover
+  far more surface than the 2005 corpus.
+- **3c — Re-implement the enhancements** cleanly (from the two forks); then (later) the full
+  idiomatic rewrite / new public API.
+
+## The sequenced cuts (3a) — net-strength-driven
+
+Detailed rationale in D42 and the readiness assessment (`.claude/FABLE-NEXT-STEPS.md` §2).
+
+| Cut | Scope | Status |
+|-----|-------|--------|
+| **1** | Neutralise the interned-`String` `==` contract behind one helper (`is`) | ✅ **done** (merged `7796f79`) |
+| **2** | Paint → typed Renderer (net captures the full primitive stream) | next |
+| **3** | DTD → typed descriptors + accessor-façade cleanup | pending |
+| **4** | Layout → per-widget strategies (a hub; second) | pending |
+| **5** | `Object[]` model → typed `Widget` (late; highest blast radius) | pending |
+| **6** | Event/input/focus (last; thinnest net) | pending |
+
+**Net-strengthening prerequisites** (interleaved): interaction-state paint goldens (before
+lifting hover/press/focus/selection paint branches); `LayoutTrace` extension to record
+`:port/:view/:widths/:offset` (before Cut 4); input characterization tests for the unasserted
+widgets (before Cut 6).
+
+## Known blind spots to close (net coverage)
+
+- **Interaction-state paint is untraced** — goldens are static renders; hover/press/focus/
+  selection/caret paint branches are unguarded.
+- **The input surface is thin** and *source-derived, not trace-backed*; menus, spinner,
+  tooltip, slider, tabbedpane, dialog drag/resize, scrollbar-mouse, context-menu,
+  focus-traversal and clipboard are unasserted.
+- **The cross-JDK trace diff is informational, non-gating**; the hard gate is same-JVM golden +
+  getter-based input assertions.
+
+## Where the two custom forks fit
+
+Cuts 1–3 do **not** depend on the enhancement shape — proceed. **Review the two forks before
+committing the model (Cut 5) and event (Cut 6) seams**, so the enhancement backlog informs
+where the extension points go (avoid clean-architecting the wrong seams).
+
+## Related docs
+
+- **`DECISIONS.md` D42** — the decision this charter expands (also D7 tolerance, D31 single-jar
+  + cross-JDK matrix, D35 tolerance posture, D36/D37 input net as refactor-safety net).
+- **`project-docs/ROADMAP.md`** — phase-level navigation.
+- **`.claude/FABLE-NEXT-STEPS.md`** — session handoff: readiness assessment, Cut 1 detail +
+  correctness evidence, and open review questions.
+- **`project-docs/backend-portability/`** — the reverse-engineered paint/layout/input spec.
+- **`KNOWN-QUIRKS.md`** — Q1/Q2 (deferred; the earmarked first enhancements).
