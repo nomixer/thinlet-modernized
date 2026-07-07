@@ -3,8 +3,8 @@
 **Written:** 2026-07-07 by Opus 4.8 (1M), end of session.
 **Audience:** Fable, asked to review this work.
 **Status of the code:** Cut 1 done, CI-green, and **merged into `main`** (squash `7796f79`).
-**How to review the change:** `git show 7796f79` on `main` is the exact Cut 1 diff; this
-branch (`claude/fable-review`) = `main` + this brief.
+**How to review the change:** everything is on `main` — review there. `git show 7796f79` is
+the exact Cut 1 diff.
 **This file:** a deletable Claude meta/handoff doc (lives under `.claude/`, per the D27
 doc-layout rule). Move to repo root if you'd rather.
 
@@ -151,8 +151,8 @@ not on a bare host (see §6).
 
 **Artifacts:** **PR #38 — MERGED** (squash **`7796f79`** on `main`); it lands the
 `Thinlet.java` sweep, **D42** (DECISIONS.md), and the `CLAUDE.md` PR-workflow note. See the
-exact Cut 1 diff with `git show 7796f79`. (The pre-merge feature branch
-`claude/phase3-interned-eq` / commit `a78328d` is now folded into that squash.)
+exact Cut 1 diff with `git show 7796f79`. (The pre-merge feature branch was squash-folded and
+has since been deleted — all its content is in `7796f79`.)
 
 ---
 
@@ -194,29 +194,26 @@ exact Cut 1 diff with `git show 7796f79`. (The pre-merge feature branch
 
 ## 7. Repo state at handoff
 
-- **Branch checked out:** `claude/fable-review` — this review branch = `main` + this brief.
-  The `manual/caret-probe` scratch branch is intact at `d5f147e`.
-- **`main`:** **`7796f79`** — includes Cut 1 (squash-merge of #38).
-- **PR #38 (Cut 1):** **MERGED**.
+- **Review on `main`** — everything is on the trunk. All feature branches from this session
+  are merged and deleted; the only other branch is your `manual/caret-probe` scratch branch,
+  intact at `d5f147e`.
+- **`main`:** **`9caa655`** — Cut 1 (#38), this brief + the goals charter (#39), and the
+  `.gitignore` add (#40). **No open PRs.**
+- **PRs #38 (Cut 1) / #39 (docs) / #40 (`.gitignore`): all MERGED.**
 - **Housekeeping done this session:** merged dependabot PRs **#33** (GH Actions bumps) and
-  **#35** (Spotless 3.8.0 / Checkstyle 13.7.0); deleted a stale local branch
-  (`claude/devcontainer-novnc-desktop`); deleted the stale untracked
-  `.devcontainer/devcontainer-lock.json` (a June-14 relic of the first dev-container build,
-  not automation).
-- **Parked:** branch `claude/gitignore-devcontainer-lock` (commit `67610da`) — a one-line
-  `.gitignore` add for `devcontainer-lock.json`; pushed, **PR not opened** (agreed to land it
-  when the current work concludes).
+  **#35** (Spotless 3.8.0 / Checkstyle 13.7.0); deleted stale local branches; deleted the
+  stale untracked `.devcontainer/devcontainer-lock.json` (a June-14 relic of the first
+  dev-container build, not automation) and added it to `.gitignore` (#40).
 
 ---
 
 ## 8. Immediate next steps
 
-1. **PR #38 — merged.** ✅ Cut 1 is on `main` at `7796f79`.
+1. **Cut 1 (#38), docs (#39), `.gitignore` (#40) — all merged.** ✅ `main` at `9caa655`.
 2. **Cut 2 (paint → typed Renderer).** First **build the dev container** for a faithful local
    loop; **generate interaction-state paint goldens** (prereq); then extract one static widget
    (label/button) as the Renderer pilot, verify against the recorded op stream, then scale.
-3. Optionally land the parked `.gitignore` PR.
-4. Before Cut 5/Cut 6: obtain and diff the **two custom `Thinlet.java` forks** to derive the
+3. Before Cut 5/Cut 6: obtain and diff the **two custom `Thinlet.java` forks** to derive the
    enhancement backlog and place the model/event seams where the enhancements need them.
 
 ---
@@ -232,4 +229,4 @@ exact Cut 1 diff with `git show 7796f79`. (The pre-merge feature branch
 - `project-docs/backend-portability/` — RENDERING-PRIMITIVES / LAYOUT-ALGORITHMS /
   INPUT-SURFACE / CROSS-JDK-TRACE-DIFF (data-derived spec of the paint/layout/input surface).
 - `.claude/PAINT-PIPELINE-MAP.md` — line-numbered map of the paint pipeline + `Object[]` model.
-- PR #38 · commit `a78328d` · branch `claude/phase3-interned-eq`.
+- **Cut 1:** PR #38 · squash commit `7796f79` on `main` (`git show 7796f79`).
