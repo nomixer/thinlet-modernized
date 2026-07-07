@@ -33,6 +33,13 @@
     <traceRecord></traceRecord>
     <traceDiffInputDir></traceDiffInputDir>
     <traceDiffOut>target/trace-diff</traceDiffOut>
+    <!-- The whole test net runs with the Thinlet.is interned-token tripwire on
+         (D43): an equals-equal but non-identical token — a broken interning
+         chain — fails loud instead of silently comparing false. Production
+         default is off (the flag guards dead code unless the system property is
+         set). Disable for a bisect with -DstrictIntern=false; the
+         InternTripwireTest wiring guard will flag that run. -->
+    <strictIntern>true</strictIntern>
   </properties>
 
   <!-- Dependency-free at runtime, period. JUnit 5 + AssertJ are test scope only
@@ -75,7 +82,7 @@
                systemPropertyVariables refuses to forward a name that collides
                with a CLI user property. The ${traceDumpDir} knobs default empty
                (above) ⇒ -Dtrace.dump.dir= ⇒ inert; CI sets -DtraceDumpDir=… etc. -->
-          <argLine>-Dfile.encoding=UTF-8 -Dtrace.dump.dir=${traceDumpDir} -Dtrace.record=${traceRecord} -Dtrace.diff.inputDir=${traceDiffInputDir} -Dtrace.diff.out=${traceDiffOut}</argLine>
+          <argLine>-Dfile.encoding=UTF-8 -Dthinlet.strictIntern=${strictIntern} -Dtrace.dump.dir=${traceDumpDir} -Dtrace.record=${traceRecord} -Dtrace.diff.inputDir=${traceDiffInputDir} -Dtrace.diff.out=${traceDiffOut}</argLine>
         </configuration>
       </plugin>
     </plugins>
