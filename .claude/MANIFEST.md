@@ -15,6 +15,7 @@ project source and stay.
 | `.claude/PAINT-PIPELINE-MAP.md` | Engineering reference for `Thinlet.java`'s paint/layout pipeline, drawing vocabulary, and widget model (Phase 1 golden-trace harness background). | Yes |
 | `.claude/agents/trace-curator.md` | Reusable agent definition codifying the trace-curation procedure that populates `project-docs/backend-portability/` from the committed goldens (D34). | Yes |
 | `.claude/FABLE-NEXT-STEPS.md` | Session handoff / review brief for Phase 3 Cut 1 (pivot, readiness assessment, Cut 1 detail + correctness evidence, open review questions). Transient — delete once the Fable review is folded in. | Yes |
+| `.claude/settings.json` | Claude Code harness permissions for this repo (maintainer-added, 2026-07-08): allowlists `gh pr merge` so PR auto-merge delegation (D42 opt-in) works in auto mode without a classifier denial. Functional config, not an orientation doc. | Yes — auto-merge delegation then needs manual approval again |
 | `.claude/MANIFEST.md` | This file. | Yes |
 
 ## Policy (keep the repo tidy)
