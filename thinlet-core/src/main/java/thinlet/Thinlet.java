@@ -1669,86 +1669,22 @@ public class Thinlet extends Container implements Runnable, Serializable {
         enabled = getBoolean(component, "enabled", true); // enabled &&
 
         if (is(classname, "label")) {
-            paint(
+            Renderer.label(this, component, bounds, g, clipx, clipy, clipwidth, clipheight, enabled);
+        } else if ((is(classname, "button")) || (is(classname, "togglebutton"))) {
+            Renderer.button(
+                    this,
                     component,
-                    0,
-                    0,
-                    bounds.width,
-                    bounds.height,
+                    classname,
+                    bounds,
                     g,
                     clipx,
                     clipy,
                     clipwidth,
                     clipheight,
-                    false,
-                    false,
-                    false,
-                    false,
-                    0,
-                    0,
-                    0,
-                    0,
-                    false,
-                    enabled ? 'e' : 'd',
-                    "left",
-                    true,
-                    false);
-        } else if ((is(classname, "button")) || (is(classname, "togglebutton"))) {
-            boolean toggled = (is(classname, "togglebutton")) && getBoolean(component, "selected", false);
-            boolean link = (is(classname, "button")) && (is(get(component, "type"), "link"));
-            if (link) {
-                paint(
-                        component,
-                        0,
-                        0,
-                        bounds.width,
-                        bounds.height,
-                        g,
-                        clipx,
-                        clipy,
-                        clipwidth,
-                        clipheight,
-                        false,
-                        false,
-                        false,
-                        false,
-                        0,
-                        0,
-                        0,
-                        0,
-                        focus,
-                        enabled ? (pressed ? 'e' : 'l') : 'd',
-                        "center",
-                        true,
-                        enabled && (inside != pressed));
-            } else { // disabled toggled
-                char mode = enabled ? ((inside != pressed) ? 'h' : ((pressed || toggled) ? 'p' : 'g')) : 'd';
-                paint(
-                        component,
-                        0,
-                        0,
-                        bounds.width,
-                        bounds.height,
-                        g,
-                        clipx,
-                        clipy,
-                        clipwidth,
-                        clipheight,
-                        true,
-                        true,
-                        true,
-                        true,
-                        2,
-                        5,
-                        2,
-                        5,
-                        focus,
-                        mode,
-                        "center",
-                        true,
-                        false);
-                // (enabled && (is(classname, "button")) && is(get(component, "type"), "default"))...
-            }
+                    pressed,
+                    inside,
+                    focus,
+                    enabled);
         } else if (is(classname, "checkbox")) {
             paint(
                     component,
@@ -3419,7 +3355,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * Paint component icon and text (using default or custom font)
      * @param mnemonic find mnemonic index and underline text
      */
-    private void paint(
+    // package-private for Renderer (D48 seam; japicmp-invisible)
+    void paint(
             Object component,
             int x,
             int y,
@@ -5961,7 +5898,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
         return false;
     }
 
-    private static Object get(Object component, Object key) {
+    // package-private for Renderer (D48 seam; japicmp-invisible)
+    static Object get(Object component, Object key) {
         for (Object[] entry = (Object[]) component; entry != null; entry = (Object[]) entry[2]) {
             if (entry[0] == key) { // TODO doesn't work under Symbian OS?
                 return entry[1];
@@ -7526,7 +7464,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
         return set(component, key, (value == defaultvalue) ? null : (value ? Boolean.TRUE : Boolean.FALSE));
     }
 
-    private boolean getBoolean(Object component, String key, boolean defaultvalue) {
+    // package-private for Renderer (D48 seam; japicmp-invisible)
+    boolean getBoolean(Object component, String key, boolean defaultvalue) {
         Object value = get(component, key);
         return (value == null) ? defaultvalue : ((Boolean) value).booleanValue();
     }
