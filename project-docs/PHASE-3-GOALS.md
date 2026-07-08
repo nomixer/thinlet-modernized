@@ -64,6 +64,15 @@ itself changes for the first time. This supersedes the "toolchain not library" p
 - **Tolerance discipline (D7/D35).** The regression gate is ±2 px; `perOp` tolerance stays
   empty until CI's cross-JDK diff surfaces a real over-tolerance position — never widen
   `defaultPx`, never re-record to make a diff go away.
+- **Visibility discipline (D43).** japicmp gates API *breaks*, not *additions* — any new
+  public type published in a v0.1.x release becomes de-facto frozen API — and the Java-8
+  floor (no JPMS) means subpackages force public types. So every class/member extracted
+  during 3a stays in package `thinlet`, **package-private**; the clean subpackage layout
+  waits for the later new-API phase.
+- **Interning tripwire (D43).** The whole test net runs `is()` strict
+  (`thinlet.strictIntern=true` via surefire argLine): an equals-but-not-interned token — a
+  broken interning chain, the contract's silent failure mode — fails loud. A tripwire hit is
+  a finding to triage, never a failure to silence.
 
 ## Success criteria — how we know 3a is done
 
@@ -88,17 +97,25 @@ Detailed rationale in D42 and the readiness assessment (`.claude/FABLE-NEXT-STEP
 
 | Cut | Scope | Status |
 |-----|-------|--------|
-| **1** | Neutralise the interned-`String` `==` contract behind one helper (`is`) | ✅ **done** (merged `7796f79`) |
+| **1** | Neutralise the interned-`String` `==` contract behind one helper (`is`) | ✅ **done** (merged `7796f79`; follow-up + tripwire: D43) |
 | **2** | Paint → typed Renderer (net captures the full primitive stream) | next |
 | **3** | DTD → typed descriptors + accessor-façade cleanup | pending |
 | **4** | Layout → per-widget strategies (a hub; second) | pending |
 | **5** | `Object[]` model → typed `Widget` (late; highest blast radius) | pending |
 | **6** | Event/input/focus (last; thinnest net) | pending |
 
-**Net-strengthening prerequisites** (interleaved): interaction-state paint goldens (before
-lifting hover/press/focus/selection paint branches); `LayoutTrace` extension to record
-`:port/:view/:widths/:offset` (before Cut 4); input characterization tests for the unasserted
-widgets (before Cut 6).
+Cuts 2 and 3 are **overlappable** (D43): Cut 2's prerequisites (the local CI loop, the
+interaction-golden determinism design) take real time, and Cut 3's descriptor-table core can
+proceed behind `getDefinition` meanwhile — design the Renderer dispatch anticipating typed
+descriptor keys so Cut 3 doesn't force a re-key.
+
+**Net-strengthening prerequisites** (interleaved): the **dev-container local CI loop** —
+blocking for Cut 2's iteration (the bare host cannot run goldens faithfully); interaction-state
+paint goldens (before lifting hover/press/focus/selection paint branches) — these need a
+**determinism design** first (caret blink is timer-phase-dependent; hover/press are held-state
+captures); `LayoutTrace` extension to record `:port/:view/:widths/:offset` (before Cut 4);
+input characterization tests for the unasserted widgets (before Cut 6) — i.e. **finishing
+Phase 2.y**.
 
 ## Known blind spots to close (net coverage)
 
@@ -114,7 +131,11 @@ widgets (before Cut 6).
 
 Cuts 1–3 do **not** depend on the enhancement shape — proceed. **Review the two forks before
 committing the model (Cut 5) and event (Cut 6) seams**, so the enhancement backlog informs
-where the extension points go (avoid clean-architecting the wrong seams).
+where the extension points go (avoid clean-architecting the wrong seams). Fork sources are
+expected **2026-07-08** (D43); the first task on arrival is a cheap **catalog diff** against
+the 2005 baseline — to *verify*, not assume, that Cuts 2–4 don't overlap the enhancement
+surface, and to see which paint/layout regions the enhancements touched (informs
+Renderer/layout-strategy seam granularity).
 
 ## Related docs
 

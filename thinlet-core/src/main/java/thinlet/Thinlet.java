@@ -4470,7 +4470,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         } else if (controldown) {
             if (((keycode == KeyEvent.VK_A) || (keycode == 0xBF))
                     && // KeyEvent.VK_SLASH
-                    (getString(component, "selection", "single") != "single")) { // select all
+                    (!is(getString(component, "selection", "single"), "single"))) { // select all
                 selectAll(component, true, recursive);
                 return true;
             } else if (keycode == 0xDC) { // KeyEvent.VK_BACK_SLASH // deselect all
@@ -5942,6 +5942,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
         return null;
     }
 
+    /** Enables the {@link #is} de-interned-token tripwire; read once at class init. */
+    private static final boolean STRICT_INTERN = Boolean.getBoolean("thinlet.strictIntern");
+
     /**
      * Identity comparison of an interned toolkit token (a widget classname, a
      * part key, or an enum-like attribute value) against a string literal. This
@@ -5950,8 +5953,21 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * sites. Semantics are deliberately identical to {@code ==} (reference
      * identity), NOT {@code equals}: the tokens are interned literals drawn from
      * the DTD constant pool, and the toolkit relies on that identity.
+     *
+     * <p>Tripwire: with the {@code thinlet.strictIntern} system property set to
+     * {@code true} (the test net enables it via surefire argLine; off — and
+     * dead-code-eliminated — otherwise), a token that is {@code equals}-equal to
+     * the literal but not identical throws instead of silently comparing false.
+     * That is the contract's silent failure mode: a refactor that breaks the
+     * interning chain (DTD pool / {@code create} re-canonicalization) would
+     * otherwise flip these comparisons with no compile error and no test signal.
+     * Package-private (not private) only so {@code InternTripwireTest} can guard
+     * the wiring; not part of the public API (japicmp scope is public+protected).
      */
-    private static boolean is(Object token, String literal) {
+    static boolean is(Object token, String literal) {
+        if (STRICT_INTERN && token != literal && literal.equals(token)) {
+            throw new IllegalStateException("de-interned token: \"" + literal + "\"");
+        }
         return token == literal;
     }
 

@@ -19,7 +19,7 @@ is a deliberate change of direction from the prior "modernize the toolchain, **n
 library" posture — recorded as **DECISIONS.md D42**.
 
 **Cut 1 is complete and CI-green**: we neutralized the interned-`String` `==` contract
-(~418 identity comparisons) behind one helper, as the enabling prerequisite for every later
+(449 identity comparisons — reviewed count, see §10) behind one helper, as the enabling prerequisite for every later
 typed refactor. It is **provably behavior- and API-preserving** (golden + input net passed
 on JDK 8/11/17/21; japicmp passed). It **merged into `main`** via **PR #38** (squash
 `7796f79`); `main` now contains Cut 1.
@@ -53,14 +53,14 @@ before opening a PR" note, for Phase 3 onward.
 Three parallel deep-reads of `Thinlet.java` by subsystem produced this. **Net strength
 drives the refactor order.**
 
-- **The dominant obstacle:** an **interned-`String` `==` contract** — ~418 identity
-  comparisons (`"combobox" == classname`, `placement == "top"`, `part == "down"`,
+- **The dominant obstacle:** an **interned-`String` `==` contract** — 449 identity
+  comparisons (reviewed count, §10) (`"combobox" == classname`, `placement == "top"`, `part == "down"`,
   `getClass(x) == "..."`, `definition[0] == "..."`). Correctness silently depends on the
   strings being interned (DTD literal pool + `create()` re-canonicalization + SAX/DOM
   interning). **Any typed/enum refactor flips these to `false` with no compile error and no
   test** for most widgets. Neutralizing it is the prerequisite for everything else.
 - **Paint** (~L1537–3533): near-pure sink; the golden net captures its *entire* observable
-  output (the primitive stream, ±2 px, 40/41 corpus files). **Safe first modernisation cut.**
+  output (the primitive stream, ±2 px, 41/42 corpus files — corrected, §10). **Safe first modernisation cut.**
   Caveat: interaction-state branches (hover/press/focus/selection/caret) are **untraced** —
   goldens are static renders. Two stray model writes to relocate first: the `:lead` write
   (~L2962) and the lazy-layout negative-width kick (~L1618–1621, paint re-runs `doLayout`
@@ -120,7 +120,7 @@ private static boolean is(Object token, String literal) {
 - Semantics are **deliberately identical to `==`** (reference identity), **NOT `equals`** —
   the tokens are interned literals; the toolkit relies on that identity. Wrapping is a pure
   mechanical seam, *not* a correctness fix.
-- **~418 sites converted** via three scripted `perl -pe` passes over specific, verified
+- **449 sites converted** (reviewed count; estimated ~418 at the time) via three scripted `perl -pe` passes over specific, verified
   operand families (classnames, `part`/`insidepart`/`pressedpart`, enum-like values —
   `placement`/`halign`/`valign`/`itemclass`/`iclass`/`fieldclass`/`selection`/`sort`/
   `alignment`/`target`/`parentclass`/`mode`, plus `getClass(ident)`, `get(component,"…")`,
@@ -138,8 +138,8 @@ private static boolean is(Object token, String literal) {
 - **CI green across the whole matrix** on PR #38: build (JDK 21); **tests JDK 8/11/17**
   (golden + input net → **no diff**, behavior identical); **japicmp** vs v0.1.0 (**public API
   unchanged**); cross-JDK trace diff (no new divergence).
-- 3 comment lines (commented-out code fragments) were incidentally rewritten to `is(...)` —
-  cosmetic, harmless.
+- 7 comment lines (commented-out code fragments) were incidentally rewritten to `is(...)` —
+  cosmetic, harmless (was reported as 3; corrected, §10).
 
 **Reproduce the local gates (no display needed):**
 ```
@@ -230,3 +230,23 @@ has since been deleted — all its content is in `7796f79`.)
   INPUT-SURFACE / CROSS-JDK-TRACE-DIFF (data-derived spec of the paint/layout/input surface).
 - `.claude/PAINT-PIPELINE-MAP.md` — line-numbered map of the paint pipeline + `Object[]` model.
 - **Cut 1:** PR #38 · squash commit `7796f79` on `main` (`git show 7796f79`).
+
+---
+
+## 10. Review outcome (2026-07-07, Fable)
+
+Reviewed as requested; **plan endorsed** — refinements, no resequencing. The full record is
+**DECISIONS.md D43** (which answers §5's five questions) and the updated
+`project-docs/PHASE-3-GOALS.md`. Highlights:
+
+- **Cut 1 verified behavior/API-preserving** by an independent sweep. One seam escapee found
+  and wrapped (the Ctrl+A select-all `!=` at ~L4473); an **interning tripwire** added inside
+  `is()` (`thinlet.strictIntern`, always on in the test net) so a broken interning chain
+  fails loud instead of silently comparing false — armed before Cut 3 touches the chain.
+- **japicmp already covers protected** (plugin default) — the subclass surface was never at
+  risk. New 3a rule: extractions stay package-private in package `thinlet` (japicmp doesn't
+  gate additions; no JPMS on the Java 8 floor).
+- Figures corrected in place in this brief: **449** wrapped sites (not ~418), **41/42**
+  corpus files (not 40/41), **7** comment-line rewrites (not 3).
+- Fork sources expected 2026-07-08; first task on arrival is a catalog diff (verify, don't
+  assume, that Cuts 2–4 miss the enhancement surface).
