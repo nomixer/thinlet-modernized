@@ -20,6 +20,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA */
 package thinlet;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 
@@ -146,6 +147,74 @@ final class Renderer {
                     true,
                     false);
             // (enabled && (is(classname, "button")) && is(get(component, "type"), "default"))...
+        }
+    }
+
+    /** The 2005 {@code checkbox} (and radio-button {@code group}) paint branch, verbatim. */
+    static void checkbox(
+            Thinlet t,
+            Object component,
+            Rectangle bounds,
+            Graphics g,
+            int clipx,
+            int clipy,
+            int clipwidth,
+            int clipheight,
+            boolean pressed,
+            boolean inside,
+            boolean focus,
+            boolean enabled) {
+        t.paint(
+                component,
+                0,
+                0,
+                bounds.width,
+                bounds.height,
+                g,
+                clipx,
+                clipy,
+                clipwidth,
+                clipheight,
+                false,
+                false,
+                false,
+                false,
+                0,
+                t.block + 3,
+                0,
+                0,
+                false,
+                enabled ? 'e' : 'd',
+                "left",
+                true,
+                false);
+
+        boolean selected = t.getBoolean(component, "selected", false);
+        String group = t.getString(component, "group", null);
+        Color border = enabled ? t.c_border : t.c_disable;
+        Color foreground = enabled ? ((inside != pressed) ? t.c_hover : (pressed ? t.c_press : t.c_ctrl)) : t.c_bg;
+        int dy = (bounds.height - t.block + 2) / 2;
+        if (group == null) {
+            t.paintRect(g, 1, dy + 1, t.block - 2, t.block - 2, border, foreground, true, true, true, true, true);
+        } else {
+            g.setColor((foreground != t.c_ctrl) ? foreground : t.c_bg);
+            g.fillOval(1, dy + 1, t.block - 3 + Thinlet.evm, t.block - 3 + Thinlet.evm);
+            g.setColor(border);
+            g.drawOval(1, dy + 1, t.block - 3, t.block - 3);
+        }
+        if (focus) {
+            t.drawFocus(g, 0, 0, bounds.width - 1, bounds.height - 1);
+        }
+        if ((!selected && inside && pressed) || (selected && (!inside || !pressed))) {
+            g.setColor(enabled ? t.c_text : t.c_disable);
+            if (group == null) {
+                g.fillRect(3, dy + t.block - 9, 2 + Thinlet.evm, 6 + Thinlet.evm);
+                g.drawLine(3, dy + t.block - 4, t.block - 4, dy + 3);
+                g.drawLine(4, dy + t.block - 4, t.block - 4, dy + 4);
+            } else {
+                g.fillOval(5, dy + 5, t.block - 10 + Thinlet.evm, t.block - 10 + Thinlet.evm);
+                g.drawOval(4, dy + 4, t.block - 9, t.block - 9);
+            }
         }
     }
 }
