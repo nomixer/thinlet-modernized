@@ -158,6 +158,37 @@ final class InputDriver {
         clickAt(widget, xOffset, size(widget).height / 2);
     }
 
+    /**
+     * Moves the pointer to the widget centre and holds it there — a bare
+     * MOUSE_MOVED with no press. Thinlet caches the hit-tested {@code
+     * mouseinside}/{@code insidepart} from motion events, so a subsequent {@link
+     * #paint()} renders the hover visuals (the D45 held-state capture). The state
+     * persists until another gesture moves the pointer.
+     */
+    void hover(Object widget) {
+        Point p = center(widget);
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_MOVED, when++, 0, p.x, p.y, 0, false));
+    }
+
+    /** {@link #hover(Object)} at ({@code xOffset},{@code yOffset}) from the widget's top-left. */
+    void hoverAt(Object widget, int xOffset, int yOffset) {
+        Point o = origin(widget);
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_MOVED, when++, 0, o.x + xOffset, o.y + yOffset, 0, false));
+    }
+
+    /**
+     * Presses the primary button on the widget centre and holds it — MOUSE_PRESSED
+     * with no release, after the usual priming MOUSE_MOVED — so {@code
+     * mousepressed}/{@code pressedpart} stay set and a subsequent {@link #paint()}
+     * renders the pressed visuals (the D45 held-state capture). Scenarios use a
+     * fresh driver each, so the un-released press never leaks between tests.
+     */
+    void pressAndHold(Object widget) {
+        Point p = center(widget);
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_MOVED, when++, 0, p.x, p.y, 0, false));
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_PRESSED, when++, 0, p.x, p.y, 1, false));
+    }
+
     /** Types literal characters as KEY_TYPED events into the focus owner. */
     void type(String text) {
         for (int i = 0; i < text.length(); i++) {
