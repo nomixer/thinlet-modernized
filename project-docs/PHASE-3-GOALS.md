@@ -114,15 +114,18 @@ descriptor keys so Cut 3 doesn't force a re-key.
 paint goldens (before lifting hover/press/focus/selection paint branches) — determinism
 design ✅ done (D45, `project-docs/INTERACTION-GOLDENS-DESIGN.md`: paint has **no time
 dependence** — the caret does not blink, contrary to D43's premise; hover/press are
-held-state captures), with the capture build + recorded goldens as the remaining work;
+held-state captures); capture harness + first 10 goldens ✅ landed (D47) — remaining
+scenarios (scrollbar/spinbox arrows, tabs, menubar, tooltip) follow as 2.y fixtures land;
 `LayoutTrace` extension to record `:port/:view/:widths/:offset` (before Cut 4);
 input characterization tests for the unasserted widgets (before Cut 6) — i.e. **finishing
 Phase 2.y**.
 
 ## Known blind spots to close (net coverage)
 
-- **Interaction-state paint is untraced** — goldens are static renders; hover/press/focus/
-  selection/caret paint branches are unguarded.
+- **Interaction-state paint** — was fully untraced; the first guarded slice landed with
+  D47 (button/checkbox hover+press, focus rects, caret, field/textarea selection, list
+  selected+lead, open combolist). Still unguarded: scrollbar/spinbox arrow hover+press,
+  tab hover, menubar hover/armed, tooltip.
 - **The input surface is thin** and *source-derived, not trace-backed*; menus, spinner,
   tooltip, slider, tabbedpane, dialog drag/resize, scrollbar-mouse, context-menu,
   focus-traversal and clipboard are unasserted.

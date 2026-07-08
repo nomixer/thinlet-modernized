@@ -171,7 +171,12 @@ final class GoldenTraceRecorder {
         }
         for (File f : files) {
             if (f.isDirectory()) {
-                collectFiles(f, out);
+                // trace/interaction/ holds the D45 interaction-state goldens, which
+                // map to scenarios (GoldenInteractionTraceTest), not corpus XML —
+                // corpusResourceFor would resolve them to nonexistent files.
+                if (!"interaction".equals(f.getName())) {
+                    collectFiles(f, out);
+                }
             } else if (f.getName().endsWith(".json") && !"trace-tolerance.json".equals(f.getName())) {
                 out.add(f);
             }
