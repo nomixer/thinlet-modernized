@@ -1647,3 +1647,55 @@ scenarios, empirically validating D45 ahead of CI.
 static-golden re-record, no tolerance change. Remaining scenarios (scrollbar/spinbox
 arrows, tab hover, menubar, tooltip) follow in later slices as their fixtures land
 (Phase 2.y). (Cross-ref D7/D24/D37/D41/D44/D45.)
+
+## D48 — Fork shape revealed (multi-file decompositions): plan validated, three refinements; Cut 2 opens with the paint-write hoists
+
+**Date:** 2026-07-09. **Status:** accepted. **Phase:** 3 (Cut 2 opening).
+
+**Context.** The maintainer clarified that the two production forks are **not** single-file
+`Thinlet.java` edits but **multi-file decompositions** separating layers (paint,
+layout-inducing actions, …), built with two decoupling styles: Fork A made methods
+`public static` so utility libraries call toolkit functionality without a subclassed
+Thinlet instance; Fork B added explicit `Thinlet` instance parameters to new methods.
+Sources + the apps built on them arrive the week of 2026-07-13. Assessment requested:
+plan change or blocker?
+
+**Assessment: not a blocker — convergent validation.** The maintainer already decomposed
+Thinlet by layer in production, along the same boundaries as the D42 cut structure; the
+"clean-architecting the wrong seams" risk (D43) *shrinks* with this information. Behavior +
+API stay frozen through 3a regardless. Three refinements:
+
+1. **Seam style for Cuts 2–4: stateless, explicit-context extraction.** Both fork styles
+   point the same way — decouple behavior from the God-object instance. Extracted classes
+   hold no state and receive everything explicitly (`render(Thinlet t, Object component,
+   Graphics g, …)`), making either fork ergonomic (public-static or instance-parameter) a
+   thin 3c wrapper later. Package-private through 3a per D43; any public surface is a
+   3c/new-API decision.
+2. **The fork task is a *mapping*, not a file diff** (a diff against one 2005 file is
+   impossible against a multi-file fork): map fork files → subsystems; compare the
+   battle-tested split boundaries against the Cut 2–6 seams; extract the functional
+   enhancement backlog; and read the set of successfully-static-ified methods as an
+   empirical **state-coupling map** of Thinlet. Runs on arrival, before the Cut 4/5/6 seam
+   commitments. The apps join as the 3b test beds.
+3. **Cut 2 proceeds now** — the seam-style question the early fork review was meant to
+   answer is answered by the fork shape itself; waiting the week buys Cut 2 nothing.
+
+**Correction to the D42 brief ("relocate the two stray paint writes"): hoist, don't
+relocate.** Relocating the writes *in time* changes observable behavior: e.g. assigning
+`:lead` at focus-gain instead of paint time flips a race — a Down key processed before the
+async focus repaint sees a null lead in 2005 (selects the first item), but a pre-assigned
+lead (selects the second). The correct, behavior-preserving move is extracting each
+mutation into a named method invoked at the **identical** point in the paint sequence.
+
+**Decision (landed this slice).** In `Thinlet.java`: the lazy-layout kick (paint entry;
+negative-width dirty flag → `doLayout`) hoisted into `layoutIfDirty(component, bounds)`,
+and the `:lead` adoption (list/table/tree item loop) hoisted into
+`ensureLeadForPaint(component, focus)` called once before the loop — semantically identical
+because the original write could fire only on the first iteration, and nothing between the
+two points touches `:lead`. The recursive paint's own text is now mutation-free, the
+precondition for a read-only Renderer extraction (Cut 2 pilot: label + button, next slice).
+
+**Validation.** Full net in the CI container (D44): 100 tests green — including the D47
+`list-selected-lead-focus` interaction golden that guards the `:lead` write — and crossjdk
+rows 8/11/17 green; zero diff on all four runtimes. japicmp unaffected (new members are
+default-visibility). (Cross-ref D42/D43/D44/D45/D47.)
