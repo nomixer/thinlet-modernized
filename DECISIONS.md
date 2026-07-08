@@ -1699,3 +1699,42 @@ precondition for a read-only Renderer extraction (Cut 2 pilot: label + button, n
 `list-selected-lead-focus` interaction golden that guards the `:lead` write — and crossjdk
 rows 8/11/17 green; zero diff on all four runtimes. japicmp unaffected (new members are
 default-visibility). (Cross-ref D42/D43/D44/D45/D47.)
+
+## D49 — Cut 2 pilot: label + button branches extracted to `Renderer` (first product-source decomposition)
+
+**Date:** 2026-07-09. **Status:** accepted. **Phase:** 3 (Cut 2 pilot).
+
+**Context.** With the paint-side mutations hoisted (D48), the recursive paint became
+read-only in its own text — the precondition for lifting widget branches out. This slice is
+the D42 "typed Renderer" pilot: prove the extraction pattern on the simplest,
+best-guarded branches before scaling it across the ~30 widget classes.
+
+**Decision.**
+
+1. **`thinlet/Renderer.java`** — the first product source file added beside the 2005 pair
+   (`Thinlet.java`, `FrameLauncher.java`). Package-private, `final`, stateless; static
+   methods in the D48 explicit-context seam style: `label(Thinlet t, Object component,
+   Rectangle bounds, Graphics g, clip…, enabled)` and `button(…, classname, …, pressed,
+   inside, focus, enabled)`. The bodies are the 2005 paint branches **moved verbatim**
+   (comments included, e.g. the commented-out default-button fragment). Dispatch — the
+   classname chain — stays in `Thinlet.paint`.
+2. **Three visibility widenings** (`private` → package-private; japicmp-invisible;
+   commented at the site): the 22-arg icon+text paint dispatcher, `static get(Object,
+   Object)`, and `getBoolean(Object, String, boolean)`. This is the expected mechanical
+   cost of decomposition under the D43 single-package discipline, and mirrors what the
+   maintainer's Fork B did (instance/context passed to relocated methods).
+3. **License/attribution:** the new file's header derives from `Thinlet.java`'s LGPL
+   header and keeps the Bajzat copyright — the method bodies are his 2005 code relocated
+   (D3: no fresh copyright claimed).
+
+**Validation.** Full net in the CI container (D44): **100 tests green**, and crossjdk rows
+**8/11/17 green — zero diff**. The moved branches are exercised by nearly all 41 static
+goldens plus the D47 button hover/press and checkbox/focus goldens, so the run is a genuine
+equivalence proof for both the static and interaction-state paint of the moved widgets.
+Checkstyle 0, SpotBugs 0; japicmp unaffected.
+
+**Scope / non-goals.** Two widget branches only — the pattern, not the migration. The
+remaining branches follow the same shape slice by slice; branches whose interaction paint
+is not yet golden-guarded (scrollbar/spinbox arrows, tabs, menubar — see D47 remaining
+scenarios) get their goldens **before** their extraction slice, per "net before refactor".
+(Cross-ref D3/D42/D43/D44/D47/D48.)
