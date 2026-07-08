@@ -1570,3 +1570,38 @@ and any Robot-driven capture (D40 keeps Robot a thin fidelity cross-check).
 **Validation.** Every line reference in the design note was read directly from the current
 `Thinlet.java` during the survey; the design is validated empirically when the first
 goldens are recorded (next slice).
+
+## D46 — `main` branch protection enforced: PR-only + required checks (closes the D43 follow-up)
+
+**Date:** 2026-07-08. **Status:** accepted. **Phase:** 3 (infrastructure).
+
+**Context.** D43 flagged a follow-up: confirm branch protection actually *requires* the
+gating CI checks — a server-side setting invisible in-repo. Inspection (2026-07-08, via the
+GitHub API) found `main` had **no protection at all**: the "direct pushes are blocked"
+statements in `CLAUDE.md`/D42 described the Claude-web sandbox's git-proxy behavior, not
+GitHub enforcement. Nothing prevented a direct push to `main` or merging a red PR, and
+GitHub refused to *arm* auto-merge on pending-check PRs ("Protected branch rules not
+configured") — which is why PRs #44/#45 were merged manually after green.
+
+**Decision (maintainer-configured in the GitHub UI; verified via API).** Ruleset
+**`protect-main`** — active, targeting the default branch:
+
+- **Require a pull request** before merging, **0 approvals** (solo-maintainer flow — the
+  point is forcing every change through the CI net, not review ceremony).
+- **Required status checks** = the five gating jobs, exact contexts:
+  `build (Maven JDK 21 / target Java 8) (21)`, `tests (JDK 8 via toolchains)`,
+  `tests (JDK 11 via toolchains)`, `tests (JDK 17 via toolchains)`,
+  `API compatibility (japicmp vs v0.1.0)`. `Cross-JDK trace diff (informational)` is
+  deliberately **not** required, preserving D33's non-gating design.
+- **Block force pushes** and **block deletion**. `strict_required_status_checks_policy` is
+  off (no up-to-date-rebase churn in a serial one-PR-at-a-time flow).
+
+**Effect.** Red PRs are unmergeable by anyone; direct pushes to `main` are refused (the
+`CLAUDE.md` claim is now enforced server-side); and `gh pr merge --auto --squash` arms
+while checks are still pending, making delegated squash-on-green fully unattended (the D42
+opt-in delegation + the #43 allow rule + this ruleset are the three pieces of "full auto").
+
+**Validation.** Effective rules on `main` read back via
+`/repos/…/rules/branches/main` match the list above exactly. The PR landing this entry is
+the end-to-end test: auto-merge was armed while its checks were pending and GitHub
+performed the squash on green without manual action. (Cross-ref D33/D42/D43.)
