@@ -1478,3 +1478,46 @@ de-interned token, all other cases unchanged; flag off → byte-identical to `==
 `InternTripwireTest` (3 tests) guards wiring + firing in every CI fork. The PR is itself the
 empirical check that no legitimate 2005 path feeds an equals-but-not-interned token through
 `is()` on JDK 8/11/17/21. (Cross-ref D7/D25/D29/D33/D35/D42.)
+
+## D44 — Faithful local CI loop: run the net inside the published CI container image
+
+**Date:** 2026-07-08. **Status:** accepted. **Phase:** 3 (3a enabling infrastructure).
+
+**Context.** Local golden runs on the bare host are unfaithful — host fonts/hinting differ
+from the container the goldens were recorded against, producing false ±2 px diffs — so every
+cut so far verified behavior only via CI round-trips. D42 deferred a "faithful local CI loop"
+as a later joint task; D43 promoted it to a blocking prerequisite for Cut 2's iteration.
+
+**Decision.** Run the net locally **inside the exact dev-container image CI publishes**
+(`ghcr.io/nomixer/thinlet-modernized/devcontainer-ci:latest`, pushed by main-branch CI runs
+per D23 and anonymously pullable), rather than rebuilding the image or approximating the
+environment. `.devcontainer/ci/local-ci.sh` wraps it:
+
+- No argument → mirrors ci.yml's `build` job: full JDK-21 `verify` (lint gates + golden +
+  input + robot), minus the D33 trace-dump knob.
+- `8`/`11`/`17` → mirrors a `test` matrix row: `-Pcrossjdk -Djdk.target=N
+  -DexcludedGroups=robot -t .mvn/toolchains.xml test`, **scoped `-pl thinlet-core -am`**
+  (gotcha below).
+- Maven writes to the workspace `.m2` exactly as CI does (the host `~/.m2` is untouched);
+  the container user `vscode` is uid/gid 1000, matching the common single-user host, so
+  workspace file ownership is preserved.
+
+**Gotcha recorded (the one CI/local divergence found).** CI's unscoped reactor `test` works
+only because each CI row starts from a clean checkout: in a local workspace whose `target/`
+directories are already populated, surefire in the test-less `thinlet-demos` module gets past
+its no-tests early-exit and fails hard on `excludedGroups` requiring a JUnit engine on the
+module classpath. The script therefore scopes the crossjdk row to `-pl thinlet-core -am` —
+faithful to intent, since the entire suite lives in `thinlet-core` (demos/drafts are
+`src/main`-only).
+
+**Validation (direct observation, maintainer host).** Base row via the script: BUILD SUCCESS,
+89 tests, 0 failures (41 goldens + full input suite + 3 robot + tripwire; the 2 skips are the
+gated dump/diff modes), ~33 s cold including dependency download into the workspace `.m2`.
+JDK-8 row via the script: toolchain resolved `/opt/jdk8`, 86 tests, 0 failures (robot
+excluded). Cut 2's per-iteration golden verification is now local; **CI remains the
+authoritative gate on PRs (D42)** — the local loop informs, the PR net decides.
+
+**Scope / non-goals.** Tooling + docs only — no `Thinlet.java` change, no golden re-record,
+no CI change. The `:latest` tag tracks CI's cache image; re-`docker pull` after Dockerfile
+changes. Exact image-digest pinning remains D16's open item. This resolves the "later joint
+task" wording in D42/`CLAUDE.md`. (Cross-ref D16/D22/D23/D31/D42/D43.)

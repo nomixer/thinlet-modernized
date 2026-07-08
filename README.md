@@ -93,6 +93,17 @@ port **6080** (password `vscode`) for visually running the demos — the default
 `DISPLAY` (`:1`) targets it, while the automated trace tests use a separate
 controlled headless display (`:99`). See `DECISIONS.md` D22.
 
+For a **faithful local CI run without VS Code** — the same golden/input net CI
+executes, against the same pinned fonts and Xvfb (bare-host runs produce false
+±2 px trace diffs) — use the helper script, which runs the build inside the
+exact CI dev-container image published to GHCR (Docker required; see
+`DECISIONS.md` D44):
+
+```sh
+.devcontainer/ci/local-ci.sh      # JDK-21 full verify (lint + traces + input net)
+.devcontainer/ci/local-ci.sh 8    # cross-JDK row: tests forked on JDK 8 (also 11, 17)
+```
+
 > **Open the Dev Container on a clone, not a linked `git worktree`.** A
 > worktree's `.git` is a pointer into the *main* repository, which is not
 > mounted into the container — so git is non-functional inside it (Source

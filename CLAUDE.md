@@ -95,8 +95,9 @@ absorbed by the coordinate tolerance, not asserted directly.
   opens PRs itself** to run the net and drives them to green (compile + Spotless / Checkstyle
   / SpotBugs run locally pre-push). **Merge to `main` stays the maintainer's** 1-click gate on
   the trunk unless delegated (opt-in "auto-merge" ⇒ GitHub squash-on-green). Supersedes the
-  earlier "consult before opening a PR" norm for Phase 3. Faithful **local CI** is a later
-  joint task.
+  earlier "consult before opening a PR" norm for Phase 3. Faithful **local CI**:
+  `.devcontainer/ci/local-ci.sh` runs the net inside the exact CI container image (D44) —
+  never trust golden diffs from the bare host.
 - **Remote branch deletion is the maintainer's to do.** The Claude-on-the-web
   sandbox can push branches but cannot delete remote refs (the git proxy returns
   403, and no API/MCP tool is exposed), so don't retry remote-branch deletion from a
