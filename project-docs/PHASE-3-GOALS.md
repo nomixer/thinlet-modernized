@@ -111,9 +111,11 @@ descriptor keys so Cut 3 doesn't force a re-key.
 
 **Net-strengthening prerequisites** (interleaved): the **dev-container local CI loop** —
 ✅ done (D44, `.devcontainer/ci/local-ci.sh`); interaction-state
-paint goldens (before lifting hover/press/focus/selection paint branches) — these need a
-**determinism design** first (caret blink is timer-phase-dependent; hover/press are held-state
-captures); `LayoutTrace` extension to record `:port/:view/:widths/:offset` (before Cut 4);
+paint goldens (before lifting hover/press/focus/selection paint branches) — determinism
+design ✅ done (D45, `project-docs/INTERACTION-GOLDENS-DESIGN.md`: paint has **no time
+dependence** — the caret does not blink, contrary to D43's premise; hover/press are
+held-state captures), with the capture build + recorded goldens as the remaining work;
+`LayoutTrace` extension to record `:port/:view/:widths/:offset` (before Cut 4);
 input characterization tests for the unasserted widgets (before Cut 6) — i.e. **finishing
 Phase 2.y**.
 

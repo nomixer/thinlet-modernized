@@ -1521,3 +1521,52 @@ authoritative gate on PRs (D42)** — the local loop informs, the PR net decides
 no CI change. The `:latest` tag tracks CI's cache image; re-`docker pull` after Dockerfile
 changes. Exact image-digest pinning remains D16's open item. This resolves the "later joint
 task" wording in D42/`CLAUDE.md`. (Cross-ref D16/D22/D23/D31/D42/D43.)
+
+## D45 — Interaction-golden determinism design: no time dependence; the caret does not blink (corrects a D43 premise)
+
+**Date:** 2026-07-08. **Status:** accepted (design; the capture build follows). **Phase:** 3
+(Cut 2 prerequisite).
+
+**Context.** D43 required a determinism design before recording interaction-state paint
+goldens, on the stated premise that "caret blink is timer-phase-dependent." A full source
+survey of `Thinlet.java`'s interaction-state paint reads (post-Cut-1 file, 7,812 lines)
+settles the design — and disproves that premise.
+
+**Findings.**
+
+- **The caret does not blink.** No blink-phase state exists in the file; the single `timer`
+  thread (`run()`, L3540–3567) dispatches only scrollbar auto-repeat, spinbox auto-repeat,
+  and the 750 ms tooltip delay (L3551–3560). The caret is painted unconditionally whenever
+  `focus` holds (`paintField` L2512–2514; textarea L2901–2904).
+- **A paint frame is a pure function** of the widget model plus seven transient fields —
+  `{mouseinside, insidepart, mousepressed, pressedpart, focusinside, focusowner,
+  tooltipowner}` (declarations L47–67; the master locals L1635–1637; the part-level gate
+  L3232–3233). No clock control is needed anywhere in the capture design.
+- The only timer-coupled paint state is the **tooltip** (`tooltipowner`, desktop paint
+  L2114–2119) — deferred.
+- Re-confirmed the `:lead` **paint-time write** (L2962–2963) — the stray write Cut 2
+  relocates first. Interaction goldens must be recorded *before* that relocation, which must
+  then be golden-neutral.
+
+**Decision.** Adopt the capture design in `project-docs/INTERACTION-GOLDENS-DESIGN.md`:
+states established through the existing `InputDriver` (hover = held `MOUSE_MOVED` — one new
+test-scope gesture; press = `MOUSE_PRESSED` without release; focus = the D36-proven
+click/synthetic-`FOCUS_GAINED` path; model states via fixtures/setters), traced with the
+existing `TracingGraphics2D`, committed under
+`thinlet-core/src/test/resources/trace/interaction/` as `<fixture>-<scenario>.json` written
+only with `-Dtrace.record=true` (the D24 lifecycle), and gated by a
+`GoldenInteractionTraceTest` mirroring the static-golden test at the D7 ±2 px tolerance,
+running by default and on the `crossjdk` matrix. Gesture aiming stays bounds-based, never
+text-metric-based (the D41 lesson). **This does not reverse D37's no-input-goldens
+posture:** these are *paint* goldens captured under a held input-state tuple — the same
+artifact class as the 41 static goldens; input outcomes stay getter-asserted live.
+
+**Scope / non-goals.** Documentation + design only this slice — no harness code, no goldens
+recorded, no `Thinlet.java` change. Deferred: the tooltip paint golden, drag-in-progress
+visuals, menus beyond the combolist (they join the net in the remaining Phase 2.y slices),
+and any Robot-driven capture (D40 keeps Robot a thin fidelity cross-check).
+(Cross-ref D7/D24/D36/D37/D39/D40/D41/D42/D43.)
+
+**Validation.** Every line reference in the design note was read directly from the current
+`Thinlet.java` during the survey; the design is validated empirically when the first
+goldens are recorded (next slice).
