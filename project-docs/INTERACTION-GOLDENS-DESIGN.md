@@ -1,12 +1,11 @@
 # Interaction-state paint goldens — determinism design
 
-> **Status:** design note (accepted design, not yet built). The Cut 2 prerequisite from
-> D42/D43: before the paint→Renderer refactor lifts the hover/press/focus/selection/caret
-> branches, those branches need goldens — today's 41 goldens are static renders and leave
-> them unguarded. This note fixes the capture design. **Source-derived** from a full survey
-> of `Thinlet.java`'s interaction-state paint reads (line refs as of the post-Cut-1 file,
-> 7,812 lines); it will be validated empirically when the first interaction goldens are
-> recorded.
+> **Status:** built — the capture harness + first 10 goldens landed with **D47**
+> (2026-07-09), validating this design empirically (green on JDK 8/11/17/21). The Cut 2
+> prerequisite from D42/D43: before the paint→Renderer refactor lifts the
+> hover/press/focus/selection/caret branches, those branches need goldens — the 41 static
+> goldens leave them unguarded. **Source-derived** from a full survey of `Thinlet.java`'s
+> interaction-state paint reads (line refs as of the post-Cut-1 file, 7,812 lines).
 
 ## Headline finding: interaction paint has NO time dependence
 

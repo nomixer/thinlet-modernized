@@ -1605,3 +1605,45 @@ opt-in delegation + the #43 allow rule + this ruleset are the three pieces of "f
 `/repos/…/rules/branches/main` match the list above exactly. The PR landing this entry is
 the end-to-end test: auto-merge was armed while its checks were pending and GitHub
 performed the squash on green without manual action. (Cross-ref D33/D42/D43.)
+
+## D47 — First interaction-state goldens: capture harness + 10 scenarios (validates D45)
+
+**Date:** 2026-07-09. **Status:** accepted. **Phase:** 3 (Cut 2 prerequisite, first slice).
+
+**Context.** D45 fixed the determinism design for interaction-state paint goldens; this
+slice builds the capture and records the first goldens, closing the "interaction-state
+paint is untraced" blind spot for the Cut 2 pilot widgets.
+
+**Decision.**
+
+1. **Held-state gestures** (test scope, `InputDriver`): `hover`/`hoverAt` (a bare
+   `MOUSE_MOVED`, held) and `pressAndHold` (`MOUSE_PRESSED` without release). Each scenario
+   uses a fresh driver, so an un-released press never leaks between tests.
+2. **Scenario registry + tests.** `InteractionScenarios` maps each golden to a fixture +
+   gesture script; `GoldenInteractionTraceTest` replays and compares at the D7 ±2 px
+   tolerance (plus an orphan-golden hygiene check); `GoldenInteractionRecordMode`
+   (re)writes goldens under `-Dtrace.record=true` — the D24 lifecycle. Recording is run
+   **inside the CI container image (D44)** so pinned fonts match what CI compares, and
+   **scoped** (`-Dtest=GoldenInteractionRecordMode`) so the static-corpus record mode is
+   never co-triggered and cannot rewrite the 41 static goldens.
+3. **Golden layout.** `trace/interaction/<fixture>-<scenario>.json`;
+   `GoldenTraceRecorder.collectFiles` skips `interaction/` — those goldens map to
+   scenarios, not corpus XML (`corpusResourceFor` would resolve them to nonexistent files).
+4. **Ten scenarios:** button hover / press; checkbox hover / press (with the pressed
+   check-preview) / focus-toggle; empty-field caret; field selection (`type` +
+   Shift+Home over a 5-char word); textarea two-line caret; focused list selected+lead
+   row; open combolist with the lead moved. **Scenario discipline (D45/D41):** carets are
+   keyboard-placed, never pixel-aimed (a pixel-aimed caret lands on a FontMetrics-dependent
+   character index); aiming is bounds-based; selection text stays short.
+
+**Validation.** The hover and press goldens differ exactly at the `c_hover`/`c_press` tint
+(`#EDEDED` vs `#B9B9B9`) — the held state provably reaches paint (a broken capture would
+have recorded the static render twice). Full container verify: **100 tests green** (was
+89). Cross-JDK rows via `local-ci.sh`: **JDK 8/11/17 all green** — the goldens hold within
+±2 px across runtimes, including the FontMetrics-sensitive selection-highlight and caret
+scenarios, empirically validating D45 ahead of CI.
+
+**Scope / non-goals.** Test-scope code + goldens only — no `Thinlet.java` change, no
+static-golden re-record, no tolerance change. Remaining scenarios (scrollbar/spinbox
+arrows, tab hover, menubar, tooltip) follow in later slices as their fixtures land
+(Phase 2.y). (Cross-ref D7/D24/D37/D41/D44/D45.)
