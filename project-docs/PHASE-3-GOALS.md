@@ -73,6 +73,11 @@ itself changes for the first time. This supersedes the "toolchain not library" p
   (`thinlet.strictIntern=true` via surefire argLine): an equals-but-not-interned token — a
   broken interning chain, the contract's silent failure mode — fails loud. A tripwire hit is
   a finding to triage, never a failure to silence.
+- **Seam style (D48).** Extracted subsystem classes are **stateless with explicit context**
+  (`render(Thinlet t, Object component, Graphics g, …)`): the maintainer's two production
+  forks decoupled behavior from the God-object both ways (public-static utilities;
+  instance-as-parameter), and this style makes either a thin 3c wrapper. Package-private
+  through 3a per the visibility discipline above.
 
 ## Success criteria — how we know 3a is done
 
@@ -98,7 +103,7 @@ Detailed rationale in D42 and the readiness assessment (`.claude/FABLE-NEXT-STEP
 | Cut | Scope | Status |
 |-----|-------|--------|
 | **1** | Neutralise the interned-`String` `==` contract behind one helper (`is`) | ✅ **done** (merged `7796f79`; follow-up + tripwire: D43) |
-| **2** | Paint → typed Renderer (net captures the full primitive stream) | next |
+| **2** | Paint → typed Renderer (net captures the full primitive stream) | ⏳ **in progress** — paint-write hoists landed (D48); Renderer pilot next |
 | **3** | DTD → typed descriptors + accessor-façade cleanup | pending |
 | **4** | Layout → per-widget strategies (a hub; second) | pending |
 | **5** | `Object[]` model → typed `Widget` (late; highest blast radius) | pending |
@@ -134,13 +139,15 @@ Phase 2.y**.
 
 ## Where the two custom forks fit
 
-Cuts 1–3 do **not** depend on the enhancement shape — proceed. **Review the two forks before
-committing the model (Cut 5) and event (Cut 6) seams**, so the enhancement backlog informs
-where the extension points go (avoid clean-architecting the wrong seams). Fork sources are
-expected **2026-07-08** (D43); the first task on arrival is a cheap **catalog diff** against
-the 2005 baseline — to *verify*, not assume, that Cuts 2–4 don't overlap the enhancement
-surface, and to see which paint/layout regions the enhancements touched (informs
-Renderer/layout-strategy seam granularity).
+The forks are **multi-file decompositions** (D48) — the maintainer already split Thinlet by
+layer in production (paint, layout-inducing actions, …), decoupling behavior from the
+God-object via public-static methods (Fork A) and instance-as-parameter methods (Fork B).
+That *validates* the cut structure and sets the seam style (Principles). Sources + the apps
+built on them arrive the **week of 2026-07-13**; the first task on arrival is the **fork
+mapping** (not a file diff): fork files → subsystems; the battle-tested boundaries vs the
+Cut 2–6 seams; the functional enhancement backlog; and the static-ability map as empirical
+state-coupling evidence. The mapping lands **before the Cut 4/5/6 seam commitments**; the
+apps become the 3b test beds.
 
 ## Related docs
 

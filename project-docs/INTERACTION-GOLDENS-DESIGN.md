@@ -66,10 +66,10 @@ JDK-invariant (the D41 lesson).
 
 ## Known hazards (all previously recorded, collected here)
 
-- **`:lead` paint-time write** (L2962–2963: focused list/tree/table with no lead assigns
-  the first item *during paint*) — one of the two stray writes Cut 2 relocates first.
-  Interaction goldens must be recorded **before** that relocation and must stay
-  byte-identical across it.
+- **`:lead` paint-time write** (focused list/tree/table with no lead adopts the first item
+  *during paint*) — **hoisted, not relocated, in D48** (`ensureLeadForPaint`, still invoked
+  at paint time: moving it to focus-gain would flip the Down-before-repaint race). The
+  goldens were recorded before the hoist and held zero-diff across it, as required.
 - **Negative-`bounds.width` dirty flag** — re-`paint()` between gestures (D39).
 - **`MOUSE_EXITED` on the first drag event** (D39) — only relevant if drag-in-progress
   states are ever captured (deferred).

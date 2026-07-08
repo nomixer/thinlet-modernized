@@ -1598,6 +1598,41 @@ public class Thinlet extends Container implements Runnable, Serializable {
     }
 
     /**
+     * Runs the deferred layout for a component whose bounds carry the
+     * negative-width dirty flag ({@code validate()} defers re-layout by negating
+     * the width). Hoisted verbatim out of the recursive paint (D48) and still
+     * invoked at the exact same point there: the lazy re-layout happening at
+     * paint time is observable 2005 behavior and must not move.
+     */
+    void layoutIfDirty(Object component, Rectangle bounds) {
+        // negative component width indicates invalid component layout
+        if (bounds.width < 0) {
+            bounds.width = Math.abs(bounds.width);
+            doLayout(component);
+        }
+    }
+
+    /**
+     * Paint-time lead assignment for list/table/tree: a focused component with no
+     * {@code :lead} adopts its first item ("draw first item focused when lead is
+     * null" — a 2005 paint-side model write). Hoisted verbatim out of the item
+     * paint loop (D48), still invoked at paint time: assigning the lead earlier
+     * (e.g. on focus gain) would change an observable race — a Down key processed
+     * before the async focus repaint sees a null lead in 2005 and selects the
+     * first item, not the second. Returns the effective lead.
+     */
+    Object ensureLeadForPaint(Object component, boolean focus) {
+        Object lead = get(component, ":lead");
+        if (focus && (lead == null)) {
+            Object first = get(component, ":comp");
+            if (first != null) {
+                set(component, ":lead", lead = first);
+            }
+        }
+        return lead;
+    }
+
+    /**
      * @param clipx the cliping rectangle is relative to the component's
      * parent location similar to the component's bounds rectangle
      * @param clipy
@@ -1614,11 +1649,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         if (bounds == null) {
             return;
         }
-        // negative component width indicates invalid component layout
-        if (bounds.width < 0) {
-            bounds.width = Math.abs(bounds.width);
-            doLayout(component);
-        }
+        layoutIfDirty(component, bounds);
         // return if the component was out of the cliping rectangle
         if ((clipx + clipwidth < bounds.x)
                 || (clipx > bounds.x + bounds.width)
@@ -2953,15 +2984,12 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 paint(g, clipx, clipy, clipwidth, clipheight, comp, enabled);
             }
         } else { // if ((is(classname, "list")) || (is(classname, "table")) || (is(classname, "tree")))
-            Object lead = get(component, ":lead");
+            Object lead = ensureLeadForPaint(component, focus);
             int[] columnwidths = (is(classname, "table")) ? ((int[]) get(component, ":widths")) : null;
             boolean line = getBoolean(component, "line", true);
             int iline = line ? 1 : 0;
             boolean angle = (is(classname, "tree")) && getBoolean(component, "angle", false);
             for (Object item = get(component, ":comp"), next = null; item != null; item = next) {
-                if (focus && (lead == null)) {
-                    set(component, ":lead", lead = item); // draw first item focused when lead is null
-                }
                 Rectangle r = getRectangle(item, "bounds");
                 if (clipy + clipheight <= r.y) {
                     break;
