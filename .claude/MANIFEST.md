@@ -17,6 +17,7 @@ project source and stay.
 | `.claude/FABLE-NEXT-STEPS.md` | Session handoff / review brief for Phase 3 Cut 1 (pivot, readiness assessment, Cut 1 detail + correctness evidence, open review questions). Transient — delete once the Fable review is folded in. | Yes |
 | `.claude/settings.json` | Claude Code harness permissions for this repo (maintainer-added, 2026-07-08): allowlists `gh pr merge` so PR auto-merge delegation (D42 opt-in) works in auto mode without a classifier denial. Functional config, not an orientation doc. | Yes — auto-merge delegation then needs manual approval again |
 | `.claude/SELF-REVIEWS.md` | Rolling log of lull-time independent-model self-reviews (full findings; material outcomes go to `DECISIONS.md`, e.g. D50). | Yes |
+| `.claude/NEXT-STEPS.md` | Session handoff (2026-07-09): state after PRs #50–#57, ordered next work (Package C goldens → branch slices → fork mapping), and the standing capture/extraction discipline. Supersedes `FABLE-NEXT-STEPS.md`. | Yes |
 | `.claude/MANIFEST.md` | This file. | Yes |
 
 ## Policy (keep the repo tidy)
