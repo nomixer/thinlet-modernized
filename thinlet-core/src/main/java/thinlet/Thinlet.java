@@ -1742,129 +1742,20 @@ public class Thinlet extends Container implements Runnable, Serializable {
             Renderer.tabbedpane(
                     this, component, bounds, g, clipx, clipy, clipwidth, clipheight, pressed, inside, focus, enabled);
         } else if ((is(classname, "panel")) || (is(classname, "dialog"))) {
-            int titleheight = getInteger(component, ":titleheight", 0);
-            if (is(classname, "dialog")) {
-                paint(
-                        component,
-                        0,
-                        0,
-                        bounds.width,
-                        3 + titleheight,
-                        g,
-                        clipx,
-                        clipy,
-                        clipwidth,
-                        clipheight,
-                        true,
-                        true,
-                        false,
-                        true,
-                        1,
-                        2,
-                        1,
-                        2,
-                        false,
-                        'g',
-                        "left",
-                        false,
-                        false);
-                int controlx = bounds.width - titleheight - 1;
-                if (getBoolean(component, "closable", false)) {
-                    paint(component, g, controlx, 3, titleheight - 2, titleheight - 2, 'c');
-                    controlx -= titleheight;
-                }
-                if (getBoolean(component, "maximizable", false)) {
-                    paint(component, g, controlx, 3, titleheight - 2, titleheight - 2, 'm');
-                    controlx -= titleheight;
-                }
-                if (getBoolean(component, "iconifiable", false)) {
-                    paint(component, g, controlx, 3, titleheight - 2, titleheight - 2, 'i');
-                }
-                paintRect(
-                        g,
-                        0,
-                        3 + titleheight,
-                        bounds.width,
-                        bounds.height - 3 - titleheight,
-                        c_border,
-                        c_press,
-                        false,
-                        true,
-                        true,
-                        true,
-                        true); // lower part excluding titlebar
-                paint(
-                        component, // content area
-                        3,
-                        3 + titleheight,
-                        bounds.width - 6,
-                        bounds.height - 6 - titleheight,
-                        g,
-                        true,
-                        true,
-                        true,
-                        true,
-                        'b');
-            } else { // panel
-                boolean border = getBoolean(component, "border", false);
-                paint(
-                        component,
-                        0,
-                        titleheight / 2,
-                        bounds.width,
-                        bounds.height - (titleheight / 2),
-                        g,
-                        border,
-                        border,
-                        border,
-                        border,
-                        enabled ? 'e' : 'd');
-                paint(
-                        component,
-                        0,
-                        0,
-                        bounds.width,
-                        titleheight, // panel title
-                        g,
-                        clipx,
-                        clipy,
-                        clipwidth,
-                        clipheight,
-                        false,
-                        false,
-                        false,
-                        false,
-                        0,
-                        3,
-                        0,
-                        3,
-                        false,
-                        enabled ? 'x' : 'd',
-                        "left",
-                        false,
-                        false);
-            }
-
-            if (get(component, ":port") != null) {
-                Renderer.scroll(
-                        this,
-                        component,
-                        classname,
-                        pressed,
-                        inside,
-                        focus,
-                        false,
-                        enabled,
-                        g,
-                        clipx,
-                        clipy,
-                        clipwidth,
-                        clipheight);
-            } else {
-                for (Object comp = get(component, ":comp"); comp != null; comp = get(comp, ":next")) {
-                    paint(g, clipx, clipy, clipwidth, clipheight, comp, enabled);
-                }
-            }
+            Renderer.container(
+                    this,
+                    component,
+                    classname,
+                    bounds,
+                    g,
+                    clipx,
+                    clipy,
+                    clipwidth,
+                    clipheight,
+                    pressed,
+                    inside,
+                    focus,
+                    enabled);
         } else if (is(classname, "desktop")) {
             paintRect(g, 0, 0, bounds.width, bounds.height, c_border, c_bg, false, false, false, false, true);
             paintReverse(g, clipx, clipy, clipwidth, clipheight, get(component, ":comp"), enabled);
@@ -1877,54 +1768,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 g.drawString(text, r.x + 2, r.y + g.getFontMetrics().getAscent() + 2); // +nullpointerexception
             }
         } else if (is(classname, "spinbox")) {
-            Renderer.field(
-                    this,
-                    g,
-                    clipx,
-                    clipy,
-                    clipwidth,
-                    clipheight,
-                    component,
-                    bounds.width - block,
-                    bounds.height,
-                    focus,
-                    enabled,
-                    false,
-                    0);
-            Renderer.arrow(
-                    this,
-                    g,
-                    bounds.width - block,
-                    0,
-                    block,
-                    bounds.height / 2,
-                    'N',
-                    enabled,
-                    inside,
-                    pressed,
-                    "up",
-                    true,
-                    false,
-                    false,
-                    true,
-                    true);
-            Renderer.arrow(
-                    this,
-                    g,
-                    bounds.width - block,
-                    bounds.height / 2,
-                    block,
-                    bounds.height - (bounds.height / 2),
-                    'S',
-                    enabled,
-                    inside,
-                    pressed,
-                    "down",
-                    true,
-                    false,
-                    true,
-                    true,
-                    true);
+            Renderer.spinbox(
+                    this, component, bounds, g, clipx, clipy, clipwidth, clipheight, pressed, inside, focus, enabled);
         } else if (is(classname, "progressbar")) {
             Renderer.progressbar(this, component, bounds, g, enabled);
         } else if (is(classname, "slider")) {
@@ -2169,7 +2014,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
         }
     }
 
-    private void paint(Object component, Graphics g, int x, int y, int width, int height, char type) {
+    // package-private for Renderer (D48 seam; japicmp-invisible)
+    void paint(Object component, Graphics g, int x, int y, int width, int height, char type) {
         paint(component, x, y, width, height, g, true, true, true, true, 'g');
         g.setColor(Color.black);
         switch (type) {
