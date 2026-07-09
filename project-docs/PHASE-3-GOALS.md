@@ -115,7 +115,7 @@ Detailed rationale in D42 and the readiness assessment (`.claude/FABLE-NEXT-STEP
 | Cut | Scope | Status |
 |-----|-------|--------|
 | **1** | Neutralise the interned-`String` `==` contract behind one helper (`is`) | ✅ **done** (merged `7796f79`; follow-up + tripwire: D43) |
-| **2** | Paint → typed Renderer (net captures the full primitive stream) | ⏳ **in progress** — hoists (D48) + `Renderer` pilot: label/button (D49), then checkbox, the shared `paintField`/`paintArrow`/`paintScroll` helpers (unlocked by D51), extracted zero-diff; remaining branches follow slice by slice (golden-guarded first; D50 shared-helper gate) |
+| **2** | Paint → typed Renderer (net captures the full primitive stream) | ⏳ **in progress** — hoists (D48) + `Renderer` pilot: label/button (D49), then checkbox, the shared `paintField`/`paintArrow`/`paintScroll` helpers (unlocked by D51), and the port-content painter (`Renderer.content`, unlocked by the Package A tree/table goldens), extracted zero-diff; remaining branches follow slice by slice (golden-guarded first; D50 shared-helper gate) |
 | **3** | DTD → typed descriptors + accessor-façade cleanup | pending |
 | **4** | Layout → per-widget strategies (a hub; second) | pending |
 | **5** | `Object[]` model → typed `Widget` (late; highest blast radius) | pending |
