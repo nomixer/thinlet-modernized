@@ -213,6 +213,13 @@ final class InteractionScenarios {
             d.click(d.find("bL"));
             d.press(KeyEvent.VK_F8);
         }));
+        // Custom-font textarea: guards the port-content painter's per-widget
+        // font path (the "font" attribute key), which the #57 extraction
+        // corrupted to "t.font" — a fallback-to-default-font regression the
+        // corpus goldens could not see (their only custom-font textareas sit on
+        // non-selected tabs, never painted). A plain paint suffices; font="bold"
+        // derives from the default family, so metrics stay within the ±2px gate.
+        s.add(new Scenario("textarea-custom-font", "/input/fonttext.xml", d -> {}));
         return Collections.unmodifiableList(s);
     }
 

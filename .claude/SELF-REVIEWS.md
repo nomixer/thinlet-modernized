@@ -49,3 +49,35 @@ order, 3a/3b/3c staging, or the fork-mapping gate.
 (2) combobox reframed as *partially* guarded; (3) `:lead` race pinned by two
 `InputListTest` tests, hoist-vs-relocate stays review-enforced; (4) 3a-closing
 re-narrowing checklist item.
+
+---
+
+## 2026-07-09 — Review 2 (Opus 4.8): paint-branch extraction stretch (#56–#66) — one real bug (→ D52)
+
+**Scope audited:** the mechanical python-scanner extraction of the port-content painter +
+combobox/tabbedpane/menubar/`:popup`/progressbar/slider/splitpane/panel/dialog/spinbox
+branches, for what a zero-diff net cannot see: phantom package-private surface, over-eager
+regex substitution, attribution, next-phase readiness.
+
+**Headline: one real regression caught.** `Renderer.java:722` — the `\bfont\b → t.font`
+regex corrupted the string-literal key `get(component, "font")` → `"t.font"`, so a
+custom-font textarea silently fell back to the default font. Net-invisible because the
+corpus's only custom-font textareas sit on non-selected tabs (never painted). Fixed +
+guarded with a `font="24"` textarea golden, **proven to fail on the broken key** (clean
+compile). Full write-up and net-gap analysis in **D52**.
+
+**Everything else clean:** all 19 package-private widenings are referenced by `Renderer`
+(D50 g4 holds — no phantom surface); `content`/`container`/`tabbedpane`/`popup` are
+literal-faithful apart from that one key; LGPL attribution coherent.
+
+**Findings worth keeping:**
+- **The blanket-regex extraction recipe can corrupt quoted literals** — future mechanical
+  moves must diff literal sequences or exclude quoted spans from field prefixing.
+- **Determinism of the guard:** `font="bold"` is too weak (bold-vs-plain within ±2 px); a
+  point-size change is needed to clear the D7 gate as a categorical `setFont` op.
+- **Next-phase note (dispatch fold):** needs three more identical widenings
+  (`mouseinside`/`focusowner`/`focusinside`); cannot be *fully* stateless until the
+  deferred tooltip path is handled — no blocker. The 22-arg `paint` overload is the
+  ergonomic wart for the later drawing-vocabulary typing.
+- **The review, not the net, caught this** — concrete justification for the standing
+  lull-time independent-model self-review.
