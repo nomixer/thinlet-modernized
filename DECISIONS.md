@@ -1786,3 +1786,42 @@ inventoried (repaint timing/ordering, tooltip, remaining transient states, unass
 input paths, JDK 25+, serialization form) and match the charter's blind-spot list; the
 upcoming field/textarea/list slices touch none of them beyond guardrail 1.
 (Cross-ref D42/D43/D44/D45/D47/D48/D49.)
+
+## D51 — Scrollbar/spinbox arrow goldens via no-op presses (auto-repeat neutralized by construction)
+
+**Date:** 2026-07-09. **Status:** accepted. **Phase:** 2.y interleaved with 3 (net-strengthening).
+
+**Context.** D47 deferred the scrollbar/spinbox arrow hover+press scenarios, and D50's
+shared-helper gate blocks extracting `paintScroll`/`paintArrow` until they are guarded.
+The blocker was a determinism question: unlike every D45/D47 state, **pressing** a
+scroll/spin arrow arms the auto-repeat timer (300/375 ms), so a held press mutates the
+model on a wall-clock schedule — a plain held-state capture would be racy.
+
+**Decision — no-op presses.** Press captures aim at an arrow whose action is impossible:
+the scroll view already at that extreme, the spinbox already at its bound. At source, both
+`processScroll` (clamped delta → `return false` *before any model write*) and
+`processSpin` (bound check fails → `return false`) then never reach `setTimer(...)` — the
+timer is **never armed**, and the pressed tint still renders because
+`mousepressed`/`pressedpart` are set by the press handling regardless of the action's
+success. The held frame is time-independent by construction, not by winning a race.
+Hover holds never arm the timer and need no trick.
+
+**Landed.** `InputDriver.pressAndHoldAt(widget, x, y)` (part-aimed press);
+`input/arrows.xml` (a horizontally-overflowing list + two spinboxes pinned at
+`maximum`/`minimum` — set explicitly, since `processSpin`'s *model* defaults are
+`Integer.MIN/MAX_VALUE`, not the DTD's 0/100); nine new goldens: vertical scrollbar
+up/down hover + up-press-at-top + down-press-at-bottom (wheel-overshoot, clamped to the
+exact bottom on every JDK — the golden draws Row-59 and not Row-00), horizontal left
+hover/press-at-left, spinbox up hover + up-press-at-max + down-press-at-min. Aim points
+derive from the `:vertical`/`:horizontal` part rectangles and widget size (bounds-based,
+D41 discipline). **19 interaction goldens green on JDK 8/11/17/21** in the CI container;
+the re-record also rewrote the 10 D47 goldens **byte-identical** (an incidental
+determinism re-proof).
+
+**Deliberate omissions** (recorded, not silent): the horizontal *right* arrow (tint gate
+is the symmetric code path of "left"); pressed states of *actionable* arrows (auto-repeat
+in flight — same deferral class as the tooltip, D45); knob-drag visuals. **Gate effect
+(D50 g1):** `paintScroll`/`paintArrow`'s own transient states (scrollbar + spinbox
+arrows) are now guarded, so those helpers are extraction-eligible; the tabbedpane and
+menubar *branches* stay gated on their own goldens, and the combobox branch on D50 g2.
+(Cross-ref D45/D47/D50.)
