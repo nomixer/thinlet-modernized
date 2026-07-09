@@ -673,7 +673,8 @@ final class Renderer {
             g.clipRect(x1, y1, x2 - x1, y2 - y1);
             g.translate(port.x - view.x, port.y - view.y);
 
-            t.paint(
+            content(
+                    t,
                     component,
                     classname,
                     focus,
@@ -691,6 +692,277 @@ final class Renderer {
         }
         if (focus && drawfocus) { // draw dotted rectangle around the viewport
             t.drawFocus(g, port.x, port.y, port.width - 1, port.height - 1);
+        }
+    }
+
+    /**
+     * Paint scrollable content
+     * @param component a panel
+     */
+    static void content(
+            Thinlet t,
+            Object component,
+            String classname,
+            boolean focus,
+            boolean enabled,
+            Graphics g,
+            int clipx,
+            int clipy,
+            int clipwidth,
+            int clipheight,
+            int portwidth,
+            int viewwidth) {
+        if (Thinlet.is(classname, "textarea")) {
+            char[] chars = (char[]) Thinlet.get(component, ":text");
+            int start = focus ? t.getInteger(component, "start", 0) : 0;
+            int end = focus ? t.getInteger(component, "end", 0) : 0;
+            int is = Math.min(start, end);
+            int ie = Math.max(start, end);
+            Font customfont = (Font) Thinlet.get(component, "t.font");
+            if (customfont != null) {
+                g.setFont(customfont);
+            }
+            FontMetrics fm = g.getFontMetrics();
+            int fontascent = fm.getAscent();
+            int fontheight = fm.getHeight();
+            int ascent = 1;
+
+            Color textcolor = enabled ? t.getColor(component, "foreground", t.c_text) : t.c_disable;
+            for (int i = 0, j = 0; j <= chars.length; j++) {
+                if ((j == chars.length) || (chars[j] == '\n')) {
+                    if (clipy + clipheight <= ascent) {
+                        break;
+                    } // the next lines are bellow paint rectangle
+                    if (clipy < ascent + fontheight) { // t line is not above painting area
+                        if (focus && (is != ie) && (ie >= i) && (is <= j)) {
+                            int xs = (is < i) ? -1 : ((is > j) ? (viewwidth - 1) : fm.charsWidth(chars, i, is - i));
+                            int xe = ((j != -1) && (ie > j)) ? (viewwidth - 1) : fm.charsWidth(chars, i, ie - i);
+                            g.setColor(t.c_select);
+                            g.fillRect(1 + xs, ascent, xe - xs + Thinlet.evm, fontheight + Thinlet.evm);
+                        }
+                        g.setColor(textcolor);
+                        g.drawChars(chars, i, j - i, 1, ascent + fontascent);
+                        if (focus && (end >= i) && (end <= j)) {
+                            int caret = fm.charsWidth(chars, i, end - i);
+                            g.setColor(t.c_focus);
+                            g.fillRect(caret, ascent, 1 + Thinlet.evm, fontheight + Thinlet.evm);
+                        }
+                    }
+                    ascent += fontheight;
+                    i = j + 1;
+                }
+            }
+            if (customfont != null) {
+                g.setFont(t.font);
+            } // restore the default t.font
+        } else if (Thinlet.is(classname, ":combolist")) {
+            Object lead = Thinlet.get(component, ":lead");
+            for (Object choice = Thinlet.get(Thinlet.get(component, "combobox"), ":comp");
+                    choice != null;
+                    choice = Thinlet.get(choice, ":next")) {
+                Rectangle r = t.getRectangle(choice, "bounds");
+                if (clipy + clipheight <= r.y) {
+                    break;
+                }
+                if (clipy >= r.y + r.height) {
+                    continue;
+                }
+                t.paint(
+                        choice,
+                        r.x,
+                        r.y,
+                        portwidth,
+                        r.height,
+                        g,
+                        clipx,
+                        clipy,
+                        clipwidth,
+                        clipheight,
+                        false,
+                        false,
+                        false,
+                        false,
+                        2,
+                        4,
+                        2,
+                        4,
+                        false,
+                        t.getBoolean(choice, "enabled", true) ? ((lead == choice) ? 's' : 't') : 'd',
+                        "left",
+                        false,
+                        false);
+            }
+        } else if ((Thinlet.is(classname, "panel")) || (Thinlet.is(classname, "dialog"))) {
+            for (Object comp = Thinlet.get(component, ":comp"); comp != null; comp = Thinlet.get(comp, ":next")) {
+                t.paint(g, clipx, clipy, clipwidth, clipheight, comp, enabled);
+            }
+        } else { // if ((Thinlet.is(classname, "list")) || (Thinlet.is(classname, "table")) || (Thinlet.is(classname,
+            // "tree")))
+            Object lead = t.ensureLeadForPaint(component, focus);
+            int[] columnwidths = (Thinlet.is(classname, "table")) ? ((int[]) Thinlet.get(component, ":widths")) : null;
+            boolean line = t.getBoolean(component, "line", true);
+            int iline = line ? 1 : 0;
+            boolean angle = (Thinlet.is(classname, "tree")) && t.getBoolean(component, "angle", false);
+            for (Object item = Thinlet.get(component, ":comp"), next = null; item != null; item = next) {
+                Rectangle r = t.getRectangle(item, "bounds");
+                if (clipy + clipheight <= r.y) {
+                    break;
+                } // clip rectangle is above
+                boolean subnode = false;
+                boolean expanded = false;
+                if (!Thinlet.is(classname, "tree")) {
+                    next = Thinlet.get(item, ":next");
+                } else {
+                    subnode = (next = Thinlet.get(item, ":comp")) != null;
+                    expanded = subnode && t.getBoolean(item, "expanded", true);
+                    if (!expanded) {
+                        for (Object node = item;
+                                (node != component) && ((next = Thinlet.get(node, ":next")) == null);
+                                node = t.getParent(node))
+                            ;
+                    }
+                }
+                if (clipy >= r.y + r.height + iline) {
+                    if (angle) { // TODO draw dashed line
+                        Object nodebelow = Thinlet.get(item, ":next");
+                        if (nodebelow != null) { // and the next node is bellow clipy
+                            g.setColor(t.c_bg);
+                            int x = r.x - t.block / 2;
+                            g.drawLine(x, r.y, x, t.getRectangle(nodebelow, "bounds").y);
+                        }
+                    }
+                    continue; // clip rectangle is bellow
+                }
+
+                boolean selected = t.getBoolean(item, "selected", false);
+                t.paintRect(
+                        g,
+                        (!Thinlet.is(classname, "tree")) ? 0 : r.x,
+                        r.y,
+                        (!Thinlet.is(classname, "tree")) ? viewwidth : r.width,
+                        r.height,
+                        null,
+                        selected ? t.c_select : t.c_textbg,
+                        false,
+                        false,
+                        false,
+                        false,
+                        true);
+                if (focus && (lead == item)) { // focused
+                    t.drawFocus(
+                            g,
+                            (!Thinlet.is(classname, "tree")) ? 0 : r.x,
+                            r.y,
+                            ((!Thinlet.is(classname, "tree")) ? viewwidth : r.width) - 1,
+                            r.height - 1);
+                }
+                if (line) {
+                    g.setColor(t.c_bg);
+                    g.drawLine(0, r.y + r.height, viewwidth, r.y + r.height);
+                }
+                if (!Thinlet.is(classname, "table")) { // list or tree
+                    boolean itemenabled = enabled && t.getBoolean(item, "enabled", true);
+                    t.paint(
+                            item,
+                            r.x,
+                            r.y,
+                            viewwidth,
+                            r.height,
+                            g,
+                            clipx,
+                            clipy,
+                            clipwidth,
+                            clipheight,
+                            false,
+                            false,
+                            false,
+                            false,
+                            1,
+                            3,
+                            1,
+                            3,
+                            false,
+                            itemenabled ? 'e' : 'd',
+                            "left",
+                            false,
+                            false);
+                    if (Thinlet.is(classname, "tree")) {
+                        int x = r.x - t.block / 2;
+                        int y = r.y + (r.height - 1) / 2;
+                        if (angle) {
+                            g.setColor(t.c_bg);
+                            g.drawLine(x, r.y, x, y);
+                            g.drawLine(x, y, r.x - 1, y);
+                            Object nodebelow = Thinlet.get(item, ":next");
+                            if (nodebelow != null) {
+                                g.drawLine(x, y, x, t.getRectangle(nodebelow, "bounds").y);
+                            }
+                        }
+                        if (subnode) {
+                            t.paintRect(
+                                    g,
+                                    x - 4,
+                                    y - 4,
+                                    9,
+                                    9,
+                                    itemenabled ? t.c_border : t.c_disable,
+                                    itemenabled ? t.c_ctrl : t.c_bg,
+                                    true,
+                                    true,
+                                    true,
+                                    true,
+                                    true);
+                            g.setColor(itemenabled ? t.c_text : t.c_disable);
+                            g.drawLine(x - 2, y, x + 2, y);
+                            if (!expanded) {
+                                g.drawLine(x, y - 2, x, y + 2);
+                            }
+                        }
+                    }
+                } else { // table
+                    int i = 0;
+                    int x = 0;
+                    for (Object cell = Thinlet.get(item, ":comp"); cell != null; cell = Thinlet.get(cell, ":next")) {
+                        if (clipx + clipwidth <= x) {
+                            break;
+                        }
+                        // column width is defined by header calculated in layout, otherwise is 80
+                        int iwidth = 80;
+                        if ((columnwidths != null) && (columnwidths.length > i)) {
+                            iwidth = (i != columnwidths.length - 1) ? columnwidths[i] : Math.max(iwidth, viewwidth - x);
+                        }
+                        if (clipx < x + iwidth) {
+                            boolean cellenabled = enabled && t.getBoolean(cell, "enabled", true);
+                            t.paint(
+                                    cell,
+                                    r.x + x,
+                                    r.y,
+                                    iwidth,
+                                    r.height - 1,
+                                    g,
+                                    clipx,
+                                    clipy,
+                                    clipwidth,
+                                    clipheight,
+                                    false,
+                                    false,
+                                    false,
+                                    false,
+                                    1,
+                                    1,
+                                    1,
+                                    1,
+                                    false,
+                                    cellenabled ? 'e' : 'd',
+                                    "left",
+                                    false,
+                                    false);
+                        }
+                        i++;
+                        x += iwidth;
+                    }
+                }
+            }
         }
     }
 }
