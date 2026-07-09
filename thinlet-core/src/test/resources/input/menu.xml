@@ -1,0 +1,12 @@
+<panel columns="1" gap="4" top="4" left="4" right="4" bottom="4">
+	<menubar name="mb" weightx="1">
+		<menu name="m1" text="File">
+			<menuitem name="mi1" text="Open" />
+			<menuitem name="mi2" text="Save" />
+		</menu>
+		<menu name="m2" text="Edit">
+			<menuitem text="Copy" />
+		</menu>
+	</menubar>
+	<label text="Body" weighty="1" />
+</panel>
