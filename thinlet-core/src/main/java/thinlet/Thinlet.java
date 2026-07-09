@@ -30,8 +30,8 @@ import java.util.*;
  */
 public class Thinlet extends Container implements Runnable, Serializable {
 
-    private transient Font font;
-    // color palette + block metric: package-private for Renderer (D48 seam; japicmp-invisible)
+    // default font, color palette + block metric: package-private for Renderer (D48 seam; japicmp-invisible)
+    transient Font font;
     transient Color c_bg;
     transient Color c_text;
     transient Color c_textbg;
@@ -1693,7 +1693,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
             if (getBoolean(component, "editable", true)) {
                 Image icon = getIcon(component, "icon", null);
                 int left = (icon != null) ? icon.getWidth(this) : 0;
-                paintField(
+                Renderer.field(
+                        this,
                         g,
                         clipx,
                         clipy,
@@ -1768,7 +1769,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     clipwidth,
                     clipheight);
         } else if ((is(classname, "textfield")) || (is(classname, "passwordfield"))) {
-            paintField(
+            Renderer.field(
+                    this,
                     g,
                     clipx,
                     clipy,
@@ -2037,7 +2039,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 g.drawString(text, r.x + 2, r.y + g.getFontMetrics().getAscent() + 2); // +nullpointerexception
             }
         } else if (is(classname, "spinbox")) {
-            paintField(
+            Renderer.field(
+                    this,
                     g,
                     clipx,
                     clipy,
@@ -2378,83 +2381,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
         }
     }
 
-    private void paintField(
-            Graphics g,
-            int clipx,
-            int clipy,
-            int clipwidth,
-            int clipheight,
-            Object component,
-            int width,
-            int height,
-            boolean focus,
-            boolean enabled,
-            boolean hidden,
-            int left) {
-        boolean editable = getBoolean(component, "editable", true);
-        paintRect(
-                g,
-                0,
-                0,
-                width,
-                height,
-                enabled ? c_border : c_disable,
-                editable ? getColor(component, "background", c_textbg) : c_bg,
-                true,
-                true,
-                true,
-                true,
-                true);
-        g.clipRect(1 + left, 1, width - left - 2, height - 2);
-
-        String text = getString(component, "text", "");
-        int offset = getInteger(component, ":offset", 0);
-        Font currentfont = (Font) get(component, "font");
-        if (currentfont != null) {
-            g.setFont(currentfont);
-        }
-        FontMetrics fm = g.getFontMetrics();
-
-        int caret = 0;
-        if (focus) {
-            int start = getInteger(component, "start", 0);
-            int end = getInteger(component, "end", 0);
-            caret = hidden ? (fm.charWidth('*') * end) : fm.stringWidth(text.substring(0, end));
-            if (start != end) {
-                int is = hidden ? (fm.charWidth('*') * start) : fm.stringWidth(text.substring(0, start));
-                g.setColor(c_select);
-                g.fillRect(2 + left - offset + Math.min(is, caret), 1, Math.abs(caret - is) + evm, height - 2 + evm);
-            }
-        }
-
-        if (focus) { // draw caret
-            g.setColor(c_focus);
-            g.fillRect(1 + left - offset + caret, 1, 1 + evm, height - 2 + evm);
-        }
-
-        g.setColor(enabled ? getColor(component, "foreground", c_text) : c_disable);
-        int fx = 2 + left - offset;
-        int fy = (height + fm.getAscent() - fm.getDescent()) / 2;
-        if (hidden) {
-            int fh = fm.charWidth('*');
-            for (int i = text.length(); i > 0; i--) {
-                g.drawString("*", fx, fy);
-                fx += fh;
-            }
-        } else {
-            g.drawString(text, fx, fy);
-        }
-        if (currentfont != null) {
-            g.setFont(font);
-        }
-        g.setClip(clipx, clipy, clipwidth, clipheight);
-
-        if (focus) { // draw dotted rectangle
-            drawFocus(g, 1, 1, width - 3, height - 3);
-        }
-    }
-
-    private Color getColor(Object component, String key, Color defaultcolor) {
+    // package-private for Renderer (D48 seam; japicmp-invisible)
+    Color getColor(Object component, String key, Color defaultcolor) {
         Object value = get(component, key);
         return (value != null) ? (Color) value : defaultcolor;
     }
@@ -7428,7 +7356,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
         return set(component, key, (value == defaultvalue) ? null : new Integer(value));
     }
 
-    private int getInteger(Object component, String key, int defaultvalue) {
+    // package-private for Renderer (D48 seam; japicmp-invisible)
+    int getInteger(Object component, String key, int defaultvalue) {
         Object value = get(component, key);
         return (value == null) ? defaultvalue : ((Integer) value).intValue();
     }
