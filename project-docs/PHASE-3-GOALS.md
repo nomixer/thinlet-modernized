@@ -142,11 +142,10 @@ Phase 2.y**.
 - **Interaction-state paint** — was fully untraced; the first guarded slice landed with
   D47 (button/checkbox hover+press, focus rects, caret, field/textarea selection, list
   selected+lead, open combolist); scrollbar + spinbox arrow hover+press followed with
-  D51 (no-op-press protocol — 19 goldens total), making `paintScroll`/`paintArrow`
-  extraction-eligible under the D50 shared-helper gate. Still unguarded: tab hover,
-  menubar hover/armed, tooltip. **Combobox is *partially* guarded** (D50):
-  the open popup + lead highlight is captured, but its arrow/body hover+press and the
-  editable-field caret path are not — its extraction waits for those goldens.
+  D51 (no-op-press protocol), then tree/table selected+lead+expanded and the combobox
+  body/arrow hover+press + editable-caret scenarios (26 goldens total) — closing the
+  D50 combobox gap and guarding the port-content painter's tree/table row paths ahead
+  of its extraction. Still unguarded: tab hover, menubar hover/armed, tooltip.
 - **The input surface is thin** and *source-derived, not trace-backed*; menus, spinner,
   tooltip, slider, tabbedpane, dialog drag/resize, scrollbar-mouse, context-menu,
   focus-traversal and clipboard are unasserted.
