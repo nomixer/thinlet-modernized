@@ -57,9 +57,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
 
     private Object content = createImpl("desktop");
     private transient Object mouseinside;
-    private transient Object insidepart;
+    transient Object insidepart; // package-private for Renderer (D48 seam; japicmp-invisible)
     private transient Object mousepressed;
-    private transient Object pressedpart;
+    transient Object pressedpart; // package-private for Renderer (D48 seam; japicmp-invisible)
     private transient int referencex, referencey;
     private transient int mousex, mousey;
     private transient Object focusowner;
@@ -1710,7 +1710,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 if (icon != null) {
                     g.drawImage(icon, 2, (bounds.height - icon.getHeight(this)) / 2, this);
                 }
-                paintArrow(
+                Renderer.arrow(
+                        this,
                         g,
                         bounds.width - block,
                         0,
@@ -1752,7 +1753,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                         false,
                         false);
                 g.setColor(enabled ? c_text : c_disable);
-                paintArrow(g, bounds.width - block, 0, block, bounds.height, 'S');
+                Renderer.arrow(g, bounds.width - block, 0, block, bounds.height, 'S');
             }
         } else if (is(classname, ":combolist")) {
             paintScroll(
@@ -2053,7 +2054,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     enabled,
                     false,
                     0);
-            paintArrow(
+            Renderer.arrow(
+                    this,
                     g,
                     bounds.width - block,
                     0,
@@ -2069,7 +2071,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     false,
                     true,
                     true);
-            paintArrow(
+            Renderer.arrow(
+                    this,
                     g,
                     bounds.width - block,
                     bounds.height / 2,
@@ -2345,7 +2348,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                         g.translate(-r.x - 4, -r.y - 2);
                     }
                     if (is(itemclass, "menu")) {
-                        paintArrow(g, r.x + bounds.width - block, r.y, block, r.height, 'E');
+                        Renderer.arrow(g, r.x + bounds.width - block, r.y, block, r.height, 'E');
                     } else {
                         String accelerator = getAccelerator(menu);
                         if (accelerator != null) { // TODO
@@ -2426,8 +2429,10 @@ public class Thinlet extends Container implements Runnable, Serializable {
             int y = horizontal.y;
             int width = horizontal.width;
             int height = horizontal.height;
-            paintArrow(g, x, y, block, height, 'W', enabled, inside, pressed, "left", true, true, true, false, true);
-            paintArrow(
+            Renderer.arrow(
+                    this, g, x, y, block, height, 'W', enabled, inside, pressed, "left", true, true, true, false, true);
+            Renderer.arrow(
+                    this,
                     g,
                     x + width - block,
                     y,
@@ -2516,8 +2521,10 @@ public class Thinlet extends Container implements Runnable, Serializable {
             int y = vertical.y;
             int width = vertical.width;
             int height = vertical.height;
-            paintArrow(g, x, y, width, block, 'N', enabled, inside, pressed, "up", true, true, false, true, false);
-            paintArrow(
+            Renderer.arrow(
+                    this, g, x, y, width, block, 'N', enabled, inside, pressed, "up", true, true, false, true, false);
+            Renderer.arrow(
+                    this,
                     g,
                     x,
                     y + height - block,
@@ -2660,7 +2667,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
 
                         Object sort = get(column, "sort"); // "none", "ascent", "descent"
                         if (sort != null) {
-                            paintArrow(
+                            Renderer.arrow(
                                     g, x - view.x + width - block, 0, block, port.y, (is(sort, "ascent")) ? 'S' : 'N');
                         }
                         x += width;
@@ -3053,63 +3060,6 @@ public class Thinlet extends Container implements Runnable, Serializable {
                         Math.min(block, width) + evm,
                         Math.min(block, height - i) + evm,
                         null);
-            }
-        }
-    }
-
-    private void paintArrow(
-            Graphics g,
-            int x,
-            int y,
-            int width,
-            int height,
-            char dir,
-            boolean enabled,
-            boolean inside,
-            boolean pressed,
-            String part,
-            boolean top,
-            boolean left,
-            boolean bottom,
-            boolean right,
-            boolean horizontal) {
-        inside = inside && (insidepart == part);
-        pressed = pressed && (pressedpart == part);
-        paintRect(
-                g,
-                x,
-                y,
-                width,
-                height,
-                enabled ? c_border : c_disable,
-                enabled ? ((inside != pressed) ? c_hover : (pressed ? c_press : c_ctrl)) : c_bg,
-                top,
-                left,
-                bottom,
-                right,
-                horizontal);
-        g.setColor(enabled ? c_text : c_disable);
-        paintArrow(
-                g,
-                x + (left ? 1 : 0),
-                y + (top ? 1 : 0),
-                width - (left ? 1 : 0) - (right ? 1 : 0),
-                height - (top ? 1 : 0) - (bottom ? 1 : 0),
-                dir);
-    }
-
-    private void paintArrow(Graphics g, int x, int y, int width, int height, char dir) {
-        int cx = x + width / 2 - 2;
-        int cy = y + height / 2 - 2;
-        for (int i = 0; i < 4; i++) {
-            if (dir == 'N') { // north
-                g.drawLine(cx + 1 - i, cy + i, cx + 1 /*2*/ + i, cy + i);
-            } else if (dir == 'W') { // west
-                g.drawLine(cx + i, cy + 1 - i, cx + i, cy + 1 /*2*/ + i);
-            } else if (dir == 'S') { // south
-                g.drawLine(cx + 1 - i, cy + 4 - i, cx + 1 /*2*/ + i, cy + 4 - i);
-            } else { // east
-                g.drawLine(cx + 4 - i, cy + 1 - i, cx + 4 - i, cy + 1 /*2*/ + i);
             }
         }
     }
