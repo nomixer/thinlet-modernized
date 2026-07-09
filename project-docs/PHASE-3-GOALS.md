@@ -115,7 +115,7 @@ Detailed rationale in D42 and the readiness assessment (`.claude/FABLE-NEXT-STEP
 | Cut | Scope | Status |
 |-----|-------|--------|
 | **1** | Neutralise the interned-`String` `==` contract behind one helper (`is`) | ✅ **done** (merged `7796f79`; follow-up + tripwire: D43) |
-| **2** | Paint → typed Renderer (net captures the full primitive stream) | ⏳ **in progress** — hoists (D48), then slice-by-slice zero-diff extraction (D49 recipe; golden-guarded first, D50 gate): branches label/button/checkbox/combobox/tabbedpane + shared helpers `field`/`arrow`/`scroll`/`content` are in `Renderer`; menubar/popup next, then the remaining chrome branches |
+| **2** | Paint → typed Renderer (net captures the full primitive stream) | ⏳ **branches extracted** — hoists (D48), then slice-by-slice zero-diff extraction (D49 recipe; golden-guarded first, D50 gate). **Every widget paint branch + shared helper now lives in `Renderer`** (label/button/checkbox/combobox/tabbedpane/menubar/`:popup`/progressbar/slider/splitpane/panel/dialog/spinbox + `field`/`arrow`/`scroll`/`content`); only the `desktop` branch stays in `Thinlet` (it paints the timer-coupled tooltip, the one net-invisible path — D45). Remaining: fold the classname dispatch chain itself into `Renderer`, then type the drawing vocabulary |
 | **3** | DTD → typed descriptors + accessor-façade cleanup | pending |
 | **4** | Layout → per-widget strategies (a hub; second) | pending |
 | **5** | `Object[]` model → typed `Widget` (late; highest blast radius) | pending |

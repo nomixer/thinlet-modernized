@@ -1467,4 +1467,208 @@ final class Renderer {
             }
         }
     }
+
+    /** The 2005 {@code panel}/{@code dialog} paint branch, verbatim (title bar + controls, border, children/port). */
+    static void container(
+            Thinlet t,
+            Object component,
+            String classname,
+            Rectangle bounds,
+            Graphics g,
+            int clipx,
+            int clipy,
+            int clipwidth,
+            int clipheight,
+            boolean pressed,
+            boolean inside,
+            boolean focus,
+            boolean enabled) {
+        int titleheight = t.getInteger(component, ":titleheight", 0);
+        if (Thinlet.is(classname, "dialog")) {
+            t.paint(
+                    component,
+                    0,
+                    0,
+                    bounds.width,
+                    3 + titleheight,
+                    g,
+                    clipx,
+                    clipy,
+                    clipwidth,
+                    clipheight,
+                    true,
+                    true,
+                    false,
+                    true,
+                    1,
+                    2,
+                    1,
+                    2,
+                    false,
+                    'g',
+                    "left",
+                    false,
+                    false);
+            int controlx = bounds.width - titleheight - 1;
+            if (t.getBoolean(component, "closable", false)) {
+                t.paint(component, g, controlx, 3, titleheight - 2, titleheight - 2, 'c');
+                controlx -= titleheight;
+            }
+            if (t.getBoolean(component, "maximizable", false)) {
+                t.paint(component, g, controlx, 3, titleheight - 2, titleheight - 2, 'm');
+                controlx -= titleheight;
+            }
+            if (t.getBoolean(component, "iconifiable", false)) {
+                t.paint(component, g, controlx, 3, titleheight - 2, titleheight - 2, 'i');
+            }
+            t.paintRect(
+                    g,
+                    0,
+                    3 + titleheight,
+                    bounds.width,
+                    bounds.height - 3 - titleheight,
+                    t.c_border,
+                    t.c_press,
+                    false,
+                    true,
+                    true,
+                    true,
+                    true); // lower part excluding titlebar
+            t.paint(
+                    component, // content area
+                    3,
+                    3 + titleheight,
+                    bounds.width - 6,
+                    bounds.height - 6 - titleheight,
+                    g,
+                    true,
+                    true,
+                    true,
+                    true,
+                    'b');
+        } else { // panel
+            boolean border = t.getBoolean(component, "border", false);
+            t.paint(
+                    component,
+                    0,
+                    titleheight / 2,
+                    bounds.width,
+                    bounds.height - (titleheight / 2),
+                    g,
+                    border,
+                    border,
+                    border,
+                    border,
+                    enabled ? 'e' : 'd');
+            t.paint(
+                    component,
+                    0,
+                    0,
+                    bounds.width,
+                    titleheight, // panel title
+                    g,
+                    clipx,
+                    clipy,
+                    clipwidth,
+                    clipheight,
+                    false,
+                    false,
+                    false,
+                    false,
+                    0,
+                    3,
+                    0,
+                    3,
+                    false,
+                    enabled ? 'x' : 'd',
+                    "left",
+                    false,
+                    false);
+        }
+
+        if (Thinlet.get(component, ":port") != null) {
+            scroll(
+                    t,
+                    component,
+                    classname,
+                    pressed,
+                    inside,
+                    focus,
+                    false,
+                    enabled,
+                    g,
+                    clipx,
+                    clipy,
+                    clipwidth,
+                    clipheight);
+        } else {
+            for (Object comp = Thinlet.get(component, ":comp"); comp != null; comp = Thinlet.get(comp, ":next")) {
+                t.paint(g, clipx, clipy, clipwidth, clipheight, comp, enabled);
+            }
+        }
+    }
+
+    /** The 2005 {@code spinbox} paint branch, verbatim (field body + up/down arrows). */
+    static void spinbox(
+            Thinlet t,
+            Object component,
+            Rectangle bounds,
+            Graphics g,
+            int clipx,
+            int clipy,
+            int clipwidth,
+            int clipheight,
+            boolean pressed,
+            boolean inside,
+            boolean focus,
+            boolean enabled) {
+        field(
+                t,
+                g,
+                clipx,
+                clipy,
+                clipwidth,
+                clipheight,
+                component,
+                bounds.width - t.block,
+                bounds.height,
+                focus,
+                enabled,
+                false,
+                0);
+        arrow(
+                t,
+                g,
+                bounds.width - t.block,
+                0,
+                t.block,
+                bounds.height / 2,
+                'N',
+                enabled,
+                inside,
+                pressed,
+                "up",
+                true,
+                false,
+                false,
+                true,
+                true);
+        arrow(
+                t,
+                g,
+                bounds.width - t.block,
+                bounds.height / 2,
+                t.block,
+                bounds.height - (bounds.height / 2),
+                'S',
+                enabled,
+                inside,
+                pressed,
+                "down",
+                true,
+                false,
+                true,
+                true,
+                true);
+    }
 }
