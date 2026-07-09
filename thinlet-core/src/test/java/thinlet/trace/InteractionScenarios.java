@@ -151,6 +151,47 @@ final class InteractionScenarios {
             Dimension dim = d.size(sp);
             d.pressAndHoldAt(sp, dim.width - 4, dim.height * 3 / 4);
         }));
+        // Tree/table model-state + focus renders (Package A): guard the
+        // port-content painter's tree/table row paths ahead of its extraction
+        s.add(new Scenario("tree-selected-lead-focus", "/input/tree.xml", d -> {
+            d.focusGained();
+            d.click(d.find("nb1"));
+        }));
+        // expand by keyboard: the mouse handle band is FontMetrics-fragile
+        // (see InputTreeTest); Right sets `expanded` via the keyboard path
+        s.add(new Scenario("tree-node-expanded", "/input/tree.xml", d -> {
+            d.focusGained();
+            d.click(d.find("na"));
+            d.arrowRight();
+        }));
+        s.add(new Scenario("table-selected-lead-focus", "/input/table.xml", d -> {
+            d.focusGained();
+            d.click(d.thinlet().getItem(d.find("tbl"), 1));
+        }));
+        // Combobox transients (D50 g2): body hover tint on the non-editable
+        // combobox; the tinted arrow is only drawn by the editable one
+        s.add(new Scenario("combobox-body-hover", "/input/combobox.xml", d -> d.hover(d.find("cb"))));
+        s.add(new Scenario("combobox2-arrow-hover", "/input/combobox2.xml", d -> {
+            Object cb = d.find("cb2");
+            Dimension dim = d.size(cb);
+            d.hoverAt(cb, dim.width - 4, dim.height / 2);
+        }));
+        // pressing the editable combobox arrow also opens the popup (held;
+        // no auto-repeat on combobox arrows, so no D51 no-op trick needed)
+        s.add(new Scenario("combobox2-arrow-press", "/input/combobox2.xml", d -> {
+            Object cb = d.find("cb2");
+            Dimension dim = d.size(cb);
+            d.pressAndHoldAt(cb, dim.width - 4, dim.height / 2);
+        }));
+        // editable-field caret: click the empty field (caret index 0 regardless
+        // of FontMetrics), then type — indices stay keyboard-driven (D41)
+        s.add(new Scenario("combobox2-editable-caret", "/input/combobox2.xml", d -> {
+            d.focusGained();
+            Object cb = d.find("cb2");
+            Dimension dim = d.size(cb);
+            d.clickAt(cb, 4, dim.height / 2);
+            d.type("Hi");
+        }));
         return Collections.unmodifiableList(s);
     }
 

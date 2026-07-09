@@ -1,0 +1,7 @@
+<panel columns="1" gap="4" top="4" left="4" right="4" bottom="4">
+	<combobox name="cb2" weightx="1">
+		<choice text="Editable-A" />
+		<choice text="Editable-B" />
+		<choice text="Editable-C" />
+	</combobox>
+</panel>

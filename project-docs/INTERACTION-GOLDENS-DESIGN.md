@@ -105,8 +105,11 @@ L3009–3016, shared dispatcher L3437; field caret + selection highlight L2500�
 textarea caret + selection L2893–2904; combolist open with `:lead` highlight (L2915–2946,
 opened via the proven combobox click).
 
-Model-state renders (no transient needed, still untraced today): list/tree/table rows
-selected vs lead-focused; menu `selected` armed state.
+Model-state renders (no transient needed): list rows (D47), tree/table rows selected
+vs lead-focused and tree expanded/collapsed — **captured** (Package A, with the combobox
+body/arrow hover+press and editable-caret scenarios closing the D50 combobox gap; tree
+expansion driven by keyboard, since the mouse handle band is FontMetrics-fragile). Still
+untraced: menu `selected` armed state.
 
 ## Deferred / non-goals
 
