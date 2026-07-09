@@ -189,6 +189,23 @@ final class InputDriver {
         dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_PRESSED, when++, 0, p.x, p.y, 1, false));
     }
 
+    /**
+     * {@link #pressAndHold(Object)} at ({@code xOffset},{@code yOffset}) from the
+     * widget's top-left — for pressing a <em>part</em> (scrollbar or spinbox
+     * arrow) rather than the widget centre. Caution for captures: pressing a
+     * scroll/spin arrow that can act arms the 300/375 ms auto-repeat timer; a
+     * deterministic held frame needs a no-op press at the scroll/spin extreme,
+     * where {@code processScroll}/{@code processSpin} return false before any
+     * model write and the timer is never armed (D51).
+     */
+    void pressAndHoldAt(Object widget, int xOffset, int yOffset) {
+        Point o = origin(widget);
+        int x = o.x + xOffset;
+        int y = o.y + yOffset;
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_MOVED, when++, 0, x, y, 0, false));
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_PRESSED, when++, 0, x, y, 1, false));
+    }
+
     /** Types literal characters as KEY_TYPED events into the focus owner. */
     void type(String text) {
         for (int i = 0; i < text.length(); i++) {

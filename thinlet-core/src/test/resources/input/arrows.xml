@@ -1,0 +1,8 @@
+<panel columns="1" gap="4" top="4" left="4" right="4" bottom="4">
+	<list name="hlist" weightx="1" weighty="1">
+		<item text="Horizontal-scroll row: the quick brown fox jumps over the lazy dog again and again and again while the horizontal scrollbar appears because this single item is far wider than any sensible port width on any JDK we test against, guaranteed" />
+		<item text="Short row" />
+	</list>
+	<spinbox name="spmax" text="100" maximum="100" weightx="1" />
+	<spinbox name="spmin" text="0" minimum="0" weightx="1" />
+</panel>

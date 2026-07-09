@@ -1,6 +1,8 @@
 /* Thinlet (modernized) — interaction-state golden capture (test scope). */
 package thinlet.trace;
 
+import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -91,6 +93,63 @@ final class InteractionScenarios {
             d.focusGained();
             d.click(d.find("cb"));
             d.arrowDown();
+        }));
+        // Scrollbar + spinbox arrows (D51). Hover holds are timer-free; press
+        // holds use NO-OP presses: at the scroll/spin extreme processScroll/
+        // processSpin return false before any model write and the 300/375 ms
+        // auto-repeat timer is never armed, so the held frame is
+        // time-independent. Aim points derive from the :vertical/:horizontal
+        // part rectangles and the widget size — bounds, never text metrics.
+        s.add(new Scenario("scroll-vup-arrow-hover", "/input/scroll.xml", d -> {
+            Object lst = d.find("slist");
+            Rectangle v = (Rectangle) d.property(lst, ":vertical");
+            d.hoverAt(lst, v.x + v.width / 2, v.y + 3);
+        }));
+        s.add(new Scenario("scroll-vup-arrow-press-attop", "/input/scroll.xml", d -> {
+            Object lst = d.find("slist");
+            Rectangle v = (Rectangle) d.property(lst, ":vertical");
+            d.pressAndHoldAt(lst, v.x + v.width / 2, v.y + 3);
+        }));
+        s.add(new Scenario("scroll-vdown-arrow-hover", "/input/scroll.xml", d -> {
+            Object lst = d.find("slist");
+            Rectangle v = (Rectangle) d.property(lst, ":vertical");
+            d.hoverAt(lst, v.x + v.width / 2, v.y + v.height - 3);
+        }));
+        s.add(new Scenario("scroll-vdown-arrow-press-atbottom", "/input/scroll.xml", d -> {
+            Object lst = d.find("slist");
+            // wheel far past the end: the scroll clamp leaves the view at the
+            // exact bottom on every JDK, making the down-press a no-op
+            for (int i = 0; i < 200; i++) {
+                d.scroll(lst, 1);
+            }
+            Rectangle v = (Rectangle) d.property(lst, ":vertical");
+            d.pressAndHoldAt(lst, v.x + v.width / 2, v.y + v.height - 3);
+        }));
+        s.add(new Scenario("arrows-hleft-arrow-hover", "/input/arrows.xml", d -> {
+            Object lst = d.find("hlist");
+            Rectangle h = (Rectangle) d.property(lst, ":horizontal");
+            d.hoverAt(lst, h.x + 3, h.y + h.height / 2);
+        }));
+        s.add(new Scenario("arrows-hleft-arrow-press-atleft", "/input/arrows.xml", d -> {
+            Object lst = d.find("hlist");
+            Rectangle h = (Rectangle) d.property(lst, ":horizontal");
+            d.pressAndHoldAt(lst, h.x + 3, h.y + h.height / 2);
+        }));
+        // Spinbox arrows occupy the right-edge block column, split at half height
+        s.add(new Scenario("arrows-spin-up-arrow-hover", "/input/arrows.xml", d -> {
+            Object sp = d.find("spmax");
+            Dimension dim = d.size(sp);
+            d.hoverAt(sp, dim.width - 4, dim.height / 4);
+        }));
+        s.add(new Scenario("arrows-spin-up-arrow-press-atmax", "/input/arrows.xml", d -> {
+            Object sp = d.find("spmax");
+            Dimension dim = d.size(sp);
+            d.pressAndHoldAt(sp, dim.width - 4, dim.height / 4);
+        }));
+        s.add(new Scenario("arrows-spin-down-arrow-press-atmin", "/input/arrows.xml", d -> {
+            Object sp = d.find("spmin");
+            Dimension dim = d.size(sp);
+            d.pressAndHoldAt(sp, dim.width - 4, dim.height * 3 / 4);
         }));
         return Collections.unmodifiableList(s);
     }
