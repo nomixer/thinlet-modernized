@@ -1325,4 +1325,146 @@ final class Renderer {
             }
         }
     }
+
+    /** The 2005 {@code progressbar} paint branch, verbatim. */
+    static void progressbar(Thinlet t, Object component, Rectangle bounds, Graphics g, boolean enabled) {
+        int minimum = t.getInteger(component, "minimum", 0);
+        int maximum = t.getInteger(component, "maximum", 100);
+        int value = t.getInteger(component, "value", 0);
+        // fixed by by Mike Hartshorn and Timothy Stack
+        boolean horizontal = (!Thinlet.is(Thinlet.get(component, "orientation"), "vertical"));
+        int length = (value - minimum) * ((horizontal ? bounds.width : bounds.height) - 1) / (maximum - minimum);
+        t.paintRect(
+                g,
+                0,
+                0,
+                horizontal ? length : bounds.width,
+                horizontal ? bounds.height : length,
+                enabled ? t.c_border : t.c_disable,
+                t.c_select,
+                true,
+                true,
+                horizontal,
+                !horizontal,
+                true);
+        t.paintRect(
+                g,
+                horizontal ? length : 0,
+                horizontal ? 0 : length,
+                horizontal ? (bounds.width - length) : bounds.width,
+                horizontal ? bounds.height : (bounds.height - length),
+                enabled ? t.c_border : t.c_disable,
+                t.c_bg,
+                true,
+                true,
+                true,
+                true,
+                true);
+    }
+
+    /** The 2005 {@code slider} paint branch, verbatim (track, knob, focus rect). */
+    static void slider(Thinlet t, Object component, Rectangle bounds, Graphics g, boolean focus, boolean enabled) {
+        if (focus) {
+            t.drawFocus(g, 0, 0, bounds.width - 1, bounds.height - 1);
+        }
+        int minimum = t.getInteger(component, "minimum", 0);
+        int maximum = t.getInteger(component, "maximum", 100);
+        int value = t.getInteger(component, "value", 0);
+        boolean horizontal = (!Thinlet.is(Thinlet.get(component, "orientation"), "vertical"));
+        int length = (value - minimum) * ((horizontal ? bounds.width : bounds.height) - t.block) / (maximum - minimum);
+        t.paintRect(
+                g,
+                horizontal ? 0 : 3,
+                horizontal ? 3 : 0,
+                horizontal ? length : (bounds.width - 6),
+                horizontal ? (bounds.height - 6) : length,
+                enabled ? t.c_border : t.c_disable,
+                t.c_bg,
+                true,
+                true,
+                horizontal,
+                !horizontal,
+                true);
+        t.paintRect(
+                g,
+                horizontal ? length : 0,
+                horizontal ? 0 : length,
+                horizontal ? t.block : bounds.width,
+                horizontal ? bounds.height : t.block,
+                enabled ? t.c_border : t.c_disable,
+                enabled ? t.c_ctrl : t.c_bg,
+                true,
+                true,
+                true,
+                true,
+                true);
+        t.paintRect(
+                g,
+                horizontal ? (t.block + length) : 3,
+                horizontal ? 3 : (t.block + length),
+                bounds.width - (horizontal ? (t.block + length) : 6),
+                bounds.height - (horizontal ? 6 : (t.block + length)),
+                enabled ? t.c_border : t.c_disable,
+                t.c_bg,
+                horizontal,
+                !horizontal,
+                true,
+                true,
+                true);
+    }
+
+    /** The 2005 {@code splitpane} paint branch, verbatim (divider strip, grip, focus rect, both panes). */
+    static void splitpane(
+            Thinlet t,
+            Object component,
+            Rectangle bounds,
+            Graphics g,
+            int clipx,
+            int clipy,
+            int clipwidth,
+            int clipheight,
+            boolean focus,
+            boolean enabled) {
+        boolean horizontal = (!Thinlet.is(Thinlet.get(component, "orientation"), "vertical"));
+        int divider = t.getInteger(component, "divider", -1);
+        t.paintRect(
+                g,
+                horizontal ? divider : 0,
+                horizontal ? 0 : divider,
+                horizontal ? 5 : bounds.width,
+                horizontal ? bounds.height : 5,
+                t.c_border,
+                t.c_bg,
+                false,
+                false,
+                false,
+                false,
+                true);
+        if (focus) {
+            if (horizontal) {
+                t.drawFocus(g, divider, 0, 4, bounds.height - 1);
+            } else {
+                t.drawFocus(g, 0, divider, bounds.width - 1, 4);
+            }
+        }
+        g.setColor(enabled ? t.c_border : t.c_disable);
+        int xy = horizontal ? bounds.height : bounds.width;
+        int xy1 = Math.max(0, xy / 2 - 12);
+        int xy2 = Math.min(xy / 2 + 12, xy - 1);
+        for (int i = divider + 1; i < divider + 4; i += 2) {
+            if (horizontal) {
+                g.drawLine(i, xy1, i, xy2);
+            } else {
+                g.drawLine(xy1, i, xy2, i);
+            }
+        }
+        Object comp1 = Thinlet.get(component, ":comp");
+        if (comp1 != null) {
+            t.paint(g, clipx, clipy, clipwidth, clipheight, comp1, enabled);
+            Object comp2 = Thinlet.get(comp1, ":next");
+            if (comp2 != null) {
+                t.paint(g, clipx, clipy, clipwidth, clipheight, comp2, enabled);
+            }
+        }
+    }
 }
