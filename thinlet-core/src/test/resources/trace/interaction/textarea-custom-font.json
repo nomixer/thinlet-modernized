@@ -1,0 +1,37 @@
+{
+  "calls": [
+    {"op": "setFont", "cat": ["SansSerif|0|12"], "num": []},
+    {"op": "translate", "cat": [], "num": [0, 0]},
+    {"op": "setColor", "cat": ["#909090FF"], "num": []},
+    {"op": "setColor", "cat": ["#E6E6E6FF"], "num": []},
+    {"op": "fillRect", "cat": [], "num": [0, 0, 1024, 768]},
+    {"op": "translate", "cat": [], "num": [0, 0]},
+    {"op": "translate", "cat": [], "num": [4, 4]},
+    {"op": "setColor", "cat": ["#909090FF"], "num": []},
+    {"op": "drawLine", "cat": [], "num": [1015, 0, 0, 0]},
+    {"op": "drawLine", "cat": [], "num": [0, 1, 0, 759]},
+    {"op": "drawLine", "cat": [], "num": [1, 759, 1015, 759]},
+    {"op": "drawLine", "cat": [], "num": [1015, 758, 1015, 1]},
+    {"op": "setColor", "cat": ["#FFFFFFFF"], "num": []},
+    {"op": "fillRect", "cat": [], "num": [1, 1, 1014, 758]},
+    {"op": "clipRect", "cat": [], "num": [1, 1, 1014, 758]},
+    {"op": "translate", "cat": [], "num": [1, 1]},
+    {"op": "setFont", "cat": ["SansSerif|0|24"], "num": []},
+    {"op": "setColor", "cat": ["#000000FF"], "num": []},
+    {"op": "drawString", "cat": ["Big line one"], "num": [1, 24]},
+    {"op": "setColor", "cat": ["#000000FF"], "num": []},
+    {"op": "drawString", "cat": ["big line two"], "num": [1, 53]},
+    {"op": "setColor", "cat": ["#000000FF"], "num": []},
+    {"op": "drawString", "cat": ["big line three"], "num": [1, 82]},
+    {"op": "setFont", "cat": ["SansSerif|0|12"], "num": []},
+    {"op": "translate", "cat": [], "num": [-1, -1]},
+    {"op": "setClip", "cat": [], "num": [-4, -4, 1024, 768]},
+    {"op": "translate", "cat": [], "num": [-4, -4]},
+    {"op": "translate", "cat": [], "num": [0, 0]},
+    {"op": "translate", "cat": [], "num": [0, 0]}
+  ],
+  "layout": [
+    {"class": "panel", "x": 0, "y": 0, "w": 1024, "h": 768},
+    {"class": "textarea", "x": 4, "y": 4, "w": 1016, "h": 760}
+  ]
+}

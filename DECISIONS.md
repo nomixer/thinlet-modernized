@@ -1825,3 +1825,51 @@ in flight — same deferral class as the tooltip, D45); knob-drag visuals. **Gat
 arrows) are now guarded, so those helpers are extraction-eligible; the tabbedpane and
 menubar *branches* stay gated on their own goldens, and the combobox branch on D50 g2.
 (Cross-ref D45/D47/D50.)
+
+## D52 — Second self-review (Opus): one real regression caught (`"t.font"`), fixed + net-guarded
+
+**Date:** 2026-07-09. **Status:** accepted. **Phase:** 3 (Cut 2, paint-branch extraction complete).
+
+**Context.** With every widget paint branch extracted to `Renderer` (#48–#66; only the
+tooltip-coupled `desktop` branch left in `Thinlet`), a scheduled independent-model review
+(Opus, per the 2026-07-09 grant) audited the mechanical stretch for what a zero-diff net
+*cannot* see: phantom package-private surface, over-eager regex substitution, attribution,
+and next-phase readiness (full report: `.claude/SELF-REVIEWS.md`, Review 2).
+
+**Finding — one real behavioral regression.** The Package B extraction (#57) used a
+python text-scanner that blanket-prefixed field names; its `\bfont\b → t.font` rule
+over-reached into a **string-literal key** in the port-content painter's textarea path:
+`get(component, "font")` became `get(component, "t.font")`. Since `"t.font"` is never a
+stored attribute, a textarea carrying a per-widget `font` attribute silently rendered in
+the default font (its paint-time `setFont` skipped) — a genuine deviation from 2005.
+
+**Why the net missed it (the net gap).** The only custom-font textareas in the 41-golden
+corpus (`drafts/looks.xml`, `drafts/widgets.xml`) all sit on **non-selected tabs**, and
+`Renderer.tabbedpane` paints only the selected tab's content — so the textarea-custom-font
+path was never exercised by any golden. Exactly the class of defect a behavior-preservation
+net is blind to: it proves *what is painted* stays identical, not that *every path* is
+painted.
+
+**Resolution (this PR).**
+1. **Fix:** `Renderer.java` line 722 restored to the verbatim 2005 key `"font"` (plus a
+   cosmetic comment revert `t.font`→`font`). Mandatory on verbatim-fidelity grounds alone
+   (D3/D49): the 2005 original and every sibling read `"font"`.
+2. **Guard:** new `input/fonttext.xml` (a standalone `font="24"` textarea — a point-size
+   change, not `bold`, so the difference clears the D7 ±2 px gate and shows as a
+   categorical `setFont` op) + the `textarea-custom-font` interaction scenario. **Proven
+   to guard:** recorded on the fixed code, the golden *fails* when the key is re-broken
+   (clean-compiled) and passes when fixed — the net now catches this regression.
+   Determinism caveat learned: `font="bold"` is too weak a signal (bold-vs-plain metrics
+   fall within ±2 px); a size change is required.
+3. **Other review items — clean.** All 19 package-private widenings are referenced by
+   `Renderer` (no phantom surface, D50 g4 holds); the other moved methods
+   (`content`/`container`/`tabbedpane`/`popup`) are literal-faithful; the LGPL attribution
+   is coherent. Next-phase note: folding the classname dispatch needs three more identical
+   widenings (`mouseinside`/`focusowner`/`focusinside`) and cannot be *fully* stateless
+   until the deferred tooltip path is addressed — no blocker.
+
+**Process lesson (recorded).** The blanket-regex extraction recipe is fast but can corrupt
+string/char literals; future mechanical moves must diff literal sequences (or exclude
+quoted spans from field-prefix substitution). The independent review — not the net — is
+what caught this; it justifies the standing lull-time self-review. (Cross-ref
+D3/D49/D50; net-gap class also noted against the D45 survey.)

@@ -1,0 +1,3 @@
+<panel columns="1" gap="4" top="4" left="4" right="4" bottom="4">
+	<textarea name="fta" font="24" text="Big line one&#10;big line two&#10;big line three" weightx="1" weighty="1" />
+</panel>

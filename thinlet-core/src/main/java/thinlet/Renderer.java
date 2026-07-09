@@ -719,7 +719,7 @@ final class Renderer {
             int end = focus ? t.getInteger(component, "end", 0) : 0;
             int is = Math.min(start, end);
             int ie = Math.max(start, end);
-            Font customfont = (Font) Thinlet.get(component, "t.font");
+            Font customfont = (Font) Thinlet.get(component, "font");
             if (customfont != null) {
                 g.setFont(customfont);
             }
@@ -755,7 +755,7 @@ final class Renderer {
             }
             if (customfont != null) {
                 g.setFont(t.font);
-            } // restore the default t.font
+            } // restore the default font
         } else if (Thinlet.is(classname, ":combolist")) {
             Object lead = Thinlet.get(component, ":lead");
             for (Object choice = Thinlet.get(Thinlet.get(component, "combobox"), ":comp");
