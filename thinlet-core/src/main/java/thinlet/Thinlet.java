@@ -31,17 +31,18 @@ import java.util.*;
 public class Thinlet extends Container implements Runnable, Serializable {
 
     private transient Font font;
-    private transient Color c_bg;
-    private transient Color c_text;
-    private transient Color c_textbg;
-    private transient Color c_border;
-    private transient Color c_disable;
-    private transient Color c_hover;
-    private transient Color c_press;
-    private transient Color c_focus;
-    private transient Color c_select;
-    private transient Color c_ctrl = null;
-    private transient int block;
+    // color palette + block metric: package-private for Renderer (D48 seam; japicmp-invisible)
+    transient Color c_bg;
+    transient Color c_text;
+    transient Color c_textbg;
+    transient Color c_border;
+    transient Color c_disable;
+    transient Color c_hover;
+    transient Color c_press;
+    transient Color c_focus;
+    transient Color c_select;
+    transient Color c_ctrl = null;
+    transient int block;
     private transient Image hgradient, vgradient;
 
     private transient Thread timer;
@@ -74,7 +75,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
     private static int MOUSE_WHEEL = 0;
     private static Method wheelrotation, renderinghint;
     private static Object[] TXT_AA, G_AA;
-    private static int evm = 0;
+    static int evm = 0; // package-private for Renderer (D48 seam; japicmp-invisible)
 
     static {
         try { // for mousewheel events
@@ -1686,58 +1687,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     focus,
                     enabled);
         } else if (is(classname, "checkbox")) {
-            paint(
-                    component,
-                    0,
-                    0,
-                    bounds.width,
-                    bounds.height,
-                    g,
-                    clipx,
-                    clipy,
-                    clipwidth,
-                    clipheight,
-                    false,
-                    false,
-                    false,
-                    false,
-                    0,
-                    block + 3,
-                    0,
-                    0,
-                    false,
-                    enabled ? 'e' : 'd',
-                    "left",
-                    true,
-                    false);
-
-            boolean selected = getBoolean(component, "selected", false);
-            String group = getString(component, "group", null);
-            Color border = enabled ? c_border : c_disable;
-            Color foreground = enabled ? ((inside != pressed) ? c_hover : (pressed ? c_press : c_ctrl)) : c_bg;
-            int dy = (bounds.height - block + 2) / 2;
-            if (group == null) {
-                paintRect(g, 1, dy + 1, block - 2, block - 2, border, foreground, true, true, true, true, true);
-            } else {
-                g.setColor((foreground != c_ctrl) ? foreground : c_bg);
-                g.fillOval(1, dy + 1, block - 3 + evm, block - 3 + evm);
-                g.setColor(border);
-                g.drawOval(1, dy + 1, block - 3, block - 3);
-            }
-            if (focus) {
-                drawFocus(g, 0, 0, bounds.width - 1, bounds.height - 1);
-            }
-            if ((!selected && inside && pressed) || (selected && (!inside || !pressed))) {
-                g.setColor(enabled ? c_text : c_disable);
-                if (group == null) {
-                    g.fillRect(3, dy + block - 9, 2 + evm, 6 + evm);
-                    g.drawLine(3, dy + block - 4, block - 4, dy + 3);
-                    g.drawLine(4, dy + block - 4, block - 4, dy + 4);
-                } else {
-                    g.fillOval(5, dy + 5, block - 10 + evm, block - 10 + evm);
-                    g.drawOval(4, dy + 4, block - 9, block - 9);
-                }
-            }
+            Renderer.checkbox(
+                    this, component, bounds, g, clipx, clipy, clipwidth, clipheight, pressed, inside, focus, enabled);
         } else if (is(classname, "combobox")) {
             if (getBoolean(component, "editable", true)) {
                 Image icon = getIcon(component, "icon", null);
@@ -3088,7 +3039,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
         }
     }
 
-    private void paintRect(
+    // package-private for Renderer (D48 seam; japicmp-invisible)
+    void paintRect(
             Graphics g,
             int x,
             int y,
@@ -3484,7 +3436,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
         } // restore the default font
     }
 
-    private void drawFocus(Graphics g, int x, int y, int width, int height) {
+    // package-private for Renderer (D48 seam; japicmp-invisible)
+    void drawFocus(Graphics g, int x, int y, int width, int height) {
         g.setColor(c_focus);
         int x2 = x + 1 - height % 2;
         for (int i = 0; i <= width; i += 2) {
@@ -7434,7 +7387,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
         return set(component, key, value); // use defaultvalue
     }
 
-    private String getString(Object component, String key, String defaultvalue) {
+    // package-private for Renderer (D48 seam; japicmp-invisible)
+    String getString(Object component, String key, String defaultvalue) {
         Object value = get(component, key);
         return (value == null) ? defaultvalue : (String) value;
     }
