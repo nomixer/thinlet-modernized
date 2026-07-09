@@ -34,7 +34,15 @@ Public artifacts, unsupported.
   Exceptions kept lowercase/fixed by ecosystem or the harness: `README.md`, `CLAUDE.md`,
   and Claude Code agent files under `.claude/agents/*.md`.
 
-## Current work — Phase 2.x (input-capture harness)
+## Current work — Phase 3a (God-class decomposition behind the net)
+
+> **Live handoff: `.claude/NEXT-STEPS.md`** — read it first for the current state
+> (Cut 2 slices merged through PR #57, `Renderer.java` growing, 26 interaction
+> goldens), the ordered next work, and the capture/extraction discipline.
+> Authority: `DECISIONS.md` through **D51**; charter: `project-docs/PHASE-3-GOALS.md`.
+> The Phase 2.x section below is retained as background on the harness design.
+
+## Background — Phase 2.x (input-capture harness)
 
 Phase 2.0 is **complete** (cross-JDK test matrix + backend-portability docs): the
 Phase 1 golden-trace harness (a `TracingGraphics2D` recorder + deterministic
