@@ -97,7 +97,8 @@ pressed check-preview (L1750, 1763); combobox body (L1831) and arrow (L1802 + pa
 spinbox up/down arrows (L2143/2158) — **captured, D51**; scrollbar arrows (L2583/2673 →
 `paintArrow` L3232–3241) — **captured, D51** (vertical both + horizontal left; the right
 arrow's tint gate is the symmetric code path of "left"); tabbedpane tab hover
-(L1898/1920) and menubar title hover vs armed (L2320–2342) — still pending fixtures.
+(L1898/1920) and menubar title hover vs armed with the open popup (L2320–2342) —
+**captured** (Package C). Tooltip remains the sole deferred interaction state.
 
 Focus + caret/selection: `drawFocus` sites — checkbox L1761, slider L2202, splitpane
 L2265–2270, field L2535, scrollpane viewport L2837–2851, list/tree/table lead row
