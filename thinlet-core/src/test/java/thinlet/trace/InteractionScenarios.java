@@ -201,6 +201,18 @@ final class InteractionScenarios {
         // clicking a menubar title arms it and opens its popup, which stays
         // open after release — held model/popup state, no timer involvement
         s.add(new Scenario("menu-armed-open", "/input/menu.xml", d -> d.click(d.find("m1"))));
+        // Focus rects not yet captured (Package D): slider knob/track focus via
+        // the public requestFocus (no click — a click would also move the value),
+        // and the splitpane divider focus via the proven child-click + F8 route
+        s.add(new Scenario("slider-focus", "/input/slider.xml", d -> {
+            d.focusGained();
+            d.thinlet().requestFocus(d.find("sl"));
+        }));
+        s.add(new Scenario("splitpane-divider-focus", "/input/splitpane.xml", d -> {
+            d.focusGained();
+            d.click(d.find("bL"));
+            d.press(KeyEvent.VK_F8);
+        }));
         return Collections.unmodifiableList(s);
     }
 

@@ -1,0 +1,4 @@
+<panel columns="1" gap="4" top="4" left="4" right="4" bottom="4">
+	<slider name="sl" value="40" weightx="1" />
+	<label text="Body" weighty="1" />
+</panel>
