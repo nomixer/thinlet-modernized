@@ -1738,3 +1738,51 @@ remaining branches follow the same shape slice by slice; branches whose interact
 is not yet golden-guarded (scrollbar/spinbox arrows, tabs, menubar — see D47 remaining
 scenarios) get their goldens **before** their extraction slice, per "net before refactor".
 (Cross-ref D3/D42/D43/D44/D47/D48.)
+
+## D50 — First scheduled independent self-review (Opus): decisions hold, four guardrails adopted
+
+**Date:** 2026-07-09. **Status:** accepted. **Phase:** 3 (Cut 2, ongoing).
+
+**Context.** The maintainer granted a standing lull-time workflow: when a work package
+completes with no concerns and no response, continue with the next recorded step, and at
+lulls run a **self-review on an independent model (Opus, not the session model)** with
+permission to document the outcome, open a PR, and merge it. The first such review audited
+D42–D49 plus the checkbox slice (PR #50) adversarially, from the committed artifacts
+(full report: `.claude/SELF-REVIEWS.md`).
+
+**Outcome.** All six audited choices **hold**; **no change** to the cut order, the
+3a/3b/3c staging, or the fork-mapping gate before the Cut 4/5/6 seams. Four guardrails
+adopted — all refinements *within* the existing plan:
+
+1. **Shared-helper gate.** `paintScroll`/`paintArrow` (and any shared paint helper)
+   carry unguarded transient states (scrollbar/spinbox arrow hover+press, tab hover,
+   menubar). They stay in `Thinlet` — called via the explicit `t.` context — until those
+   interaction goldens land. Upcoming field/textarea/list slices move only their own
+   branch plus the already-guarded `paintField`; a slice must not smuggle a shared
+   helper out.
+2. **Combobox is *partially* guarded**, not unguarded: `combobox-open-lead` covers the
+   open popup + lead highlight, but the arrow/body hover+press transients and the
+   editable-field caret path are uncaptured. Its extraction slice waits for those
+   goldens (charter blind-spot list corrected).
+3. **Paint goldens cannot discriminate hoist-vs-relocate.** A held-state golden sets the
+   transient tuple explicitly, so a paint-side write hoisted (D48) and one relocated to
+   an earlier event produce identical traces — the D48 correction rested on source
+   reasoning, not the net. Adopted: "hoist, don't relocate" stays a review-enforced
+   invariant, **and** the `:lead` Down-before-repaint race is now pinned by two input
+   tests (`InputListTest`): Down with a never-painted focused list selects the *first*
+   item (null lead at keypress); Down after a focused paint selects the *second* (paint
+   adopted the lead). Relocating the write to focus-gain fails the first; dropping the
+   paint-time adoption fails the second.
+4. **3a-closing checklist item.** Before 3a closes, re-narrow any package-private member
+   the decomposition widened but no longer uses, so the later subpackage split inherits
+   no phantom surface (follow-up to the D49/PR-#50 widenings, which are all currently
+   consumed or scheduled).
+
+Also recorded (review precision notes): D43's "dead-code-eliminated" phrasing is
+imprecise — `STRICT_INTERN` is a runtime `final` (a `Boolean.getBoolean` call, not a
+compile-time constant), so the strict branch is runtime-gated; the behavioral guarantee
+(byte-identical to `==` when unset) is unaffected. The net's structural blind spots were
+inventoried (repaint timing/ordering, tooltip, remaining transient states, unasserted
+input paths, JDK 25+, serialization form) and match the charter's blind-spot list; the
+upcoming field/textarea/list slices touch none of them beyond guardrail 1.
+(Cross-ref D42/D43/D44/D45/D47/D48/D49.)
