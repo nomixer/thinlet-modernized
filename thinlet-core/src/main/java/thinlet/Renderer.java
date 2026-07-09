@@ -1047,4 +1047,126 @@ final class Renderer {
             Renderer.arrow(g, bounds.width - t.block, 0, t.block, bounds.height, 'S');
         }
     }
+
+    /** The 2005 {@code tabbedpane} paint branch, verbatim (tab headers with hover tint + content). */
+    static void tabbedpane(
+            Thinlet t,
+            Object component,
+            Rectangle bounds,
+            Graphics g,
+            int clipx,
+            int clipy,
+            int clipwidth,
+            int clipheight,
+            boolean pressed,
+            boolean inside,
+            boolean focus,
+            boolean enabled) {
+        int i = 0;
+        Object selectedtab = null;
+        int selected = t.getInteger(component, "selected", 0);
+        String placement = t.getString(component, "placement", "top");
+        boolean horizontal = ((Thinlet.is(placement, "top")) || (Thinlet.is(placement, "bottom")));
+        boolean stacked = (Thinlet.is(placement, "stacked"));
+        int bx = stacked ? 0 : horizontal ? 2 : 1, by = stacked ? 0 : horizontal ? 1 : 2, bw = 2 * bx, bh = 2 * by;
+        // paint tabs except the selected one
+        int pcx = clipx, pcy = clipy, pcw = clipwidth, pch = clipheight;
+        clipx = Math.max(0, clipx);
+        clipy = Math.max(0, clipy);
+        clipwidth = Math.min(bounds.width, pcx + pcw) - clipx;
+        clipheight = Math.min(bounds.height, pcy + pch) - clipy;
+        g.clipRect(clipx, clipy, clipwidth, clipheight); // intersection of clip and bound
+        for (Object tab = Thinlet.get(component, ":comp"); tab != null; tab = Thinlet.get(tab, ":next")) {
+            Rectangle r = t.getRectangle(tab, "bounds");
+            if (selected != i) {
+                boolean hover = inside && (t.mousepressed == null) && (t.insidepart == tab);
+                boolean tabenabled = enabled && t.getBoolean(tab, "enabled", true);
+                t.paint(
+                        tab,
+                        r.x + bx,
+                        r.y + by,
+                        r.width - bw,
+                        r.height - bh,
+                        g,
+                        clipx,
+                        clipy,
+                        clipwidth,
+                        clipheight,
+                        (!Thinlet.is(placement, "bottom")),
+                        (!Thinlet.is(placement, "right")),
+                        !stacked && (!Thinlet.is(placement, "top")),
+                        (!Thinlet.is(placement, "left")),
+                        1,
+                        3,
+                        1,
+                        3,
+                        false,
+                        tabenabled ? (hover ? 'h' : 'g') : 'd',
+                        "left",
+                        true,
+                        false);
+            } else {
+                selectedtab = tab;
+                // paint tabbedpane border
+                t.paint(
+                        tab,
+                        (Thinlet.is(placement, "left")) ? r.width - 1 : 0,
+                        stacked ? (r.y + r.height - 1) : (Thinlet.is(placement, "top")) ? r.height - 1 : 0,
+                        (horizontal || stacked) ? bounds.width : (bounds.width - r.width + 1),
+                        stacked
+                                ? (bounds.height - r.y - r.height + 1)
+                                : horizontal ? (bounds.height - r.height + 1) : bounds.height,
+                        g,
+                        true,
+                        true,
+                        true,
+                        true,
+                        enabled ? 'e' : 'd');
+                Object comp = Thinlet.get(selectedtab, ":comp");
+                if ((comp != null) && t.getBoolean(comp, "visible", true)) {
+                    clipx -= r.x;
+                    clipy -= r.y;
+                    g.translate(r.x, r.y); // relative to tab
+                    t.paint(g, clipx, clipy, clipwidth, clipheight, comp, enabled);
+                    clipx += r.x;
+                    clipy += r.y;
+                    g.translate(-r.x, -r.y);
+                }
+            }
+            i++;
+        }
+
+        // paint selected tab and its content
+        if (selectedtab != null) {
+            Rectangle r = t.getRectangle(selectedtab, "bounds");
+            // paint selected tab
+            int ph = stacked ? 3 : (horizontal ? 5 : 4);
+            int pv = stacked ? 1 : (horizontal ? 2 : 3);
+            t.paint(
+                    selectedtab,
+                    r.x,
+                    r.y,
+                    r.width,
+                    r.height,
+                    g,
+                    clipx,
+                    clipy,
+                    clipwidth,
+                    clipheight,
+                    (!Thinlet.is(placement, "bottom")),
+                    (!Thinlet.is(placement, "right")),
+                    !stacked && (!Thinlet.is(placement, "top")),
+                    (!Thinlet.is(placement, "left")),
+                    pv,
+                    ph,
+                    pv,
+                    ph,
+                    focus,
+                    enabled ? 'b' : 'i',
+                    "left",
+                    true,
+                    false);
+        }
+        g.setClip(pcx, pcy, pcw, pch);
+    }
 }

@@ -58,7 +58,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
     private Object content = createImpl("desktop");
     private transient Object mouseinside;
     transient Object insidepart; // package-private for Renderer (D48 seam; japicmp-invisible)
-    private transient Object mousepressed;
+    transient Object mousepressed; // package-private for Renderer (D48 seam; japicmp-invisible)
     transient Object pressedpart; // package-private for Renderer (D48 seam; japicmp-invisible)
     private transient int referencex, referencey;
     private transient int mousex, mousey;
@@ -1738,112 +1738,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     clipwidth,
                     clipheight);
         } else if (is(classname, "tabbedpane")) {
-            int i = 0;
-            Object selectedtab = null;
-            int selected = getInteger(component, "selected", 0);
-            String placement = getString(component, "placement", "top");
-            boolean horizontal = ((is(placement, "top")) || (is(placement, "bottom")));
-            boolean stacked = (is(placement, "stacked"));
-            int bx = stacked ? 0 : horizontal ? 2 : 1, by = stacked ? 0 : horizontal ? 1 : 2, bw = 2 * bx, bh = 2 * by;
-            // paint tabs except the selected one
-            int pcx = clipx, pcy = clipy, pcw = clipwidth, pch = clipheight;
-            clipx = Math.max(0, clipx);
-            clipy = Math.max(0, clipy);
-            clipwidth = Math.min(bounds.width, pcx + pcw) - clipx;
-            clipheight = Math.min(bounds.height, pcy + pch) - clipy;
-            g.clipRect(clipx, clipy, clipwidth, clipheight); // intersection of clip and bound
-            for (Object tab = get(component, ":comp"); tab != null; tab = get(tab, ":next")) {
-                Rectangle r = getRectangle(tab, "bounds");
-                if (selected != i) {
-                    boolean hover = inside && (mousepressed == null) && (insidepart == tab);
-                    boolean tabenabled = enabled && getBoolean(tab, "enabled", true);
-                    paint(
-                            tab,
-                            r.x + bx,
-                            r.y + by,
-                            r.width - bw,
-                            r.height - bh,
-                            g,
-                            clipx,
-                            clipy,
-                            clipwidth,
-                            clipheight,
-                            (!is(placement, "bottom")),
-                            (!is(placement, "right")),
-                            !stacked && (!is(placement, "top")),
-                            (!is(placement, "left")),
-                            1,
-                            3,
-                            1,
-                            3,
-                            false,
-                            tabenabled ? (hover ? 'h' : 'g') : 'd',
-                            "left",
-                            true,
-                            false);
-                } else {
-                    selectedtab = tab;
-                    // paint tabbedpane border
-                    paint(
-                            tab,
-                            (is(placement, "left")) ? r.width - 1 : 0,
-                            stacked ? (r.y + r.height - 1) : (is(placement, "top")) ? r.height - 1 : 0,
-                            (horizontal || stacked) ? bounds.width : (bounds.width - r.width + 1),
-                            stacked
-                                    ? (bounds.height - r.y - r.height + 1)
-                                    : horizontal ? (bounds.height - r.height + 1) : bounds.height,
-                            g,
-                            true,
-                            true,
-                            true,
-                            true,
-                            enabled ? 'e' : 'd');
-                    Object comp = get(selectedtab, ":comp");
-                    if ((comp != null) && getBoolean(comp, "visible", true)) {
-                        clipx -= r.x;
-                        clipy -= r.y;
-                        g.translate(r.x, r.y); // relative to tab
-                        paint(g, clipx, clipy, clipwidth, clipheight, comp, enabled);
-                        clipx += r.x;
-                        clipy += r.y;
-                        g.translate(-r.x, -r.y);
-                    }
-                }
-                i++;
-            }
-
-            // paint selected tab and its content
-            if (selectedtab != null) {
-                Rectangle r = getRectangle(selectedtab, "bounds");
-                // paint selected tab
-                int ph = stacked ? 3 : (horizontal ? 5 : 4);
-                int pv = stacked ? 1 : (horizontal ? 2 : 3);
-                paint(
-                        selectedtab,
-                        r.x,
-                        r.y,
-                        r.width,
-                        r.height,
-                        g,
-                        clipx,
-                        clipy,
-                        clipwidth,
-                        clipheight,
-                        (!is(placement, "bottom")),
-                        (!is(placement, "right")),
-                        !stacked && (!is(placement, "top")),
-                        (!is(placement, "left")),
-                        pv,
-                        ph,
-                        pv,
-                        ph,
-                        focus,
-                        enabled ? 'b' : 'i',
-                        "left",
-                        true,
-                        false);
-            }
-            g.setClip(pcx, pcy, pcw, pch);
+            Renderer.tabbedpane(
+                    this, component, bounds, g, clipx, clipy, clipwidth, clipheight, pressed, inside, focus, enabled);
         } else if ((is(classname, "panel")) || (is(classname, "dialog"))) {
             int titleheight = getInteger(component, ":titleheight", 0);
             if (is(classname, "dialog")) {
@@ -2424,7 +2320,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
     /**
      * Paint component's borders and background
      */
-    private void paint(
+    // package-private for Renderer (D48 seam; japicmp-invisible)
+    void paint(
             Object component,
             int x,
             int y,
