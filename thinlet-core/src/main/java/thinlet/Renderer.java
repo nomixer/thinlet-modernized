@@ -1169,4 +1169,160 @@ final class Renderer {
         }
         g.setClip(pcx, pcy, pcw, pch);
     }
+
+    /** The 2005 {@code menubar} paint branch, verbatim (titles: armed/hover/grayed + trailing strip). */
+    static void menubar(
+            Thinlet t,
+            Object component,
+            Rectangle bounds,
+            Graphics g,
+            int clipx,
+            int clipy,
+            int clipwidth,
+            int clipheight,
+            boolean enabled) {
+        Object selected = Thinlet.get(component, "selected");
+        int lastx = 0;
+        for (Object menu = Thinlet.get(component, ":comp"); menu != null; menu = Thinlet.get(menu, ":next")) {
+            Rectangle mb = t.getRectangle(menu, "bounds");
+            if (clipx + clipwidth <= mb.x) {
+                break;
+            }
+            if (clipx >= mb.x + mb.width) {
+                continue;
+            }
+            boolean menuenabled = enabled && t.getBoolean(menu, "enabled", true);
+            boolean armed = (selected == menu);
+            boolean hoover = (selected == null) && (t.insidepart == menu);
+            t.paint(
+                    menu,
+                    mb.x,
+                    0,
+                    mb.width,
+                    bounds.height,
+                    g,
+                    clipx,
+                    clipy,
+                    clipwidth,
+                    clipheight, // TODO disabled
+                    armed,
+                    armed,
+                    true,
+                    armed,
+                    1,
+                    3,
+                    1,
+                    3,
+                    false,
+                    enabled ? (menuenabled ? (armed ? 's' : (hoover ? 'h' : 'g')) : 'r') : 'd',
+                    "left",
+                    true,
+                    false);
+            lastx = mb.x + mb.width;
+        }
+        t.paintRect(
+                g,
+                lastx,
+                0,
+                bounds.width - lastx,
+                bounds.height,
+                enabled ? t.c_border : t.c_disable,
+                enabled ? t.c_ctrl : t.c_bg,
+                false,
+                false,
+                true,
+                false,
+                true);
+    }
+
+    /** The 2005 {@code :popup} paint branch, verbatim (menu items, checkbox marks, submenu arrows, accelerators). */
+    static void popup(
+            Thinlet t,
+            Object component,
+            Rectangle bounds,
+            Graphics g,
+            int clipx,
+            int clipy,
+            int clipwidth,
+            int clipheight) {
+        t.paintRect(g, 0, 0, bounds.width, bounds.height, t.c_border, t.c_textbg, true, true, true, true, true);
+        Object selected = Thinlet.get(component, "selected");
+        for (Object menu = Thinlet.get(Thinlet.get(component, "menu"), ":comp");
+                menu != null;
+                menu = Thinlet.get(menu, ":next")) {
+            Rectangle r = t.getRectangle(menu, "bounds");
+            if (clipy + clipheight <= r.y) {
+                break;
+            }
+            if (clipy >= r.y + r.height) {
+                continue;
+            }
+            String itemclass = Thinlet.getClass(menu);
+            if (Thinlet.is(itemclass, "separator")) {
+                g.setColor(t.c_border);
+                g.fillRect(r.x, r.y, bounds.width - 2 + t.evm, r.height + t.evm);
+            } else {
+                boolean armed = (selected == menu);
+                boolean menuenabled = t.getBoolean(menu, "enabled", true);
+                t.paint(
+                        menu,
+                        r.x,
+                        r.y,
+                        bounds.width - 2,
+                        r.height,
+                        g,
+                        clipx,
+                        clipy,
+                        clipwidth,
+                        clipheight,
+                        false,
+                        false,
+                        false,
+                        false,
+                        2,
+                        (Thinlet.is(itemclass, "checkboxmenuitem")) ? (t.block + 7) : 4,
+                        2,
+                        4,
+                        false,
+                        menuenabled ? (armed ? 's' : 't') : 'd',
+                        "left",
+                        true,
+                        false);
+                if (Thinlet.is(itemclass, "checkboxmenuitem")) {
+                    boolean checked = t.getBoolean(menu, "selected", false);
+                    String group = t.getString(menu, "group", null);
+                    g.translate(r.x + 4, r.y + 2);
+                    g.setColor(menuenabled ? t.c_border : t.c_disable);
+                    if (group == null) {
+                        g.drawRect(1, 1, t.block - 3, t.block - 3);
+                    } else {
+                        g.drawOval(1, 1, t.block - 3, t.block - 3);
+                    }
+                    if (checked) {
+                        g.setColor(menuenabled ? t.c_text : t.c_disable);
+                        if (group == null) {
+                            g.fillRect(3, t.block - 9, 2 + t.evm, 6 + t.evm);
+                            g.drawLine(3, t.block - 4, t.block - 4, 3);
+                            g.drawLine(4, t.block - 4, t.block - 4, 4);
+                        } else {
+                            g.fillOval(5, 5, t.block - 10 + t.evm, t.block - 10 + t.evm);
+                            g.drawOval(4, 4, t.block - 9, t.block - 9);
+                        }
+                    }
+                    g.translate(-r.x - 4, -r.y - 2);
+                }
+                if (Thinlet.is(itemclass, "menu")) {
+                    Renderer.arrow(g, r.x + bounds.width - t.block, r.y, t.block, r.height, 'E');
+                } else {
+                    String accelerator = t.getAccelerator(menu);
+                    if (accelerator != null) { // TODO
+                        g.drawString(
+                                accelerator,
+                                bounds.width - 4 - t.getFontMetrics(t.font).stringWidth(accelerator),
+                                r.y + 2 + 10);
+                    }
+                }
+            }
+        }
+    }
 }
