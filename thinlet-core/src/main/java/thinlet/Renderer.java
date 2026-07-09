@@ -307,4 +307,71 @@ final class Renderer {
             t.drawFocus(g, 1, 1, width - 3, height - 3);
         }
     }
+
+    /**
+     * The 2005 tinted arrow button (scrollbar/spinbox/combobox arrows), verbatim:
+     * bordered rect with the hover/press tint gated on the arrow's <em>part</em>
+     * name, then the directional glyph.
+     */
+    static void arrow(
+            Thinlet t,
+            Graphics g,
+            int x,
+            int y,
+            int width,
+            int height,
+            char dir,
+            boolean enabled,
+            boolean inside,
+            boolean pressed,
+            String part,
+            boolean top,
+            boolean left,
+            boolean bottom,
+            boolean right,
+            boolean horizontal) {
+        inside = inside && (t.insidepart == part);
+        pressed = pressed && (t.pressedpart == part);
+        t.paintRect(
+                g,
+                x,
+                y,
+                width,
+                height,
+                enabled ? t.c_border : t.c_disable,
+                enabled ? ((inside != pressed) ? t.c_hover : (pressed ? t.c_press : t.c_ctrl)) : t.c_bg,
+                top,
+                left,
+                bottom,
+                right,
+                horizontal);
+        g.setColor(enabled ? t.c_text : t.c_disable);
+        arrow(
+                g,
+                x + (left ? 1 : 0),
+                y + (top ? 1 : 0),
+                width - (left ? 1 : 0) - (right ? 1 : 0),
+                height - (top ? 1 : 0) - (bottom ? 1 : 0),
+                dir);
+    }
+
+    /**
+     * The 2005 bare arrow glyph, verbatim — a pure function of the
+     * {@code Graphics}, needing no {@code Thinlet} context at all.
+     */
+    static void arrow(Graphics g, int x, int y, int width, int height, char dir) {
+        int cx = x + width / 2 - 2;
+        int cy = y + height / 2 - 2;
+        for (int i = 0; i < 4; i++) {
+            if (dir == 'N') { // north
+                g.drawLine(cx + 1 - i, cy + i, cx + 1 /*2*/ + i, cy + i);
+            } else if (dir == 'W') { // west
+                g.drawLine(cx + i, cy + 1 - i, cx + i, cy + 1 /*2*/ + i);
+            } else if (dir == 'S') { // south
+                g.drawLine(cx + 1 - i, cy + 4 - i, cx + 1 /*2*/ + i, cy + 4 - i);
+            } else { // east
+                g.drawLine(cx + 4 - i, cy + 1 - i, cx + 4 - i, cy + 1 /*2*/ + i);
+            }
+        }
+    }
 }
