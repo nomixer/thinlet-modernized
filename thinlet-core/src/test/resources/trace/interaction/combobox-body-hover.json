@@ -1,0 +1,30 @@
+{
+  "calls": [
+    {"op": "setFont", "cat": ["SansSerif|0|12"], "num": []},
+    {"op": "translate", "cat": [], "num": [0, 0]},
+    {"op": "setColor", "cat": ["#909090FF"], "num": []},
+    {"op": "setColor", "cat": ["#E6E6E6FF"], "num": []},
+    {"op": "fillRect", "cat": [], "num": [0, 0, 1024, 768]},
+    {"op": "translate", "cat": [], "num": [0, 0]},
+    {"op": "translate", "cat": [], "num": [4, 4]},
+    {"op": "setColor", "cat": ["#909090FF"], "num": []},
+    {"op": "drawLine", "cat": [], "num": [1015, 0, 0, 0]},
+    {"op": "drawLine", "cat": [], "num": [0, 1, 0, 18]},
+    {"op": "drawLine", "cat": [], "num": [1, 18, 1015, 18]},
+    {"op": "drawLine", "cat": [], "num": [1015, 17, 1015, 1]},
+    {"op": "setColor", "cat": ["#EDEDEDFF"], "num": []},
+    {"op": "fillRect", "cat": [], "num": [1, 1, 1014, 17]},
+    {"op": "setColor", "cat": ["#000000FF"], "num": []},
+    {"op": "drawLine", "cat": [], "num": [1007, 11, 1007, 11]},
+    {"op": "drawLine", "cat": [], "num": [1006, 10, 1008, 10]},
+    {"op": "drawLine", "cat": [], "num": [1005, 9, 1009, 9]},
+    {"op": "drawLine", "cat": [], "num": [1004, 8, 1010, 8]},
+    {"op": "translate", "cat": [], "num": [-4, -4]},
+    {"op": "translate", "cat": [], "num": [0, 0]},
+    {"op": "translate", "cat": [], "num": [0, 0]}
+  ],
+  "layout": [
+    {"class": "panel", "x": 0, "y": 0, "w": 1024, "h": 768},
+    {"class": "combobox", "x": 4, "y": 4, "w": 1016, "h": 19}
+  ]
+}
