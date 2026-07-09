@@ -21,14 +21,17 @@
 package thinlet;
 
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 
 /**
- * Per-widget paint branches extracted from {@code Thinlet}'s recursive paint —
+ * Per-widget paint branches — plus their already-golden-guarded shared helpers
+ * (D50), e.g. {@link #field} — extracted from {@code Thinlet}'s recursive paint:
  * the Cut 2 "typed Renderer" seam (DECISIONS.md D42/D48), grown one widget
  * branch at a time. Behavior-preserving by contract: each method body is the
- * 2005 branch moved verbatim, guarded by the golden + interaction-golden net.
+ * 2005 code moved verbatim, guarded by the golden + interaction-golden net.
  *
  * <p>Seam style (D48): <b>stateless with explicit context</b> — no fields; the
  * {@code Thinlet} instance, the widget, the {@code Graphics}, and the
@@ -215,6 +218,93 @@ final class Renderer {
                 g.fillOval(5, dy + 5, t.block - 10 + Thinlet.evm, t.block - 10 + Thinlet.evm);
                 g.drawOval(4, dy + 4, t.block - 9, t.block - 9);
             }
+        }
+    }
+
+    /**
+     * The 2005 {@code paintField} helper, verbatim: the text-field body shared by
+     * textfield/passwordfield, the editable combobox, and the spinbox — border,
+     * selection highlight, caret, text (or {@code '*'} echo when {@code hidden}),
+     * and the focus rectangle.
+     */
+    static void field(
+            Thinlet t,
+            Graphics g,
+            int clipx,
+            int clipy,
+            int clipwidth,
+            int clipheight,
+            Object component,
+            int width,
+            int height,
+            boolean focus,
+            boolean enabled,
+            boolean hidden,
+            int left) {
+        boolean editable = t.getBoolean(component, "editable", true);
+        t.paintRect(
+                g,
+                0,
+                0,
+                width,
+                height,
+                enabled ? t.c_border : t.c_disable,
+                editable ? t.getColor(component, "background", t.c_textbg) : t.c_bg,
+                true,
+                true,
+                true,
+                true,
+                true);
+        g.clipRect(1 + left, 1, width - left - 2, height - 2);
+
+        String text = t.getString(component, "text", "");
+        int offset = t.getInteger(component, ":offset", 0);
+        Font currentfont = (Font) Thinlet.get(component, "font");
+        if (currentfont != null) {
+            g.setFont(currentfont);
+        }
+        FontMetrics fm = g.getFontMetrics();
+
+        int caret = 0;
+        if (focus) {
+            int start = t.getInteger(component, "start", 0);
+            int end = t.getInteger(component, "end", 0);
+            caret = hidden ? (fm.charWidth('*') * end) : fm.stringWidth(text.substring(0, end));
+            if (start != end) {
+                int is = hidden ? (fm.charWidth('*') * start) : fm.stringWidth(text.substring(0, start));
+                g.setColor(t.c_select);
+                g.fillRect(
+                        2 + left - offset + Math.min(is, caret),
+                        1,
+                        Math.abs(caret - is) + Thinlet.evm,
+                        height - 2 + Thinlet.evm);
+            }
+        }
+
+        if (focus) { // draw caret
+            g.setColor(t.c_focus);
+            g.fillRect(1 + left - offset + caret, 1, 1 + Thinlet.evm, height - 2 + Thinlet.evm);
+        }
+
+        g.setColor(enabled ? t.getColor(component, "foreground", t.c_text) : t.c_disable);
+        int fx = 2 + left - offset;
+        int fy = (height + fm.getAscent() - fm.getDescent()) / 2;
+        if (hidden) {
+            int fh = fm.charWidth('*');
+            for (int i = text.length(); i > 0; i--) {
+                g.drawString("*", fx, fy);
+                fx += fh;
+            }
+        } else {
+            g.drawString(text, fx, fy);
+        }
+        if (currentfont != null) {
+            g.setFont(t.font);
+        }
+        g.setClip(clipx, clipy, clipwidth, clipheight);
+
+        if (focus) { // draw dotted rectangle
+            t.drawFocus(g, 1, 1, width - 3, height - 3);
         }
     }
 }
