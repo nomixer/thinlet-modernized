@@ -192,6 +192,15 @@ final class InteractionScenarios {
             d.clickAt(cb, 4, dim.height / 2);
             d.type("Hi");
         }));
+        // Tab + menubar transients (Package C — the last unguarded hover
+        // states). Tab hover gates on insidepart == the tab object, and only a
+        // NON-selected tab renders the hover tint; hover the tab itself (its
+        // bounds are the header rect)
+        s.add(new Scenario("tabs-tab-hover", "/input/tabs.xml", d -> d.hover(d.find("t2"))));
+        s.add(new Scenario("menu-title-hover", "/input/menu.xml", d -> d.hover(d.find("m1"))));
+        // clicking a menubar title arms it and opens its popup, which stays
+        // open after release — held model/popup state, no timer involvement
+        s.add(new Scenario("menu-armed-open", "/input/menu.xml", d -> d.click(d.find("m1"))));
         return Collections.unmodifiableList(s);
     }
 

@@ -143,9 +143,10 @@ Phase 2.y**.
   D47 (button/checkbox hover+press, focus rects, caret, field/textarea selection, list
   selected+lead, open combolist); scrollbar + spinbox arrow hover+press followed with
   D51 (no-op-press protocol), then tree/table selected+lead+expanded and the combobox
-  body/arrow hover+press + editable-caret scenarios (26 goldens total) — closing the
+  body/arrow hover+press + editable-caret scenarios — closing the
   D50 combobox gap and guarding the port-content painter's tree/table row paths ahead
-  of its extraction. Still unguarded: tab hover, menubar hover/armed, tooltip.
+  of its extraction; then tab hover + menubar hover/armed (29 goldens total). The only
+  remaining unguarded interaction state is the tooltip (timer-coupled, deferred by D45).
 - **The input surface is thin** and *source-derived, not trace-backed*; menus, spinner,
   tooltip, slider, tabbedpane, dialog drag/resize, scrollbar-mouse, context-menu,
   focus-traversal and clipboard are unasserted.
