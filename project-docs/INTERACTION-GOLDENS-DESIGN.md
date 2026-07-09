@@ -1,7 +1,9 @@
 # Interaction-state paint goldens — determinism design
 
 > **Status:** built — the capture harness + first 10 goldens landed with **D47**
-> (2026-07-09), validating this design empirically (green on JDK 8/11/17/21). The Cut 2
+> (2026-07-09), validating this design empirically (green on JDK 8/11/17/21); the
+> scrollbar/spinbox arrow scenarios (9 more goldens) followed with **D51**, which added
+> the **no-op-press** protocol below. The Cut 2
 > prerequisite from D42/D43: before the paint→Renderer refactor lifts the
 > hover/press/focus/selection/caret branches, those branches need goldens — the 41 static
 > goldens leave them unguarded. **Source-derived** from a full survey of `Thinlet.java`'s
@@ -64,6 +66,14 @@ combinations must respect it rather than enumerate blindly.
 absorbed by the ±2 px compare, but aim math must stay bounds-based so the *state* is
 JDK-invariant (the D41 lesson).
 
+**No-op presses for auto-repeat parts (D51):** pressing a scroll/spin arrow that *can*
+act arms the 300/375 ms auto-repeat timer — a racy capture. Aim the press where the
+action is impossible (view at that scroll extreme; spinbox at its explicit
+`maximum`/`minimum`): `processScroll`/`processSpin` return false before any model write,
+`setTimer` is never reached, and the pressed tint still renders (the transient fields are
+set regardless of action success). Reach an extreme deterministically by overshooting
+(e.g. wheel far past the end — the clamp lands on the exact bottom on every JDK).
+
 ## Known hazards (all previously recorded, collected here)
 
 - **`:lead` paint-time write** (focused list/tree/table with no lead adopts the first item
@@ -84,8 +94,10 @@ JDK-invariant (the D41 lesson).
 Hover/press (transient-tinted widgets only — knob/track/slider are *not* hover-tinted):
 button rollover + pressed (L1694) and link-underline (L1692); checkbox hover/press fill +
 pressed check-preview (L1750, 1763); combobox body (L1831) and arrow (L1802 + part gate);
-spinbox up/down arrows (L2143/2158); scrollbar arrows (L2583/2673 → `paintArrow`
-L3232–3241); tabbedpane tab hover (L1898/1920); menubar title hover vs armed (L2320–2342).
+spinbox up/down arrows (L2143/2158) — **captured, D51**; scrollbar arrows (L2583/2673 →
+`paintArrow` L3232–3241) — **captured, D51** (vertical both + horizontal left; the right
+arrow's tint gate is the symmetric code path of "left"); tabbedpane tab hover
+(L1898/1920) and menubar title hover vs armed (L2320–2342) — still pending fixtures.
 
 Focus + caret/selection: `drawFocus` sites — checkbox L1761, slider L2202, splitpane
 L2265–2270, field L2535, scrollpane viewport L2837–2851, list/tree/table lead row
