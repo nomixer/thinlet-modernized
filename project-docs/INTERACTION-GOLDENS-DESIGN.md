@@ -70,6 +70,10 @@ JDK-invariant (the D41 lesson).
   *during paint*) — **hoisted, not relocated, in D48** (`ensureLeadForPaint`, still invoked
   at paint time: moving it to focus-gain would flip the Down-before-repaint race). The
   goldens were recorded before the hoist and held zero-diff across it, as required.
+  **Caveat (D50):** held-state goldens cannot discriminate hoist from relocate — both set
+  the state before painting — so the race itself is pinned by two `InputListTest` input
+  tests (Down on a focused-but-never-painted list selects the *first* item; Down after a
+  focused paint selects the *second*), not by these goldens.
 - **Negative-`bounds.width` dirty flag** — re-`paint()` between gestures (D39).
 - **`MOUSE_EXITED` on the first drag event** (D39) — only relevant if drag-in-progress
   states are ever captured (deferred).

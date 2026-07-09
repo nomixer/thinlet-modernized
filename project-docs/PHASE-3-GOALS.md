@@ -78,6 +78,16 @@ itself changes for the first time. This supersedes the "toolchain not library" p
   forks decoupled behavior from the God-object both ways (public-static utilities;
   instance-as-parameter), and this style makes either a thin 3c wrapper. Package-private
   through 3a per the visibility discipline above.
+- **Shared-helper gate (D50).** Shared paint helpers with unguarded transient states
+  (`paintScroll`/`paintArrow`: scrollbar/spinbox arrow hover+press, tab hover, menubar)
+  stay in `Thinlet` — called via the explicit `t.` context — until their interaction
+  goldens land. A widget slice moves only its own branch plus already-guarded helpers
+  (e.g. `paintField`); it must not smuggle a shared helper out.
+- **Hoist, don't relocate — review-enforced (D48/D50).** Held-state paint goldens cannot
+  discriminate a paint-side write hoisted in place from one relocated to an earlier
+  event; the timing argument is source reasoning. The `:lead` Down-before-repaint race
+  is additionally pinned by two `InputListTest` tests (D50); any other paint-side-effect
+  move needs the same scrutiny at review time.
 
 ## Success criteria — how we know 3a is done
 
@@ -87,6 +97,8 @@ itself changes for the first time. This supersedes the "toolchain not library" p
   accumulated across all cuts.
 - **japicmp shows the public API unchanged.**
 - The maintainer's real apps **run unchanged** on the modern base (the 3b gate).
+- **Closing checklist (D50):** re-narrow any package-private member the decomposition
+  widened but no longer uses, so the later subpackage split inherits no phantom surface.
 
 ## Sub-phase structure
 
@@ -130,7 +142,9 @@ Phase 2.y**.
 - **Interaction-state paint** — was fully untraced; the first guarded slice landed with
   D47 (button/checkbox hover+press, focus rects, caret, field/textarea selection, list
   selected+lead, open combolist). Still unguarded: scrollbar/spinbox arrow hover+press,
-  tab hover, menubar hover/armed, tooltip.
+  tab hover, menubar hover/armed, tooltip. **Combobox is *partially* guarded** (D50):
+  the open popup + lead highlight is captured, but its arrow/body hover+press and the
+  editable-field caret path are not — its extraction waits for those goldens.
 - **The input surface is thin** and *source-derived, not trace-backed*; menus, spinner,
   tooltip, slider, tabbedpane, dialog drag/resize, scrollbar-mouse, context-menu,
   focus-traversal and clipboard are unasserted.

@@ -70,6 +70,48 @@ class InputListTest {
         assertThat(t.getSelectedIndex(lst)).as("Home selects the first item").isEqualTo(0);
     }
 
+    /**
+     * Pins the Down-before-repaint race (D48/D50): the {@code :lead} adoption is a
+     * <em>paint-time</em> write ({@code ensureLeadForPaint}), so a focused list that has
+     * never been painted still has a null lead, and Down selects the <em>first</em> item.
+     * Relocating the write to focus-gain time would make this select the second item.
+     */
+    @Test
+    void downOnFocusedNeverPaintedListSelectsFirstItem() throws IOException {
+        InputDriver d = InputDriver.load(FIXTURE, new InputHandler());
+        Thinlet t = d.thinlet();
+        Object lst = d.find("lst");
+        d.focusGained();
+        assertThat(t.requestFocus(lst)).as("list is focusable").isTrue();
+        d.arrowDown();
+        assertThat(t.getSelectedIndex(lst))
+                .as("Down with a null :lead (focused, never painted) selects the first item")
+                .isEqualTo(0);
+    }
+
+    /**
+     * The other side of the D48/D50 race pin: once a <em>focused</em> paint has run, the
+     * paint-time write has adopted the first item as {@code :lead} (selecting nothing),
+     * so Down moves to the <em>second</em> item. Dropping the paint-time adoption would
+     * make this select the first item.
+     */
+    @Test
+    void downAfterFocusedPaintSelectsSecondItem() throws IOException {
+        InputDriver d = InputDriver.load(FIXTURE, new InputHandler());
+        Thinlet t = d.thinlet();
+        Object lst = d.find("lst");
+        d.focusGained();
+        assertThat(t.requestFocus(lst)).as("list is focusable").isTrue();
+        d.paint();
+        assertThat(t.getSelectedIndex(lst))
+                .as("the paint-time :lead adoption selects nothing by itself")
+                .isEqualTo(-1);
+        d.arrowDown();
+        assertThat(t.getSelectedIndex(lst))
+                .as("Down after a focused paint moves from the adopted lead to the second item")
+                .isEqualTo(1);
+    }
+
     @Test
     void shiftArrowExtendsMultiSelection() throws IOException {
         InputDriver d = InputDriver.load(FIXTURE, new InputHandler());
