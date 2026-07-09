@@ -708,7 +708,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @param component a menuitem
      * @return key modifier strings and key text
      */
-    private String getAccelerator(Object component) {
+    // package-private for Renderer (D48 seam; japicmp-invisible)
+    String getAccelerator(Object component) {
         Object accelerator = get(component, "accelerator");
         if (accelerator != null) {
             long keystroke = ((Long) accelerator).longValue();
@@ -2067,136 +2068,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
             g.setColor(enabled ? c_border : c_disable);
             g.fillRect(0, 0, bounds.width + evm, bounds.height + evm);
         } else if (is(classname, "menubar")) {
-            Object selected = get(component, "selected");
-            int lastx = 0;
-            for (Object menu = get(component, ":comp"); menu != null; menu = get(menu, ":next")) {
-                Rectangle mb = getRectangle(menu, "bounds");
-                if (clipx + clipwidth <= mb.x) {
-                    break;
-                }
-                if (clipx >= mb.x + mb.width) {
-                    continue;
-                }
-                boolean menuenabled = enabled && getBoolean(menu, "enabled", true);
-                boolean armed = (selected == menu);
-                boolean hoover = (selected == null) && (insidepart == menu);
-                paint(
-                        menu,
-                        mb.x,
-                        0,
-                        mb.width,
-                        bounds.height,
-                        g,
-                        clipx,
-                        clipy,
-                        clipwidth,
-                        clipheight, // TODO disabled
-                        armed,
-                        armed,
-                        true,
-                        armed,
-                        1,
-                        3,
-                        1,
-                        3,
-                        false,
-                        enabled ? (menuenabled ? (armed ? 's' : (hoover ? 'h' : 'g')) : 'r') : 'd',
-                        "left",
-                        true,
-                        false);
-                lastx = mb.x + mb.width;
-            }
-            paintRect(
-                    g,
-                    lastx,
-                    0,
-                    bounds.width - lastx,
-                    bounds.height,
-                    enabled ? c_border : c_disable,
-                    enabled ? c_ctrl : c_bg,
-                    false,
-                    false,
-                    true,
-                    false,
-                    true);
+            Renderer.menubar(this, component, bounds, g, clipx, clipy, clipwidth, clipheight, enabled);
         } else if (is(classname, ":popup")) {
-            paintRect(g, 0, 0, bounds.width, bounds.height, c_border, c_textbg, true, true, true, true, true);
-            Object selected = get(component, "selected");
-            for (Object menu = get(get(component, "menu"), ":comp"); menu != null; menu = get(menu, ":next")) {
-                Rectangle r = getRectangle(menu, "bounds");
-                if (clipy + clipheight <= r.y) {
-                    break;
-                }
-                if (clipy >= r.y + r.height) {
-                    continue;
-                }
-                String itemclass = getClass(menu);
-                if (is(itemclass, "separator")) {
-                    g.setColor(c_border);
-                    g.fillRect(r.x, r.y, bounds.width - 2 + evm, r.height + evm);
-                } else {
-                    boolean armed = (selected == menu);
-                    boolean menuenabled = getBoolean(menu, "enabled", true);
-                    paint(
-                            menu,
-                            r.x,
-                            r.y,
-                            bounds.width - 2,
-                            r.height,
-                            g,
-                            clipx,
-                            clipy,
-                            clipwidth,
-                            clipheight,
-                            false,
-                            false,
-                            false,
-                            false,
-                            2,
-                            (is(itemclass, "checkboxmenuitem")) ? (block + 7) : 4,
-                            2,
-                            4,
-                            false,
-                            menuenabled ? (armed ? 's' : 't') : 'd',
-                            "left",
-                            true,
-                            false);
-                    if (is(itemclass, "checkboxmenuitem")) {
-                        boolean checked = getBoolean(menu, "selected", false);
-                        String group = getString(menu, "group", null);
-                        g.translate(r.x + 4, r.y + 2);
-                        g.setColor(menuenabled ? c_border : c_disable);
-                        if (group == null) {
-                            g.drawRect(1, 1, block - 3, block - 3);
-                        } else {
-                            g.drawOval(1, 1, block - 3, block - 3);
-                        }
-                        if (checked) {
-                            g.setColor(menuenabled ? c_text : c_disable);
-                            if (group == null) {
-                                g.fillRect(3, block - 9, 2 + evm, 6 + evm);
-                                g.drawLine(3, block - 4, block - 4, 3);
-                                g.drawLine(4, block - 4, block - 4, 4);
-                            } else {
-                                g.fillOval(5, 5, block - 10 + evm, block - 10 + evm);
-                                g.drawOval(4, 4, block - 9, block - 9);
-                            }
-                        }
-                        g.translate(-r.x - 4, -r.y - 2);
-                    }
-                    if (is(itemclass, "menu")) {
-                        Renderer.arrow(g, r.x + bounds.width - block, r.y, block, r.height, 'E');
-                    } else {
-                        String accelerator = getAccelerator(menu);
-                        if (accelerator != null) { // TODO
-                            g.drawString(
-                                    accelerator,
-                                    bounds.width - 4 - getFontMetrics(font).stringWidth(accelerator),
-                                    r.y + 2 + 10);
-                        }
-                    }
-                }
-            }
+            Renderer.popup(this, component, bounds, g, clipx, clipy, clipwidth, clipheight);
         } else if (is(classname, "bean")) {
             g.clipRect(0, 0, bounds.width, bounds.height);
             ((Component) get(component, "bean")).paint(g);
