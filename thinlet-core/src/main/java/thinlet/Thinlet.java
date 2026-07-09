@@ -1690,71 +1690,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
             Renderer.checkbox(
                     this, component, bounds, g, clipx, clipy, clipwidth, clipheight, pressed, inside, focus, enabled);
         } else if (is(classname, "combobox")) {
-            if (getBoolean(component, "editable", true)) {
-                Image icon = getIcon(component, "icon", null);
-                int left = (icon != null) ? icon.getWidth(this) : 0;
-                Renderer.field(
-                        this,
-                        g,
-                        clipx,
-                        clipy,
-                        clipwidth,
-                        clipheight,
-                        component,
-                        bounds.width - block,
-                        bounds.height,
-                        focus,
-                        enabled,
-                        false,
-                        left);
-                if (icon != null) {
-                    g.drawImage(icon, 2, (bounds.height - icon.getHeight(this)) / 2, this);
-                }
-                Renderer.arrow(
-                        this,
-                        g,
-                        bounds.width - block,
-                        0,
-                        block,
-                        bounds.height,
-                        'S',
-                        enabled,
-                        inside,
-                        pressed,
-                        "down",
-                        true,
-                        false,
-                        true,
-                        true,
-                        true);
-            } else {
-                paint(
-                        component,
-                        0,
-                        0,
-                        bounds.width,
-                        bounds.height,
-                        g,
-                        clipx,
-                        clipy,
-                        clipwidth,
-                        clipheight,
-                        true,
-                        true,
-                        true,
-                        true,
-                        1,
-                        1,
-                        1,
-                        1 + block,
-                        focus,
-                        enabled ? ((inside != pressed) ? 'h' : (pressed ? 'p' : 'g')) : 'd',
-                        "left",
-                        false,
-                        false);
-                g.setColor(enabled ? c_text : c_disable);
-                Renderer.arrow(g, bounds.width - block, 0, block, bounds.height, 'S');
-            }
+            Renderer.combobox(
+                    this, component, bounds, g, clipx, clipy, clipwidth, clipheight, pressed, inside, focus, enabled);
         } else if (is(classname, ":combolist")) {
             Renderer.scroll(
                     this,
@@ -6707,7 +6644,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
         throw new IllegalArgumentException("unknown " + value + " for " + key);
     }
 
-    private Image getIcon(Object component, String key, Image defaultvalue) {
+    // package-private for Renderer (D48 seam; japicmp-invisible)
+    Image getIcon(Object component, String key, Image defaultvalue) {
         Object value = get(component, key);
         return (value == null) ? defaultvalue : (Image) value;
     }

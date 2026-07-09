@@ -24,6 +24,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.Rectangle;
 
 /**
@@ -963,6 +964,87 @@ final class Renderer {
                     }
                 }
             }
+        }
+    }
+
+    /** The 2005 {@code combobox} paint branch, verbatim (editable and static forms). */
+    static void combobox(
+            Thinlet t,
+            Object component,
+            Rectangle bounds,
+            Graphics g,
+            int clipx,
+            int clipy,
+            int clipwidth,
+            int clipheight,
+            boolean pressed,
+            boolean inside,
+            boolean focus,
+            boolean enabled) {
+        if (t.getBoolean(component, "editable", true)) {
+            Image icon = t.getIcon(component, "icon", null);
+            int left = (icon != null) ? icon.getWidth(t) : 0;
+            Renderer.field(
+                    t,
+                    g,
+                    clipx,
+                    clipy,
+                    clipwidth,
+                    clipheight,
+                    component,
+                    bounds.width - t.block,
+                    bounds.height,
+                    focus,
+                    enabled,
+                    false,
+                    left);
+            if (icon != null) {
+                g.drawImage(icon, 2, (bounds.height - icon.getHeight(t)) / 2, t);
+            }
+            arrow(
+                    t,
+                    g,
+                    bounds.width - t.block,
+                    0,
+                    t.block,
+                    bounds.height,
+                    'S',
+                    enabled,
+                    inside,
+                    pressed,
+                    "down",
+                    true,
+                    false,
+                    true,
+                    true,
+                    true);
+        } else {
+            t.paint(
+                    component,
+                    0,
+                    0,
+                    bounds.width,
+                    bounds.height,
+                    g,
+                    clipx,
+                    clipy,
+                    clipwidth,
+                    clipheight,
+                    true,
+                    true,
+                    true,
+                    true,
+                    1,
+                    1,
+                    1,
+                    1 + t.block,
+                    focus,
+                    enabled ? ((inside != pressed) ? 'h' : (pressed ? 'p' : 'g')) : 'd',
+                    "left",
+                    false,
+                    false);
+            g.setColor(enabled ? t.c_text : t.c_disable);
+            Renderer.arrow(g, bounds.width - t.block, 0, t.block, bounds.height, 'S');
         }
     }
 }
