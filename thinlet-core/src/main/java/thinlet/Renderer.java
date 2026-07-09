@@ -374,4 +374,323 @@ final class Renderer {
             }
         }
     }
+
+    /**
+     * @param component scrollable widget
+     * @param classname
+     * @param pressed
+     * @param inside
+     * @param focus
+     * @param enabled
+     * @param g grahics context
+     * @param clipx current cliping x location relative to the component
+     * @param clipy y location of the cliping area relative to the component
+     * @param clipwidth width of the cliping area
+     * @param clipheight height of the cliping area
+     * @param header column height
+     * @param topborder bordered on the top if true
+     * @param border define left, bottom, and right border if true
+     */
+    static void scroll(
+            Thinlet t,
+            Object component,
+            String classname,
+            boolean pressed,
+            boolean inside,
+            boolean focus,
+            boolean drawfocus,
+            boolean enabled,
+            Graphics g,
+            int clipx,
+            int clipy,
+            int clipwidth,
+            int clipheight) {
+        Rectangle port = t.getRectangle(component, ":port");
+        Rectangle horizontal = t.getRectangle(component, ":horizontal");
+        Rectangle vertical = t.getRectangle(component, ":vertical");
+        Rectangle view = t.getRectangle(component, ":view");
+
+        if (horizontal != null) { // paint horizontal scrollbar
+            int x = horizontal.x;
+            int y = horizontal.y;
+            int width = horizontal.width;
+            int height = horizontal.height;
+            arrow(t, g, x, y, t.block, height, 'W', enabled, inside, pressed, "left", true, true, true, false, true);
+            arrow(
+                    t,
+                    g,
+                    x + width - t.block,
+                    y,
+                    t.block,
+                    height,
+                    'E',
+                    enabled,
+                    inside,
+                    pressed,
+                    "right",
+                    true,
+                    false,
+                    true,
+                    true,
+                    true);
+
+            int track = width - (2 * t.block);
+            if (track < 10) {
+                t.paintRect(
+                        g,
+                        x + t.block,
+                        y,
+                        track,
+                        height,
+                        enabled ? t.c_border : t.c_disable,
+                        t.c_bg,
+                        true,
+                        true,
+                        true,
+                        true,
+                        true);
+            } else {
+                int knob = Math.max(track * port.width / view.width, 10);
+                int decrease = view.x * (track - knob) / (view.width - port.width);
+                t.paintRect(
+                        g,
+                        x + t.block,
+                        y,
+                        decrease,
+                        height,
+                        enabled ? t.c_border : t.c_disable,
+                        t.c_bg,
+                        false,
+                        true,
+                        true,
+                        false,
+                        true);
+                t.paintRect(
+                        g,
+                        x + t.block + decrease,
+                        y,
+                        knob,
+                        height,
+                        enabled ? t.c_border : t.c_disable,
+                        enabled ? t.c_ctrl : t.c_bg,
+                        true,
+                        true,
+                        true,
+                        true,
+                        true);
+                int n = Math.min(5, (knob - 4) / 3);
+                g.setColor(enabled ? t.c_border : t.c_disable);
+                int cx = (x + t.block + decrease) + (knob + 2 - n * 3) / 2;
+                for (int i = 0; i < n; i++) {
+                    g.drawLine(cx + i * 3, y + 3, cx + i * 3, y + height - 5);
+                }
+                int increase = track - decrease - knob;
+                t.paintRect(
+                        g,
+                        x + t.block + decrease + knob,
+                        y,
+                        increase,
+                        height,
+                        enabled ? t.c_border : t.c_disable,
+                        t.c_bg,
+                        false,
+                        false,
+                        true,
+                        true,
+                        true);
+            }
+        }
+
+        if (vertical != null) { // paint vertical scrollbar
+            int x = vertical.x;
+            int y = vertical.y;
+            int width = vertical.width;
+            int height = vertical.height;
+            arrow(t, g, x, y, width, t.block, 'N', enabled, inside, pressed, "up", true, true, false, true, false);
+            arrow(
+                    t,
+                    g,
+                    x,
+                    y + height - t.block,
+                    width,
+                    t.block,
+                    'S',
+                    enabled,
+                    inside,
+                    pressed,
+                    "down",
+                    false,
+                    true,
+                    true,
+                    true,
+                    false);
+
+            int track = height - (2 * t.block);
+            if (track < 10) {
+                t.paintRect(
+                        g,
+                        x,
+                        y + t.block,
+                        width,
+                        track,
+                        enabled ? t.c_border : t.c_disable,
+                        t.c_bg,
+                        true,
+                        true,
+                        true,
+                        true,
+                        false);
+            } else {
+                int knob = Math.max(track * port.height / view.height, 10);
+                int decrease = view.y * (track - knob) / (view.height - port.height);
+                t.paintRect(
+                        g,
+                        x,
+                        y + t.block,
+                        width,
+                        decrease,
+                        enabled ? t.c_border : t.c_disable,
+                        t.c_bg,
+                        true,
+                        false,
+                        false,
+                        true,
+                        false);
+                t.paintRect(
+                        g,
+                        x,
+                        y + t.block + decrease,
+                        width,
+                        knob,
+                        enabled ? t.c_border : t.c_disable,
+                        enabled ? t.c_ctrl : t.c_bg,
+                        true,
+                        true,
+                        true,
+                        true,
+                        false);
+                int n = Math.min(5, (knob - 4) / 3);
+                g.setColor(enabled ? t.c_border : t.c_disable);
+                int cy = (y + t.block + decrease) + (knob + 2 - n * 3) / 2;
+                for (int i = 0; i < n; i++) {
+                    g.drawLine(x + 3, cy + i * 3, x + width - 5, cy + i * 3);
+                }
+                int increase = track - decrease - knob;
+                t.paintRect(
+                        g,
+                        x,
+                        y + t.block + decrease + knob,
+                        width,
+                        increase,
+                        enabled ? t.c_border : t.c_disable,
+                        t.c_bg,
+                        false,
+                        false,
+                        true,
+                        true,
+                        false);
+            }
+        }
+
+        boolean hneed = (horizontal != null);
+        boolean vneed = (vertical != null);
+        if ((!Thinlet.is(classname, "panel"))
+                && (!Thinlet.is(classname, "dialog"))
+                && ((!Thinlet.is(classname, "textarea")) || t.getBoolean(component, "border", true))) {
+            t.paintRect(
+                    g,
+                    port.x - 1,
+                    port.y - 1,
+                    port.width + (vneed ? 1 : 2),
+                    port.height + (hneed ? 1 : 2),
+                    enabled ? t.c_border : t.c_disable,
+                    t.getColor(component, "background", t.c_textbg),
+                    true,
+                    true,
+                    !hneed,
+                    !vneed,
+                    true); // TODO not editable textarea background color
+            if (Thinlet.is(classname, "table")) {
+                Object header = Thinlet.get(component, "header");
+                if (header != null) {
+                    int[] columnwidths = (int[]) Thinlet.get(component, ":widths");
+                    Object column = Thinlet.get(header, ":comp");
+                    int x = 0;
+                    g.clipRect(0, 0, port.width + 2, port.y); // not 2 and decrease clip area...
+                    for (int i = 0; i < columnwidths.length; i++) {
+                        if (i != 0) {
+                            column = Thinlet.get(column, ":next");
+                        }
+                        boolean lastcolumn = (i == columnwidths.length - 1);
+                        int width = lastcolumn ? (view.width - x + 2) : columnwidths[i];
+
+                        t.paint(
+                                column,
+                                x - view.x,
+                                0,
+                                width,
+                                port.y - 1,
+                                g,
+                                clipx,
+                                clipy,
+                                clipwidth,
+                                clipheight,
+                                true,
+                                true,
+                                false,
+                                lastcolumn,
+                                1,
+                                1,
+                                0,
+                                0,
+                                false,
+                                enabled ? 'g' : 'd',
+                                "left",
+                                false,
+                                false);
+
+                        Object sort = Thinlet.get(column, "sort"); // "none", "ascent", "descent"
+                        if (sort != null) {
+                            arrow(
+                                    g,
+                                    x - view.x + width - t.block,
+                                    0,
+                                    t.block,
+                                    port.y,
+                                    (Thinlet.is(sort, "ascent")) ? 'S' : 'N');
+                        }
+                        x += width;
+                    }
+                    g.setClip(clipx, clipy, clipwidth, clipheight);
+                }
+            }
+        }
+        int x1 = Math.max(clipx, port.x);
+        int x2 = Math.min(clipx + clipwidth, port.x + port.width);
+        int y1 = Math.max(clipy, port.y);
+        int y2 = Math.min(clipy + clipheight, port.y + port.height);
+        if ((x2 > x1) && (y2 > y1)) {
+            g.clipRect(x1, y1, x2 - x1, y2 - y1);
+            g.translate(port.x - view.x, port.y - view.y);
+
+            t.paint(
+                    component,
+                    classname,
+                    focus,
+                    enabled,
+                    g,
+                    view.x - port.x + x1,
+                    view.y - port.y + y1,
+                    x2 - x1,
+                    y2 - y1,
+                    port.width,
+                    view.width);
+
+            g.translate(view.x - port.x, view.y - port.y);
+            g.setClip(clipx, clipy, clipwidth, clipheight);
+        }
+        if (focus && drawfocus) { // draw dotted rectangle around the viewport
+            t.drawFocus(g, port.x, port.y, port.width - 1, port.height - 1);
+        }
+    }
 }

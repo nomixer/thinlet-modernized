@@ -1756,7 +1756,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 Renderer.arrow(g, bounds.width - block, 0, block, bounds.height, 'S');
             }
         } else if (is(classname, ":combolist")) {
-            paintScroll(
+            Renderer.scroll(
+                    this,
                     component,
                     classname,
                     pressed,
@@ -1785,7 +1786,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     (is(classname, "passwordfield")),
                     0);
         } else if (is(classname, "textarea")) {
-            paintScroll(
+            Renderer.scroll(
+                    this,
                     component,
                     classname,
                     pressed,
@@ -2010,7 +2012,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
             }
 
             if (get(component, ":port") != null) {
-                paintScroll(
+                Renderer.scroll(
+                        this,
                         component,
                         classname,
                         pressed,
@@ -2213,7 +2216,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 }
             }
         } else if ((is(classname, "list")) || (is(classname, "table")) || (is(classname, "tree"))) {
-            paintScroll(
+            Renderer.scroll(
+                    this,
                     component,
                     classname,
                     pressed,
@@ -2391,325 +2395,11 @@ public class Thinlet extends Container implements Runnable, Serializable {
     }
 
     /**
-     * @param component scrollable widget
-     * @param classname
-     * @param pressed
-     * @param inside
-     * @param focus
-     * @param enabled
-     * @param g grahics context
-     * @param clipx current cliping x location relative to the component
-     * @param clipy y location of the cliping area relative to the component
-     * @param clipwidth width of the cliping area
-     * @param clipheight height of the cliping area
-     * @param header column height
-     * @param topborder bordered on the top if true
-     * @param border define left, bottom, and right border if true
-     */
-    private void paintScroll(
-            Object component,
-            String classname,
-            boolean pressed,
-            boolean inside,
-            boolean focus,
-            boolean drawfocus,
-            boolean enabled,
-            Graphics g,
-            int clipx,
-            int clipy,
-            int clipwidth,
-            int clipheight) {
-        Rectangle port = getRectangle(component, ":port");
-        Rectangle horizontal = getRectangle(component, ":horizontal");
-        Rectangle vertical = getRectangle(component, ":vertical");
-        Rectangle view = getRectangle(component, ":view");
-
-        if (horizontal != null) { // paint horizontal scrollbar
-            int x = horizontal.x;
-            int y = horizontal.y;
-            int width = horizontal.width;
-            int height = horizontal.height;
-            Renderer.arrow(
-                    this, g, x, y, block, height, 'W', enabled, inside, pressed, "left", true, true, true, false, true);
-            Renderer.arrow(
-                    this,
-                    g,
-                    x + width - block,
-                    y,
-                    block,
-                    height,
-                    'E',
-                    enabled,
-                    inside,
-                    pressed,
-                    "right",
-                    true,
-                    false,
-                    true,
-                    true,
-                    true);
-
-            int track = width - (2 * block);
-            if (track < 10) {
-                paintRect(
-                        g,
-                        x + block,
-                        y,
-                        track,
-                        height,
-                        enabled ? c_border : c_disable,
-                        c_bg,
-                        true,
-                        true,
-                        true,
-                        true,
-                        true);
-            } else {
-                int knob = Math.max(track * port.width / view.width, 10);
-                int decrease = view.x * (track - knob) / (view.width - port.width);
-                paintRect(
-                        g,
-                        x + block,
-                        y,
-                        decrease,
-                        height,
-                        enabled ? c_border : c_disable,
-                        c_bg,
-                        false,
-                        true,
-                        true,
-                        false,
-                        true);
-                paintRect(
-                        g,
-                        x + block + decrease,
-                        y,
-                        knob,
-                        height,
-                        enabled ? c_border : c_disable,
-                        enabled ? c_ctrl : c_bg,
-                        true,
-                        true,
-                        true,
-                        true,
-                        true);
-                int n = Math.min(5, (knob - 4) / 3);
-                g.setColor(enabled ? c_border : c_disable);
-                int cx = (x + block + decrease) + (knob + 2 - n * 3) / 2;
-                for (int i = 0; i < n; i++) {
-                    g.drawLine(cx + i * 3, y + 3, cx + i * 3, y + height - 5);
-                }
-                int increase = track - decrease - knob;
-                paintRect(
-                        g,
-                        x + block + decrease + knob,
-                        y,
-                        increase,
-                        height,
-                        enabled ? c_border : c_disable,
-                        c_bg,
-                        false,
-                        false,
-                        true,
-                        true,
-                        true);
-            }
-        }
-
-        if (vertical != null) { // paint vertical scrollbar
-            int x = vertical.x;
-            int y = vertical.y;
-            int width = vertical.width;
-            int height = vertical.height;
-            Renderer.arrow(
-                    this, g, x, y, width, block, 'N', enabled, inside, pressed, "up", true, true, false, true, false);
-            Renderer.arrow(
-                    this,
-                    g,
-                    x,
-                    y + height - block,
-                    width,
-                    block,
-                    'S',
-                    enabled,
-                    inside,
-                    pressed,
-                    "down",
-                    false,
-                    true,
-                    true,
-                    true,
-                    false);
-
-            int track = height - (2 * block);
-            if (track < 10) {
-                paintRect(
-                        g,
-                        x,
-                        y + block,
-                        width,
-                        track,
-                        enabled ? c_border : c_disable,
-                        c_bg,
-                        true,
-                        true,
-                        true,
-                        true,
-                        false);
-            } else {
-                int knob = Math.max(track * port.height / view.height, 10);
-                int decrease = view.y * (track - knob) / (view.height - port.height);
-                paintRect(
-                        g,
-                        x,
-                        y + block,
-                        width,
-                        decrease,
-                        enabled ? c_border : c_disable,
-                        c_bg,
-                        true,
-                        false,
-                        false,
-                        true,
-                        false);
-                paintRect(
-                        g,
-                        x,
-                        y + block + decrease,
-                        width,
-                        knob,
-                        enabled ? c_border : c_disable,
-                        enabled ? c_ctrl : c_bg,
-                        true,
-                        true,
-                        true,
-                        true,
-                        false);
-                int n = Math.min(5, (knob - 4) / 3);
-                g.setColor(enabled ? c_border : c_disable);
-                int cy = (y + block + decrease) + (knob + 2 - n * 3) / 2;
-                for (int i = 0; i < n; i++) {
-                    g.drawLine(x + 3, cy + i * 3, x + width - 5, cy + i * 3);
-                }
-                int increase = track - decrease - knob;
-                paintRect(
-                        g,
-                        x,
-                        y + block + decrease + knob,
-                        width,
-                        increase,
-                        enabled ? c_border : c_disable,
-                        c_bg,
-                        false,
-                        false,
-                        true,
-                        true,
-                        false);
-            }
-        }
-
-        boolean hneed = (horizontal != null);
-        boolean vneed = (vertical != null);
-        if ((!is(classname, "panel"))
-                && (!is(classname, "dialog"))
-                && ((!is(classname, "textarea")) || getBoolean(component, "border", true))) {
-            paintRect(
-                    g,
-                    port.x - 1,
-                    port.y - 1,
-                    port.width + (vneed ? 1 : 2),
-                    port.height + (hneed ? 1 : 2),
-                    enabled ? c_border : c_disable,
-                    getColor(component, "background", c_textbg),
-                    true,
-                    true,
-                    !hneed,
-                    !vneed,
-                    true); // TODO not editable textarea background color
-            if (is(classname, "table")) {
-                Object header = get(component, "header");
-                if (header != null) {
-                    int[] columnwidths = (int[]) get(component, ":widths");
-                    Object column = get(header, ":comp");
-                    int x = 0;
-                    g.clipRect(0, 0, port.width + 2, port.y); // not 2 and decrease clip area...
-                    for (int i = 0; i < columnwidths.length; i++) {
-                        if (i != 0) {
-                            column = get(column, ":next");
-                        }
-                        boolean lastcolumn = (i == columnwidths.length - 1);
-                        int width = lastcolumn ? (view.width - x + 2) : columnwidths[i];
-
-                        paint(
-                                column,
-                                x - view.x,
-                                0,
-                                width,
-                                port.y - 1,
-                                g,
-                                clipx,
-                                clipy,
-                                clipwidth,
-                                clipheight,
-                                true,
-                                true,
-                                false,
-                                lastcolumn,
-                                1,
-                                1,
-                                0,
-                                0,
-                                false,
-                                enabled ? 'g' : 'd',
-                                "left",
-                                false,
-                                false);
-
-                        Object sort = get(column, "sort"); // "none", "ascent", "descent"
-                        if (sort != null) {
-                            Renderer.arrow(
-                                    g, x - view.x + width - block, 0, block, port.y, (is(sort, "ascent")) ? 'S' : 'N');
-                        }
-                        x += width;
-                    }
-                    g.setClip(clipx, clipy, clipwidth, clipheight);
-                }
-            }
-        }
-        int x1 = Math.max(clipx, port.x);
-        int x2 = Math.min(clipx + clipwidth, port.x + port.width);
-        int y1 = Math.max(clipy, port.y);
-        int y2 = Math.min(clipy + clipheight, port.y + port.height);
-        if ((x2 > x1) && (y2 > y1)) {
-            g.clipRect(x1, y1, x2 - x1, y2 - y1);
-            g.translate(port.x - view.x, port.y - view.y);
-
-            paint(
-                    component,
-                    classname,
-                    focus,
-                    enabled,
-                    g,
-                    view.x - port.x + x1,
-                    view.y - port.y + y1,
-                    x2 - x1,
-                    y2 - y1,
-                    port.width,
-                    view.width);
-
-            g.translate(view.x - port.x, view.y - port.y);
-            g.setClip(clipx, clipy, clipwidth, clipheight);
-        }
-        if (focus && drawfocus) { // draw dotted rectangle around the viewport
-            drawFocus(g, port.x, port.y, port.width - 1, port.height - 1);
-        }
-    }
-
-    /**
      * Paint scrollable content
      * @param component a panel
      */
-    private void paint(
+    // package-private for Renderer (D48 seam; japicmp-invisible)
+    void paint(
             Object component,
             String classname,
             boolean focus,
@@ -7324,7 +7014,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
         }
     }
 
-    private Rectangle getRectangle(Object component, String key) {
+    // package-private for Renderer (D48 seam; japicmp-invisible)
+    Rectangle getRectangle(Object component, String key) {
         return (Rectangle) get(component, key);
     }
 
