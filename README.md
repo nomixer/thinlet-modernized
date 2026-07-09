@@ -93,6 +93,10 @@ port **6080** (password `vscode`) for visually running the demos — the default
 `DISPLAY` (`:1`) targets it, while the automated trace tests use a separate
 controlled headless display (`:99`). See `DECISIONS.md` D22.
 
+To launch the bundled 2005 example apps (`thinlet-demos` + `thinlet-drafts`), use
+`scripts/run-example.sh` (run it with no argument to list them); full guide in
+`project-docs/RUNNING-EXAMPLES.md`.
+
 For a **faithful local CI run without VS Code** — the same golden/input net CI
 executes, against the same pinned fonts and Xvfb (bare-host runs produce false
 ±2 px trace diffs) — use the helper script, which runs the build inside the
