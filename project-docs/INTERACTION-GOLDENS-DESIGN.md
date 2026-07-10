@@ -112,6 +112,32 @@ body/arrow hover+press and editable-caret scenarios closing the D50 combobox gap
 expansion driven by keyboard, since the mouse handle band is FontMetrics-fragile). Still
 untraced: menu `selected` armed state.
 
+## Corpus-driven coverage (D53) — reaching interaction-revealed paint paths
+
+D52 exposed a structural blind spot beyond any single widget: the net proves *what is
+painted* stays identical, but never paints code reachable only after interaction — content
+on a **non-selected tab**, inside a **collapsed tree**, behind a closed popup. (D52 itself
+was a `"font"`→`"t.font"` corruption on a textarea that only ever sits on non-selected
+corpus tabs.)
+
+To close that class, interaction scenarios drive the **vendored corpus** files directly
+(`/corpus/{drafts,demo}/*.xml` — the drafts demo's own page content), select non-default
+tabs (`d.click(getItem(tabbedpane, index))` — a click already selects), and expand
+collapsed nodes (`d.arrowRight()` on the selected node), then capture a held-state golden.
+Reuse, not re-authoring: these are the same static goldens' source files, driven through
+the stub `CorpusHandler` (corpus XML binds demo methods Thinlet resolves at parse time, so
+the fixture needs that handler, not the minimal `InputHandler`). Unnamed containers are
+reached via `InputDriver.root()` / `first(classname)`. **Determinism** holds for the same
+reasons as every other interaction golden: stub handler = no dynamic content, no
+timer-coupled state, one paint after a held gesture — verified by byte-identical re-record
+and cross-JDK green.
+
+**Deferred:** the *live-`Drafts`-app* playthrough (navigate the nav tree into pages,
+System→Colors) — it would cover the dynamically-injected content, but needs the
+`thinlet-testkit` extraction (D37) and a deterministic-page allowlist (excluding
+system/filesystem/locale-bound pages). Corpus-driven scenarios expand a nav node's child
+rows but cannot follow a click into a page (the navigation handler is stubbed).
+
 ## Deferred / non-goals
 
 - **Tooltip paint** (`tooltipowner`, L2114–2119) — the only timer-coupled state; capturing

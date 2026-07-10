@@ -145,8 +145,15 @@ Phase 2.y**.
   D51 (no-op-press protocol), then tree/table selected+lead+expanded and the combobox
   body/arrow hover+press + editable-caret scenarios — closing the
   D50 combobox gap and guarding the port-content painter's tree/table row paths ahead
-  of its extraction; then tab hover + menubar hover/armed (29 goldens total). The only
+  of its extraction; then tab hover + menubar hover/armed. The only
   remaining unguarded interaction state is the tooltip (timer-coupled, deferred by D45).
+- **Interaction-revealed paint paths (D52 class)** — content on non-selected tabs / inside
+  collapsed trees / behind closed popups was never painted by the static net (the gap that
+  hid D52). **Now actively covered (D53):** corpus-driven scenarios drive the vendored
+  `corpus/{drafts,demo}/*.xml` through `CorpusHandler`, selecting non-default tabs and
+  expanding collapsed nodes (48 interaction goldens total). Deferred: the live-`Drafts`-app
+  navigation playthrough (needs the `thinlet-testkit` extraction + a deterministic-page
+  allowlist).
 - **The input surface is thin** and *source-derived, not trace-backed*; menus, spinner,
   tooltip, slider, tabbedpane, dialog drag/resize, scrollbar-mouse, context-menu,
   focus-traversal and clipboard are unasserted.
