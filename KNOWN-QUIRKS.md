@@ -72,6 +72,31 @@ Each entry, added as quirks are discovered during Phase 1+ test authoring:
 - **Enhanced Thinlet disposition:** fix — preserve the ratio on resize (or at least
   restore the remembered divider after a transient shrink).
 
+### Q3 — `getIcon` silently returns `null` for a missing/unloadable resource
+- **What happens:** `getIcon(String path, boolean preload)` resolves an icon via
+  `getClass().getResource(path)` / `getResourceAsStream(path)`; when neither
+  resolves it returns `null` — the classpath lookup misses, the `new URL(path)`
+  fallback throws `MalformedURLException` (a protocol-less `/icon/...` path), and
+  **both** attempts are swallowed by empty `catch (Throwable e) {}` blocks. No log,
+  no throw. The widget then lays out and paints as if icon-less (icon width/height
+  count as 0; the guarded `drawImage` is skipped).
+- **Why it's a quirk:** a missing resource is a configuration error that should be
+  surfaced (log or throw), not silently absorbed. It is exactly what hid the fact
+  that the corpus referenced 25 `/icon/*.gif` assets that were never vendored — every
+  reference resolved to `null` and every golden was captured blank (fixed by D54,
+  which restores the 24 authentic assets that shipped; `volume.gif` was genuinely
+  absent in 2005 and stays null).
+- **Where:** `Thinlet.java` `getIcon(String, boolean)` (~6212-6249; empty catches at
+  ~6222-6223 and ~6236-6237; `getIcon(Object, String, Image)` at ~6147-6150 reads the
+  possibly-null value back out of the widget map).
+- **Locked by:** `thinlet.quirks.GetIconSilentNullQuirkTest` (tagged
+  documents-current-behavior). The *library* silent-null is preserved here; the
+  separate `thinlet.trace.CorpusResourceResolutionTest` guard ensures our own
+  fixtures never *rely* on it (it fails the build on any unresolved corpus resource,
+  save the documented 2005 gap `/icon/volume.gif`).
+- **Enhanced Thinlet disposition:** fix — log or throw a descriptive error on an
+  unresolved/unloadable resource instead of returning `null`.
+
 ## Triaged for Enhanced Thinlet (not behavior-locked)
 
 These D13 candidate findings were investigated during Phase 1 but are *not* pinned
