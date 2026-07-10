@@ -35,3 +35,9 @@ thinlet-drafts/src/main/resources/thinlet/drafts/internationalization.xml -text
 *.png    binary
 *.ico    binary
 *.jar    binary
+
+# The 2005 icon GIFs, extracted byte-verbatim from the archive demo/draft jars
+# (see project-docs/ICON-PROVENANCE.md, DECISIONS.md D54). Marking them `binary`
+# bypasses EOL normalization and text diffing so the bytes are never rewritten —
+# the golden traces depend on their exact intrinsic dimensions.
+*.gif    binary
