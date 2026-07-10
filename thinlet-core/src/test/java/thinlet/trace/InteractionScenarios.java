@@ -266,6 +266,32 @@ final class InteractionScenarios {
         s.add(corpusTab("corpus-eventlogger-lists", "/corpus/drafts/eventlogger.xml", TABBEDPANE, 1));
         s.add(corpusTab("corpus-eventlogger-text", "/corpus/drafts/eventlogger.xml", TABBEDPANE, 2));
         s.add(corpusTab("corpus-eventlogger-menu", "/corpus/drafts/eventlogger.xml", TABBEDPANE, 3));
+        // Tree-expand (D53): expand a default-collapsed node to paint its hidden
+        // children — the other half of the D52 blind-spot class. Keyboard
+        // Right-arrow drives expansion (the mouse handle-band is FontMetrics-
+        // fragile, per InputTreeTest); select the node first so the arrow targets
+        // it. demo.xml "Tree node C" (index 2) is in the already-selected Lists
+        // tab; drafts.xml "System" (index 4) is in the launcher nav tree and
+        // reveals its Properties/Colors/Windows child rows (following a click
+        // into those pages is live-app only, deferred).
+        s.add(new Scenario(
+                "corpus-demo-tree-expand",
+                "/corpus/demo/demo.xml",
+                d -> {
+                    d.focusGained();
+                    d.click(d.thinlet().getItem(d.first("tree"), 2));
+                    d.arrowRight();
+                },
+                CorpusHandler::new));
+        s.add(new Scenario(
+                "corpus-drafts-tree-expand",
+                "/corpus/drafts/drafts.xml",
+                d -> {
+                    d.focusGained();
+                    d.click(d.thinlet().getItem(d.first("tree"), 4));
+                    d.arrowRight();
+                },
+                CorpusHandler::new));
         return Collections.unmodifiableList(s);
     }
 

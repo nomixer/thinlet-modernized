@@ -1873,3 +1873,53 @@ string/char literals; future mechanical moves must diff literal sequences (or ex
 quoted spans from field-prefix substitution). The independent review — not the net — is
 what caught this; it justifies the standing lull-time self-review. (Cross-ref
 D3/D49/D50; net-gap class also noted against the D45 survey.)
+
+## D53 — Corpus-driven interaction goldens: paint the tab/tree blind spots (close the D52 class)
+
+**Date:** 2026-07-10. **Status:** accepted. **Phase:** 2.y net-strengthening (interleaved with 3).
+
+**Context.** D52 was a real regression the static golden net could not see: a
+`font="bold"` textarea on a **non-selected tab** is never painted (a tabbedpane paints
+only its selected tab), so a corrupted paint path went uncaught. The general gap: the net
+proves *what is painted* stays identical, but is blind to paint code reachable only after
+interaction — content on non-selected tabs, inside collapsed trees, behind closed popups.
+The maintainer proposed driving the drafts demo (click non-default tabs, expand collapsed
+trees) to paint those paths and capture goldens over them.
+
+**Decision — reuse the vendored corpus as interaction fixtures.** The drafts demo's page
+content *is* the vendored `corpus/{drafts,demo}/*.xml`, which already renders
+deterministically through the stub `CorpusHandler`. So the interaction harness now drives
+those corpus files (read-only; unmodified, D9/D12), selecting non-default tabs and
+expanding collapsed nodes, then capturing held-state paint goldens — the same D45/D47
+artifact class, just reaching interaction-revealed content.
+
+**Distinguish from D37.** D37 rejected "driving the vendored corpus through input" — but
+for the *getter-assertion* input net, reason: "the corpus asserts nothing about input."
+This is *paint-trace* capture on the interaction net, purely to reach unpainted code, and
+the exact gap D52 proved real. D37 does not foreclose it.
+
+**Determinism basis.** `CorpusHandler` stubs all demo action/init methods (no dynamic
+content), there is no timer-coupled state in these frames (D45), and gestures leave a held
+state before a single paint. Proven: the 14 tab + 2 tree goldens re-record byte-identical
+and pass cross-JDK 8/11/17/21; the record pass left all pre-existing goldens byte-identical.
+
+**Landed (PRs #70–#72).**
+- *Bridge:* `Scenario` gains a per-scenario handler factory (corpus scenarios pass
+  `CorpusHandler::new`; the minimal `InputHandler` would throw, since Thinlet resolves the
+  corpus's bound methods at parse time); `InputDriver.root()` + `first(classname)` (DFS)
+  reach unnamed containers. No `Thinlet` change, no new gesture (`click(tab)` already
+  selects; `arrowRight` already expands).
+- *Coverage:* 16 corpus scenarios — `looks`/`widgets`/`demo`/`tabbedpane`/`eventlogger`
+  non-default tabs (list/tree/table, menubar/popup, splitpane, `font="bold"`, sliders/
+  spinboxes), plus `demo` "Tree node C" and `drafts` "System" node expansion.
+- *Proof it closes D52:* re-breaking the `"font"`→`"t.font"` key (clean compile) fails
+  `corpus-looks-tab2` — the corpus method catches the regression class on real content.
+
+**Deliberately deferred (opt-in, needs its own step).** The **live-`Drafts` app
+playthrough** — navigating the nav tree into pages (System→Colors) — requires extracting
+`InputDriver` into the `thinlet-testkit` module D37 deferred (its second consumer) and an
+**allowlist** of pages proven deterministic across the JDK matrix (excluding
+`SystemProperties`/`FolderBrowser`/`Choosers`/`DesktopProperties`/etc., which read the
+system/filesystem/locale). Corpus-driven scenarios can expand a nav node's child rows but
+cannot follow a click into a page (the navigation handler is stubbed). (Cross-ref
+D37/D45/D47/D52.)
