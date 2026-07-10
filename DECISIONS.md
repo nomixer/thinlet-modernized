@@ -1923,3 +1923,63 @@ playthrough** — navigating the nav tree into pages (System→Colors) — requi
 system/filesystem/locale). Corpus-driven scenarios can expand a nav node's child rows but
 cannot follow a click into a page (the navigation handler is stubbed). (Cross-ref
 D37/D45/D47/D52.)
+
+## D54 — Restore the 2005 icon assets; re-baseline the icon-bearing goldens (fidelity fix)
+
+**Date:** 2026-07-10. **Status:** accepted. **Phase:** 2.y net-strengthening (interleaved with 3).
+
+**Context.** The vendored corpus (D9) references **25 distinct** icons as
+`icon="/icon/<name>.gif"` — 42 XML scenes, ~300 references — but the GIFs themselves were
+never vendored. `Thinlet.getIcon` (`Thinlet.java:6212-6249`) resolves them via
+`getClass().getResource(...)` and swallows every miss in empty `catch (Throwable e) {}`
+blocks: no log, no throw, returns `null` (now KNOWN-QUIRKS **Q3**). A null icon contributes
+width/height = 0 to layout and emits **zero** `drawImage` calls (every paint site is guarded
+`if (icon != null)`). So every golden trace was captured with all icons blank, and the icon
+paint/layout path was exercised by **no** golden — a silent failure hiding a real coverage
+hole.
+
+**Fidelity framing — this restores 2005 behavior, it does not change it.** In 2005 the icons
+shipped on the classpath inside the demo/draft jars (`amazon.jar`/`demo.jar`/`drafts.jar` in
+the archive `thinlet-2005-03-28/lib/`), so the faithful 2005 baseline **has** icons; the
+no-icon goldens were the *infidelity* (an accident of not vendoring those jars), not a
+deliberate choice. This is distinct from D9/D12 "don't modify the vendored corpus": no corpus
+XML is edited — we supply the resources the XML always referenced.
+
+**Decision.**
+- **Vendor the authentic bytes.** 24 of the 25 GIFs, extracted byte-verbatim from the archive
+  jars (archive commit `6ad9565`), sha256-provenanced in `project-docs/ICON-PROVENANCE.md`.
+  Icons appearing in more than one jar are byte-identical across them (one canonical stream).
+- **`volume.gif` is a genuine 2005 gap — left absent.** It is referenced once
+  (`drafts/widgets.xml`, a table column header) but exists in **no** jar of **any** archive
+  version; `drafts.jar` (its 2005 classpath) never shipped it, so that column was a silent-null
+  in 2005 too. Preserving it icon-less is the faithful behavior; fabricating a substitute would
+  be an infidelity. It is allowlisted in the guard test (below).
+- **Placement (three classpath roots, full 24 in each, byte-identical):**
+  `thinlet-core/src/test/resources/icon/` (drives the harness; test-scope, **not** in the
+  published core jar — that stays `thinlet.dtd`-only), `thinlet-demos/src/main/resources/icon/`
+  and `thinlet-drafts/src/main/resources/icon/` (runtime). `*.gif` marked `binary` in
+  `.gitattributes`.
+- **Guard against future silent failures.** New `thinlet.trace.CorpusResourceResolutionTest`
+  (always-on, display-independent) sweeps every corpus XML for resource references and fails the
+  build on any that does not resolve on the classpath (plus a decode check that each resolves to
+  a real ≥1×1 image), exempting the documented `KNOWN_ABSENT_2005 = {/icon/volume.gif}`. This is
+  test-only — it does **not** change the library's silent-null semantics.
+- **Preserve + pin the library behavior.** The empty catches stay verbatim; the silent-null is
+  quirk-locked as **Q3** (`thinlet.quirks.GetIconSilentNullQuirkTest`).
+
+**Re-baseline (recorded in the CI container per D44, `clean` per D52).** Restoring the icons is
+an out-of-D7-tolerance change (new `drawImage` calls + ~16px layout shifts), so the record modes
+(`-DtraceRecord=true`) rewrote the icon-bearing goldens: **21 static** (amazon ×10, demo ×2,
+drafts ×9) + **10 interaction** (`corpus-looks-*` ×5, `corpus-widgets-{three,fonts}`,
+`corpus-demo-{texts,values,tree-expand}`). The other **20** static goldens and all `/input/*` +
+`corpus-{eventlogger,tabbedpane}-*` + `corpus-drafts-tree-expand` interaction goldens came back
+**byte-identical** — the icons are the only cause of change.
+
+**Determinism basis.** All 24 icons are 16×16 with frame-independent intrinsic dimensions
+(`loading.gif` is 4-frame animated, but the trace records only geometry, never pixels). Two
+independent record runs produced **byte-identical** goldens (all 89), and
+`GoldenTraceRegressionTest` passes **41/41 on JDK 8/11/17/21** against the new goldens — so the
+GIF dims are decoder-stable and the re-baseline is cross-JDK-portable.
+
+**Cross-ref** D7 (tolerance), D9/D12 (verbatim corpus — unchanged), D22 (Xvfb :99), D33
+(cross-JDK), D44/D52 (record-in-container + `clean`), D45/D47/D53 (interaction goldens).
