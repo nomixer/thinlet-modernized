@@ -9,6 +9,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * The interaction-state golden scenarios (DECISIONS.md D45,
@@ -35,11 +36,20 @@ final class InteractionScenarios {
         final String name; // golden file stem under trace/interaction/
         final String fixture; // classpath resource
         final Script script;
+        final Supplier<Object> handler; // parse-time event handler for the fixture
 
         Scenario(String name, String fixture, Script script) {
+            this(name, fixture, script, InputHandler::new);
+        }
+
+        // Corpus-driven scenarios (D53) pass CorpusHandler::new: the vendored
+        // corpus XML binds demo action/init methods that Thinlet resolves at
+        // parse time, so the minimal InputHandler would throw on load.
+        Scenario(String name, String fixture, Script script, Supplier<Object> handler) {
             this.name = name;
             this.fixture = fixture;
             this.script = script;
+            this.handler = handler;
         }
     }
 
@@ -220,12 +230,29 @@ final class InteractionScenarios {
         // non-selected tabs, never painted). A plain paint suffices; font="bold"
         // derives from the default family, so metrics stay within the ±2px gate.
         s.add(new Scenario("textarea-custom-font", "/input/fonttext.xml", d -> {}));
+
+        // --- Corpus-driven coverage (D53): drive the vendored drafts corpus
+        // through CorpusHandler and interact, to paint content the static net
+        // never reaches (a non-selected tab / collapsed subtree is unpainted —
+        // the D52 blind-spot class). Deterministic: stub handler = no dynamic
+        // content, no timer-coupled state; a held-state paint after the gesture.
+        // Reach unnamed tabs by index off root() (looks.xml's tabbedpane and its
+        // tabs carry no name).
+        //
+        // looks.xml tab 2 (index 1) is the D52 twin: a font="bold" textarea plus
+        // spinbox/progressbar/slider — the exact never-painted shape that hid the
+        // "font" -> "t.font" corruption.
+        s.add(new Scenario(
+                "corpus-looks-tab2",
+                "/corpus/drafts/looks.xml",
+                d -> d.click(d.thinlet().getItem(d.root(), 1)),
+                CorpusHandler::new));
         return Collections.unmodifiableList(s);
     }
 
     /** Runs a scenario and captures the post-gesture paint trace. */
     static Trace capture(Scenario scenario) throws Exception {
-        InputDriver d = InputDriver.load(scenario.fixture, new InputHandler());
+        InputDriver d = InputDriver.load(scenario.fixture, scenario.handler.get());
         scenario.script.run(d);
         return d.paint();
     }
