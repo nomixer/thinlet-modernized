@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
-# Launch a bundled Thinlet example (thinlet-demos + thinlet-drafts) in an AWT Frame.
-# These are the original 2005 sample apps, preserved as-is; they need a display.
-# Full guide: project-docs/RUNNING-EXAMPLES.md
+# Build and launch a bundled Thinlet example (thinlet-demos + thinlet-drafts) in an
+# AWT Frame. These are the original 2005 sample apps, preserved as-is; they need a
+# display. The script ALWAYS compiles the needed module first (incrementally, ~a
+# couple of seconds) and then launches it — you never build separately, and it is
+# never stale. Full guide: project-docs/RUNNING-EXAMPLES.md
 #
-#   scripts/run-example.sh              # list the examples
-#   scripts/run-example.sh demo         # launch by short name
-#   scripts/run-example.sh --build drafts   # force a rebuild first
+#   scripts/example.sh                   # list the examples
+#   scripts/example.sh demo              # build (incrementally) + launch by short name
+#   scripts/example.sh --no-build demo   # skip the rebuild for a fast relaunch
+#   DISPLAY=:0 scripts/example.sh demo   # override the display
 #
 # Display: uses $DISPLAY if set (in the Dev Container it is :1, the noVNC desktop
-# on forwarded port 6080). Override per run, e.g.  DISPLAY=:0 scripts/run-example.sh demo
+# on forwarded port 6080).
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -25,7 +28,10 @@ swing|thinlet-drafts|thinlet.drafts.SwingProperties|Swing-look reproduction
 '
 
 list() {
-  echo "Usage: scripts/run-example.sh [--build] <name>"
+  echo "Usage: scripts/example.sh [--no-build] <name>"
+  echo
+  echo "Builds the example's module (incrementally) and launches it — no separate build step."
+  echo "  --no-build   skip the rebuild for a fast relaunch (builds anyway if never built)"
   echo
   echo "Examples:"
   while IFS='|' read -r name module cls desc; do
@@ -36,9 +42,10 @@ list() {
   echo "Display: DISPLAY=${DISPLAY:-<unset>} (Dev Container desktop is :1 -> noVNC on port 6080)."
 }
 
-build=false
-if [[ "${1:-}" == "--build" || "${1:-}" == "-b" ]]; then
-  build=true
+# Build by default; --no-build is an opt-out for speed, never needed for correctness.
+build=true
+if [[ "${1:-}" == "--no-build" || "${1:-}" == "-n" ]]; then
+  build=false
   shift
 fi
 
@@ -61,11 +68,19 @@ if [[ -z "$module" ]]; then
   exit 1
 fi
 
-# Build the module (and its deps) if the class is missing, or when forced.
+# Always build (incrementally) so a launch is never stale — no flag to remember. The
+# hint is printed *before* the build kicks off, so the --no-build escape hatch is
+# discoverable in the normal output (no --help / source-reading needed). --no-build
+# still builds if the class was never compiled, so it can never fail confusingly.
 classfile="$module/target/classes/${mainclass//.//}.class"
-if $build || [[ ! -f "$classfile" ]]; then
-  echo ">> building $module (and thinlet-core) ..."
+if $build; then
+  echo ">> building $module (incremental; thinlet-core + module) — pass --no-build to skip"
   ./mvnw -q -pl "$module" -am -DskipTests package
+elif [[ ! -f "$classfile" ]]; then
+  echo ">> --no-build given, but $mainclass isn't built yet — building it once ..."
+  ./mvnw -q -pl "$module" -am -DskipTests package
+else
+  echo ">> skipping build (--no-build)"
 fi
 
 if [[ -z "${DISPLAY:-}" ]]; then
