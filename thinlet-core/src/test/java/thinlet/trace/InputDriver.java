@@ -108,6 +108,16 @@ final class InputDriver {
         return thinlet;
     }
 
+    /**
+     * The parsed root component (as added to the desktop). Lets a scenario reach
+     * an <em>unnamed</em> container by index — e.g. {@code getItem(root(), 1)} for
+     * the second tab of a nameless tabbedpane — when {@link #find(String)} can't
+     * (corpus-driven scenarios, D53).
+     */
+    Object root() {
+        return root;
+    }
+
     Object find(String name) {
         return thinlet.find(name);
     }
