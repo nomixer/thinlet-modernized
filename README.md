@@ -94,7 +94,8 @@ port **6080** (password `vscode`) for visually running the demos — the default
 controlled headless display (`:99`). See `DECISIONS.md` D22.
 
 To launch the bundled 2005 example apps (`thinlet-demos` + `thinlet-drafts`), use
-`scripts/run-example.sh` (run it with no argument to list them); full guide in
+`scripts/example.sh` (run it with no argument to list them); it builds the module
+incrementally and launches — no separate build step. Full guide in
 `project-docs/RUNNING-EXAMPLES.md`.
 
 For a **faithful local CI run without VS Code** — the same golden/input net CI

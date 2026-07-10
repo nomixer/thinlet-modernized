@@ -24,15 +24,20 @@ A JRE 8/11/17/21 can run the examples; the modules build with the repo's Maven w
 
 ## Quickest path: the launcher script
 
-`scripts/run-example.sh` builds the needed module (if not already built) and launches by
-short name. Run it with no argument to list what's available:
+`scripts/example.sh` compiles the example's module (incrementally) and launches it by
+short name — there is no separate build step, and a launch is never stale. Run it with no
+argument to list what's available:
 
 ```sh
-scripts/run-example.sh                # list the examples
-scripts/run-example.sh demo           # launch the widget showcase
-scripts/run-example.sh --build drafts # force a rebuild first, then launch
-DISPLAY=:0 scripts/run-example.sh calculator   # override the display
+scripts/example.sh                # list the examples
+scripts/example.sh demo           # build (incrementally) + launch the widget showcase
+scripts/example.sh --no-build demo   # skip the rebuild for a fast relaunch
+DISPLAY=:0 scripts/example.sh calculator   # override the display
 ```
+
+The `--no-build` flag is only a speed shortcut for a rapid relaunch — you never need it for
+correctness, and the launcher advertises it in its own build-status line, so there is
+nothing to memorize.
 
 ## The examples
 
@@ -52,8 +57,9 @@ they are the components the **`drafts`** showcase loads. `thinlet.AppletLauncher
 ## Running manually (without the script)
 
 Each module's compiled classes plus `thinlet-core` are all that's on the classpath (the
-`*.xml` layouts live in each module's `src/main/resources` and compile into
-`target/classes`). Build once, then launch:
+`*.xml` layouts and `/icon/*.gif` assets live in each module's `src/main/resources` and
+copy into `target/classes` — the launcher runs from there, **not** from the built jars).
+Build once, then launch:
 
 ```sh
 ./mvnw -q -pl thinlet-demos,thinlet-drafts -am -DskipTests package
@@ -68,10 +74,12 @@ java -cp thinlet-core/target/classes:thinlet-drafts/target/classes thinlet.draft
 
 ## Notes
 
-- **Icons are not bundled.** The samples reference `/icon/*.gif` resources that were not
-  imported with the source, so widgets render **without their icons** (blank) — this is a
-  cosmetic gap in the vendored corpus, not a fault of a given run. Text and layout are
-  unaffected.
+- **Icons are bundled.** The samples reference `/icon/*.gif` resources; the authentic 2005
+  GIFs were restored byte-verbatim from the archive demo/draft jars (DECISIONS.md **D54**;
+  per-file provenance in `project-docs/ICON-PROVENANCE.md`), so toolbars, lists, trees and
+  tables render with their icons. The one exception is `/icon/volume.gif` — genuinely absent
+  from every 2005 jar, so it was a blank in 2005 too — which leaves a single table-column
+  header (the drafts *Widgets* page) icon-less by design.
 - **These modules are not published.** Only `thinlet-core` publishes; `thinlet-demos` and
   `thinlet-drafts` exist for in-repo examples and the consumer-compat CI job
   (`README.md` → *Project layout*). They will become living test beds for the
