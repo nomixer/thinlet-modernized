@@ -1,8 +1,8 @@
 # Next steps — session handoff (2026-07-10)
 
-> Refreshed at a session stop. State as of `main` = PR #72 merged. Supersedes
+> Refreshed at a session stop. State as of `main` = PR #76 merged. Supersedes
 > `.claude/FABLE-NEXT-STEPS.md` (historical, Cut 1 era). Authority is `DECISIONS.md`
-> (through **D53**); charter is `project-docs/PHASE-3-GOALS.md`.
+> (through **D54**); charter is `project-docs/PHASE-3-GOALS.md`.
 
 ## State at stop — Cut 2 paint-branch extraction COMPLETE; net hardened (D52/D53)
 
@@ -23,8 +23,16 @@
   holds, 4 guardrails). Review 2 → **D52: caught one real regression** the net was blind
   to — a `"font"`→`"t.font"` corruption from the #57 extraction regex. Fixed + guarded
   (#67), then the whole D52 *class* closed by D53. The lull-time review paid for itself.
-- **Also landed:** `scripts/run-example.sh` + `project-docs/RUNNING-EXAMPLES.md` (#69) —
-  how to build/launch the bundled demos & drafts.
+- **D54 (#74) — the 2005 icons, restored.** The corpus referenced 25 `/icon/*.gif` that
+  were never vendored (silent-null → every golden was captured blank; the icon paint/layout
+  path had zero coverage). 24 authentic GIFs restored byte-verbatim from the archive
+  demo/draft jars (`project-docs/ICON-PROVENANCE.md`); `volume.gif` was genuinely absent in
+  2005, so it stays blank + allowlisted. New `CorpusResourceResolutionTest` reddens the
+  build on any unresolved corpus resource; the silent-null is quirk-locked (**Q3**). 21
+  static + 10 interaction goldens re-baselined (determinism + cross-JDK 8/11/17/21 proven).
+- **Also landed:** the bundled-demo launcher `scripts/example.sh` + `RUNNING-EXAMPLES.md`
+  (#69; renamed from `run-example.sh` and made always-build + self-documenting in #76) —
+  build/launch the demos & drafts.
 
 ## Next work, in order
 
