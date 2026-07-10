@@ -1,25 +1,30 @@
-# Next steps — session handoff (2026-07-09)
+# Next steps — session handoff (2026-07-10)
 
-> Refreshed at a session stop. State as of `main` = PR #67 merged. Supersedes
+> Refreshed at a session stop. State as of `main` = PR #72 merged. Supersedes
 > `.claude/FABLE-NEXT-STEPS.md` (historical, Cut 1 era). Authority is `DECISIONS.md`
-> (through **D52**); charter is `project-docs/PHASE-3-GOALS.md`.
+> (through **D53**); charter is `project-docs/PHASE-3-GOALS.md`.
 
-## State at stop — Cut 2 paint-branch extraction COMPLETE
+## State at stop — Cut 2 paint-branch extraction COMPLETE; net hardened (D52/D53)
 
-- **Merged this session:** #48–#67. **Every widget paint branch + shared helper is now
-  in `Renderer.java`** (~1,900 lines): label/button/checkbox/combobox/tabbedpane/menubar/
+- **Paint extraction (#48–#67):** **every widget paint branch + shared helper is in
+  `Renderer.java`** (~1,900 lines): label/button/checkbox/combobox/tabbedpane/menubar/
   `:popup`/progressbar/slider/splitpane/panel(container)/dialog/spinbox, plus helpers
   `field`/`arrow`(×2)/`scroll`/`content`. `Thinlet.java` ≈ 6,470 lines (from 7,779).
   Only the **`desktop`** branch stays in `Thinlet` — it paints the timer-coupled tooltip
   (`tooltipowner` + `paintReverse`), the one net-invisible path (D45).
-- **Net:** 41 static + **32 interaction goldens** + input suite (incl. the D50 `:lead`
-  race pins). Every interaction-state family from the D45 survey is guarded except the
-  deferred tooltip.
-- **Reviews:** two Opus self-reviews done (`.claude/SELF-REVIEWS.md`). Review 1 → D50
-  (plan holds, 4 guardrails). Review 2 → **D52: caught one real regression** the net was
-  blind to — a `"font"`→`"t.font"` string-literal corruption from the #57 extraction
-  regex (custom-font textarea rendered default). Fixed + guarded (#67). This is the proof
-  the lull-time review is worth its cost.
+- **Net (#68–#72):** 41 static + **48 interaction goldens** + input suite (incl. the D50
+  `:lead` race pins). Every D45-survey interaction-state family is guarded except the
+  deferred tooltip. **D53 corpus-driven coverage** now paints the interaction-revealed
+  paths the static net was blind to (the D52 class): 16 scenarios drive the vendored
+  `corpus/{drafts,demo}/*.xml` through `CorpusHandler` — 14 non-default tab-selects
+  (looks/widgets/demo/tabbedpane/eventlogger) + 2 tree-expands (demo, drafts). Proven: the
+  D52 key-break fails `corpus-looks-tab2`.
+- **Reviews:** two Opus self-reviews (`.claude/SELF-REVIEWS.md`). Review 1 → D50 (plan
+  holds, 4 guardrails). Review 2 → **D52: caught one real regression** the net was blind
+  to — a `"font"`→`"t.font"` corruption from the #57 extraction regex. Fixed + guarded
+  (#67), then the whole D52 *class* closed by D53. The lull-time review paid for itself.
+- **Also landed:** `scripts/run-example.sh` + `project-docs/RUNNING-EXAMPLES.md` (#69) —
+  how to build/launch the bundled demos & drafts.
 
 ## Next work, in order
 
@@ -40,6 +45,12 @@
    enhancement backlog; static-ability map. **Lands before Cut 4/5/6 seam commitments.**
 5. **Tooltip capture** — the last interaction golden, needs the 750ms timer handled
    (D45); unblocks the `desktop` branch extraction. Low priority.
+6. **Live-`Drafts` playthrough (D53 deferred)** — navigate the app's nav tree into pages
+   (System→Colors) for the dynamically-injected content the corpus-driven layer can't
+   reach. Needs the **`thinlet-testkit` extraction** (D37's deferred second consumer) +
+   an **opt-in allowlist** of pages proven deterministic across the JDK matrix (exclude
+   SystemProperties/FolderBrowser/Choosers/DesktopProperties/… — system/filesystem/locale
+   bound). Separately scoped; reassess after the dispatch fold.
 
 ## Standing discipline (hard-won, do not relearn)
 
