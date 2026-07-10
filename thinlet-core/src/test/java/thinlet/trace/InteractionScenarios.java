@@ -9,6 +9,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -239,15 +240,48 @@ final class InteractionScenarios {
         // Reach unnamed tabs by index off root() (looks.xml's tabbedpane and its
         // tabs carry no name).
         //
-        // looks.xml tab 2 (index 1) is the D52 twin: a font="bold" textarea plus
-        // spinbox/progressbar/slider — the exact never-painted shape that hid the
-        // "font" -> "t.font" corruption.
-        s.add(new Scenario(
-                "corpus-looks-tab2",
-                "/corpus/drafts/looks.xml",
-                d -> d.click(d.thinlet().getItem(d.root(), 1)),
-                CorpusHandler::new));
+        // looks.xml (root IS the tabbedpane, index 0 selected/painted). tab 2
+        // (index 1) is the D52 twin: a font="bold" textarea plus spinbox/
+        // progressbar/slider — the exact never-painted shape that hid the
+        // "font" -> "t.font" corruption. The rest are the other blind tabs.
+        s.add(corpusTab("corpus-looks-tab2", "/corpus/drafts/looks.xml", InputDriver::root, 1));
+        s.add(corpusTab("corpus-looks-listtree", "/corpus/drafts/looks.xml", InputDriver::root, 2));
+        s.add(corpusTab("corpus-looks-menu", "/corpus/drafts/looks.xml", InputDriver::root, 3));
+        s.add(corpusTab("corpus-looks-splitpane", "/corpus/drafts/looks.xml", InputDriver::root, 4));
+        s.add(corpusTab("corpus-looks-scrollable", "/corpus/drafts/looks.xml", InputDriver::root, 5));
+        // widgets.xml (unnamed tabbedpane below root): Three = tree+list+table,
+        // Fonts = a whole font="bold" tab.
+        s.add(corpusTab("corpus-widgets-three", "/corpus/drafts/widgets.xml", TABBEDPANE, 2));
+        s.add(corpusTab("corpus-widgets-fonts", "/corpus/drafts/widgets.xml", TABBEDPANE, 4));
+        // demo.xml (selected="1" = Lists): Texts = textarea+checkboxes, Values =
+        // sliders/spinboxes/progressbars + a font="bold" preview label.
+        s.add(corpusTab("corpus-demo-texts", "/corpus/demo/demo.xml", TABBEDPANE, 0));
+        s.add(corpusTab("corpus-demo-values", "/corpus/demo/demo.xml", TABBEDPANE, 2));
+        // tabbedpane.xml (named "tabbed"): Two = textarea+checkbox, Five =
+        // scrollable button panel.
+        s.add(corpusTab("corpus-tabbedpane-two", "/corpus/drafts/tabbedpane.xml", d -> d.find("tabbed"), 1));
+        s.add(corpusTab("corpus-tabbedpane-five", "/corpus/drafts/tabbedpane.xml", d -> d.find("tabbed"), 4));
+        // eventlogger.xml (unnamed tabbedpane, action="tabChanged" — a no-op in
+        // CorpusHandler): "2" = list+tree+table, "3" = textfields/areas, "4" = menus.
+        s.add(corpusTab("corpus-eventlogger-lists", "/corpus/drafts/eventlogger.xml", TABBEDPANE, 1));
+        s.add(corpusTab("corpus-eventlogger-text", "/corpus/drafts/eventlogger.xml", TABBEDPANE, 2));
+        s.add(corpusTab("corpus-eventlogger-menu", "/corpus/drafts/eventlogger.xml", TABBEDPANE, 3));
         return Collections.unmodifiableList(s);
+    }
+
+    /** Locator for the first (usually only) tabbedpane in a fixture with no name. */
+    private static final Function<InputDriver, Object> TABBEDPANE = d -> d.first("tabbedpane");
+
+    /**
+     * A corpus-driven scenario (D53) that selects tab {@code index} of the
+     * tabbedpane found by {@code tabbedpane}, then paints — reaching content the
+     * static net never draws (a non-selected tab). Driven by {@link CorpusHandler}
+     * since corpus XML binds demo methods Thinlet resolves at parse time.
+     */
+    private static Scenario corpusTab(
+            String name, String fixture, Function<InputDriver, Object> tabbedpane, int index) {
+        return new Scenario(
+                name, fixture, d -> d.click(d.thinlet().getItem(tabbedpane.apply(d), index)), CorpusHandler::new);
     }
 
     /** Runs a scenario and captures the post-gesture paint trace. */
