@@ -123,6 +123,36 @@ final class InputDriver {
     }
 
     /**
+     * The first component of the given widget class in document order (depth-first
+     * from {@link #root()}), or {@code null} if none. For corpus-driven scenarios
+     * (D53) whose target container is unnamed — e.g. {@code first("tabbedpane")} to
+     * reach a nameless tabbedpane before selecting a tab by index.
+     */
+    Object first(String classname) {
+        return firstOfClass(root, classname);
+    }
+
+    private Object firstOfClass(Object component, String classname) {
+        if (component == null) {
+            return null;
+        }
+        if (classname.equals(Thinlet.getClass(component))) {
+            return component;
+        }
+        // getItem walks the :comp child chain and returns null past the last child.
+        for (int i = 0; ; i++) {
+            Object child = thinlet.getItem(component, i);
+            if (child == null) {
+                return null;
+            }
+            Object hit = firstOfClass(child, classname);
+            if (hit != null) {
+                return hit;
+            }
+        }
+    }
+
+    /**
      * Makes Thinlet believe it owns the keyboard focus. Headless {@code
      * requestFocus()} delivers no native FOCUS_GAINED, and Thinlet drops key events
      * unless {@code focusinside} is set — so the driver synthesizes the focus gain.
