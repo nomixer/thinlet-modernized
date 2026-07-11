@@ -1757,16 +1757,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     focus,
                     enabled);
         } else if (is(classname, "desktop")) {
-            paintRect(g, 0, 0, bounds.width, bounds.height, c_border, c_bg, false, false, false, false, true);
-            paintReverse(g, clipx, clipy, clipwidth, clipheight, get(component, ":comp"), enabled);
-            // g.setColor(Color.red); if (clip != null) g.drawRect(clipx, clipy, clipwidth, clipheight);
-            if ((tooltipowner != null) && (component == content)) {
-                Rectangle r = getRectangle(tooltipowner, ":tooltipbounds");
-                paintRect(g, r.x, r.y, r.width, r.height, c_border, c_bg, true, true, true, true, true);
-                String text = getString(tooltipowner, "tooltip", null);
-                g.setColor(c_text);
-                g.drawString(text, r.x + 2, r.y + g.getFontMetrics().getAscent() + 2); // +nullpointerexception
-            }
+            paintDesktop(component, bounds, g, clipx, clipy, clipwidth, clipheight, enabled);
         } else if (is(classname, "spinbox")) {
             Renderer.spinbox(
                     this, component, bounds, g, clipx, clipy, clipwidth, clipheight, pressed, inside, focus, enabled);
@@ -1806,6 +1797,34 @@ public class Thinlet extends Container implements Runnable, Serializable {
         g.translate(-bounds.x, -bounds.y);
         clipx += bounds.x;
         clipy += bounds.y;
+    }
+
+    /**
+     * The 2005 {@code desktop} paint branch, verbatim — hoisted (D48) so the classname
+     * dispatch can live in {@link Renderer#paint}. Stays in {@code Thinlet} because it
+     * paints the timer-coupled tooltip ({@code tooltipowner}), the one net-invisible
+     * paint path (D45); extraction waits for the tooltip capture.
+     */
+    // package-private for Renderer (D48 seam; japicmp-invisible)
+    void paintDesktop(
+            Object component,
+            Rectangle bounds,
+            Graphics g,
+            int clipx,
+            int clipy,
+            int clipwidth,
+            int clipheight,
+            boolean enabled) {
+        paintRect(g, 0, 0, bounds.width, bounds.height, c_border, c_bg, false, false, false, false, true);
+        paintReverse(g, clipx, clipy, clipwidth, clipheight, get(component, ":comp"), enabled);
+        // g.setColor(Color.red); if (clip != null) g.drawRect(clipx, clipy, clipwidth, clipheight);
+        if ((tooltipowner != null) && (component == content)) {
+            Rectangle r = getRectangle(tooltipowner, ":tooltipbounds");
+            paintRect(g, r.x, r.y, r.width, r.height, c_border, c_bg, true, true, true, true, true);
+            String text = getString(tooltipowner, "tooltip", null);
+            g.setColor(c_text);
+            g.drawString(text, r.x + 2, r.y + g.getFontMetrics().getAscent() + 2); // +nullpointerexception
+        }
     }
 
     private void paintReverse(
