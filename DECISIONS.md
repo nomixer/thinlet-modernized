@@ -1983,3 +1983,51 @@ GIF dims are decoder-stable and the re-baseline is cross-JDK-portable.
 
 **Cross-ref** D7 (tolerance), D9/D12 (verbatim corpus — unchanged), D22 (Xvfb :99), D33
 (cross-JDK), D44/D52 (record-in-container + `clean`), D45/D47/D53 (interaction goldens).
+
+## D55 — Fold the classname dispatch chain into `Renderer.paint` (Cut 2 closes)
+
+**Date:** 2026-07-11. **Status:** accepted. **Phase:** 3 (Cut 2, dispatch fold).
+
+**Context.** Cut 2 extracted every widget paint branch to `Renderer` (#48–#67), but the
+**dispatch itself** — `Thinlet.paint(Graphics, int×4, Object, boolean)`'s recursive
+per-component body: visibility/bounds gate, clip-reject, translate, the
+`if (is(classname, …))` ladder, un-translate — still lived in `Thinlet`, and `Renderer`'s
+class doc pinned that as the contract ("dispatch stays in `Thinlet.paint`"). D52 forecast
+this fold: three more D48 widenings, and not fully stateless until the tooltip path is
+handled. This is the handoff's next-work item 1.
+
+**Decision.**
+- **`Renderer.paint(Thinlet t, Graphics g, int clipx, int clipy, int clipwidth,
+  int clipheight, Object component, boolean enabled)`** now holds the full body, moved
+  verbatim. **`Thinlet.paint` becomes a one-line shim** delegating to it, so all six
+  existing call sites stay untouched: `Thinlet.paint(Graphics)` (top-level AWT entry),
+  `paintReverse` (desktop z-order recursion), and the recursive child-paint calls already
+  inside `Renderer` (`container`, `tabbedpane`, `splitpane` ×2, `spinbox`). Rewiring those
+  to intra-class calls would be cosmetic; deferred.
+- **`desktop` stays in `Thinlet` behind a callback.** Its body — the one net-invisible
+  paint path (timer-coupled tooltip, D45) — was first hoisted (D48 hoist-don't-relocate)
+  into a package-private `Thinlet.paintDesktop(…)` at the identical call point; the folded
+  ladder calls `t.paintDesktop(…)`. `paintReverse`/`tooltipowner`/`content` stay private.
+  Extraction waits for the tooltip capture (deferred, low priority).
+- **`separator` and `bean` move with the ladder.** Reconciling D52's "only the
+  tooltip-coupled `desktop` branch left" phrasing: these two trivial inline branches were
+  not counted there. Both are stateless — no `pressed`/`inside`/`focus` use, only
+  already-widened members (`c_border`/`c_disable`/`evm`/static `get`) — so the D50 gate
+  (which targets *interaction-state* helpers) does not apply. Coverage: `<separator>`
+  appears across the static-golden corpus; `<bean>` in `drafts/chart.xml`.
+- **Widenings: exactly the three D52 forecast** — `mouseinside`, `focusowner`,
+  `focusinside` — each with the standard seam comment. No method widenings were needed
+  (`is`/`layoutIfDirty` already package-private; `getClass` public static).
+
+**Mechanical discipline (per the D52 lessons).** Python move with boundary assertions;
+token rewrites applied only *outside* string literals, never a blanket prefix regex; the
+quoted-literal sequence of the moved region asserted byte-identical before/after
+(30 literals). Compiler caught nothing residual (no stray `this`/unprefixed members).
+
+**Verification gate.** A pure move: **zero golden diffs required** — the container net
+(D44) on JDK 21 plus the crossjdk 8/11/17 rows must pass with `git status` clean (41
+static + 48 interaction goldens byte-identical), plus the input suite. Any golden diff
+would mean the move changed behavior and is a defect, never a re-baseline.
+
+**Cross-ref** D42/D43 (Cut 2 charter), D45 (tooltip = net-invisible), D48 (seam style,
+hoist, widening comment), D50 (guardrails), D52 (forecast + regex trap), D44 (container).

@@ -21,6 +21,7 @@
 package thinlet;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -38,12 +39,188 @@ import java.awt.Rectangle;
  * {@code Thinlet} instance, the widget, the {@code Graphics}, and the
  * paint-time state ({@code pressed}/{@code inside}/{@code focus}/{@code
  * enabled}) are all passed in. Package-private through 3a (D43): no public
- * surface until the later new-API phase. Dispatch (the classname chain) stays
- * in {@code Thinlet.paint}.
+ * surface until the later new-API phase. The dispatch (the classname chain)
+ * lives here too ({@link #paint}); only the tooltip-coupled {@code desktop}
+ * body remains in {@code Thinlet} behind the {@code Thinlet#paintDesktop}
+ * callback (the one net-invisible paint path, D45), and {@code Thinlet.paint}
+ * is now a shim delegating here.
  */
 final class Renderer {
 
     private Renderer() {}
+
+    /**
+     * The recursive per-component paint: visibility/bounds gate, clip-reject,
+     * translate, then the 2005 classname dispatch chain, verbatim — each widget
+     * branch delegating to its extracted method. Only the tooltip-coupled
+     * {@code desktop} body remains in {@code Thinlet} (the one net-invisible
+     * paint path, D45) behind the {@link Thinlet#paintDesktop} callback.
+     */
+    static void paint(
+            Thinlet t,
+            Graphics g,
+            int clipx,
+            int clipy,
+            int clipwidth,
+            int clipheight,
+            Object component,
+            boolean enabled) {
+        if (!t.getBoolean(component, "visible", true)) {
+            return;
+        }
+        Rectangle bounds = t.getRectangle(component, "bounds");
+        if (bounds == null) {
+            return;
+        }
+        t.layoutIfDirty(component, bounds);
+        // return if the component was out of the cliping rectangle
+        if ((clipx + clipwidth < bounds.x)
+                || (clipx > bounds.x + bounds.width)
+                || (clipy + clipheight < bounds.y)
+                || (clipy > bounds.y + bounds.height)) {
+            return;
+        }
+        // set the clip rectangle relative to the component location
+        clipx -= bounds.x;
+        clipy -= bounds.y;
+        g.translate(bounds.x, bounds.y);
+        // g.setClip(0, 0, bounds.width, bounds.height);
+        String classname = Thinlet.getClass(component);
+        boolean pressed = (t.mousepressed == component);
+        boolean inside = (t.mouseinside == component) && ((t.mousepressed == null) || pressed);
+        boolean focus = t.focusinside && (t.focusowner == component);
+        enabled = t.getBoolean(component, "enabled", true); // enabled &&
+
+        if (Thinlet.is(classname, "label")) {
+            Renderer.label(t, component, bounds, g, clipx, clipy, clipwidth, clipheight, enabled);
+        } else if ((Thinlet.is(classname, "button")) || (Thinlet.is(classname, "togglebutton"))) {
+            Renderer.button(
+                    t,
+                    component,
+                    classname,
+                    bounds,
+                    g,
+                    clipx,
+                    clipy,
+                    clipwidth,
+                    clipheight,
+                    pressed,
+                    inside,
+                    focus,
+                    enabled);
+        } else if (Thinlet.is(classname, "checkbox")) {
+            Renderer.checkbox(
+                    t, component, bounds, g, clipx, clipy, clipwidth, clipheight, pressed, inside, focus, enabled);
+        } else if (Thinlet.is(classname, "combobox")) {
+            Renderer.combobox(
+                    t, component, bounds, g, clipx, clipy, clipwidth, clipheight, pressed, inside, focus, enabled);
+        } else if (Thinlet.is(classname, ":combolist")) {
+            Renderer.scroll(
+                    t,
+                    component,
+                    classname,
+                    pressed,
+                    inside,
+                    focus,
+                    false,
+                    enabled,
+                    g,
+                    clipx,
+                    clipy,
+                    clipwidth,
+                    clipheight);
+        } else if ((Thinlet.is(classname, "textfield")) || (Thinlet.is(classname, "passwordfield"))) {
+            Renderer.field(
+                    t,
+                    g,
+                    clipx,
+                    clipy,
+                    clipwidth,
+                    clipheight,
+                    component,
+                    bounds.width,
+                    bounds.height,
+                    focus,
+                    enabled,
+                    (Thinlet.is(classname, "passwordfield")),
+                    0);
+        } else if (Thinlet.is(classname, "textarea")) {
+            Renderer.scroll(
+                    t,
+                    component,
+                    classname,
+                    pressed,
+                    inside,
+                    focus,
+                    true,
+                    enabled,
+                    g,
+                    clipx,
+                    clipy,
+                    clipwidth,
+                    clipheight);
+        } else if (Thinlet.is(classname, "tabbedpane")) {
+            Renderer.tabbedpane(
+                    t, component, bounds, g, clipx, clipy, clipwidth, clipheight, pressed, inside, focus, enabled);
+        } else if ((Thinlet.is(classname, "panel")) || (Thinlet.is(classname, "dialog"))) {
+            Renderer.container(
+                    t,
+                    component,
+                    classname,
+                    bounds,
+                    g,
+                    clipx,
+                    clipy,
+                    clipwidth,
+                    clipheight,
+                    pressed,
+                    inside,
+                    focus,
+                    enabled);
+        } else if (Thinlet.is(classname, "desktop")) {
+            t.paintDesktop(component, bounds, g, clipx, clipy, clipwidth, clipheight, enabled);
+        } else if (Thinlet.is(classname, "spinbox")) {
+            Renderer.spinbox(
+                    t, component, bounds, g, clipx, clipy, clipwidth, clipheight, pressed, inside, focus, enabled);
+        } else if (Thinlet.is(classname, "progressbar")) {
+            Renderer.progressbar(t, component, bounds, g, enabled);
+        } else if (Thinlet.is(classname, "slider")) {
+            Renderer.slider(t, component, bounds, g, focus, enabled);
+        } else if (Thinlet.is(classname, "splitpane")) {
+            Renderer.splitpane(t, component, bounds, g, clipx, clipy, clipwidth, clipheight, focus, enabled);
+        } else if ((Thinlet.is(classname, "list"))
+                || (Thinlet.is(classname, "table"))
+                || (Thinlet.is(classname, "tree"))) {
+            Renderer.scroll(
+                    t,
+                    component,
+                    classname,
+                    pressed,
+                    inside,
+                    focus,
+                    focus && (Thinlet.get(component, ":comp") == null),
+                    enabled,
+                    g,
+                    clipx,
+                    clipy,
+                    clipwidth,
+                    clipheight);
+        } else if (Thinlet.is(classname, "separator")) {
+            g.setColor(enabled ? t.c_border : t.c_disable);
+            g.fillRect(0, 0, bounds.width + Thinlet.evm, bounds.height + Thinlet.evm);
+        } else if (Thinlet.is(classname, "menubar")) {
+            Renderer.menubar(t, component, bounds, g, clipx, clipy, clipwidth, clipheight, enabled);
+        } else if (Thinlet.is(classname, ":popup")) {
+            Renderer.popup(t, component, bounds, g, clipx, clipy, clipwidth, clipheight);
+        } else if (Thinlet.is(classname, "bean")) {
+            g.clipRect(0, 0, bounds.width, bounds.height);
+            ((Component) Thinlet.get(component, "bean")).paint(g);
+            g.setClip(clipx, clipy, clipwidth, clipheight);
+        } else throw new IllegalArgumentException(classname);
+        g.translate(-bounds.x, -bounds.y);
+        clipx += bounds.x;
+        clipy += bounds.y;
+    }
 
     /** The 2005 {@code label} paint branch, verbatim. */
     static void label(

@@ -56,14 +56,14 @@ public class Thinlet extends Container implements Runnable, Serializable {
     private transient long findtime;
 
     private Object content = createImpl("desktop");
-    private transient Object mouseinside;
+    transient Object mouseinside; // package-private for Renderer (D48 seam; japicmp-invisible)
     transient Object insidepart; // package-private for Renderer (D48 seam; japicmp-invisible)
     transient Object mousepressed; // package-private for Renderer (D48 seam; japicmp-invisible)
     transient Object pressedpart; // package-private for Renderer (D48 seam; japicmp-invisible)
     private transient int referencex, referencey;
     private transient int mousex, mousey;
-    private transient Object focusowner;
-    private transient boolean focusinside;
+    transient Object focusowner; // package-private for Renderer (D48 seam; japicmp-invisible)
+    transient boolean focusinside; // package-private for Renderer (D48 seam; japicmp-invisible)
     private transient Object popupowner;
     private transient Object tooltipowner;
     // private transient int pressedkey;
@@ -1644,168 +1644,35 @@ public class Thinlet extends Container implements Runnable, Serializable {
      */
     // package-private for Renderer (D48 seam; japicmp-invisible)
     void paint(Graphics g, int clipx, int clipy, int clipwidth, int clipheight, Object component, boolean enabled) {
-        if (!getBoolean(component, "visible", true)) {
-            return;
-        }
-        Rectangle bounds = getRectangle(component, "bounds");
-        if (bounds == null) {
-            return;
-        }
-        layoutIfDirty(component, bounds);
-        // return if the component was out of the cliping rectangle
-        if ((clipx + clipwidth < bounds.x)
-                || (clipx > bounds.x + bounds.width)
-                || (clipy + clipheight < bounds.y)
-                || (clipy > bounds.y + bounds.height)) {
-            return;
-        }
-        // set the clip rectangle relative to the component location
-        clipx -= bounds.x;
-        clipy -= bounds.y;
-        g.translate(bounds.x, bounds.y);
-        // g.setClip(0, 0, bounds.width, bounds.height);
-        String classname = getClass(component);
-        boolean pressed = (mousepressed == component);
-        boolean inside = (mouseinside == component) && ((mousepressed == null) || pressed);
-        boolean focus = focusinside && (focusowner == component);
-        enabled = getBoolean(component, "enabled", true); // enabled &&
+        Renderer.paint(this, g, clipx, clipy, clipwidth, clipheight, component, enabled);
+    }
 
-        if (is(classname, "label")) {
-            Renderer.label(this, component, bounds, g, clipx, clipy, clipwidth, clipheight, enabled);
-        } else if ((is(classname, "button")) || (is(classname, "togglebutton"))) {
-            Renderer.button(
-                    this,
-                    component,
-                    classname,
-                    bounds,
-                    g,
-                    clipx,
-                    clipy,
-                    clipwidth,
-                    clipheight,
-                    pressed,
-                    inside,
-                    focus,
-                    enabled);
-        } else if (is(classname, "checkbox")) {
-            Renderer.checkbox(
-                    this, component, bounds, g, clipx, clipy, clipwidth, clipheight, pressed, inside, focus, enabled);
-        } else if (is(classname, "combobox")) {
-            Renderer.combobox(
-                    this, component, bounds, g, clipx, clipy, clipwidth, clipheight, pressed, inside, focus, enabled);
-        } else if (is(classname, ":combolist")) {
-            Renderer.scroll(
-                    this,
-                    component,
-                    classname,
-                    pressed,
-                    inside,
-                    focus,
-                    false,
-                    enabled,
-                    g,
-                    clipx,
-                    clipy,
-                    clipwidth,
-                    clipheight);
-        } else if ((is(classname, "textfield")) || (is(classname, "passwordfield"))) {
-            Renderer.field(
-                    this,
-                    g,
-                    clipx,
-                    clipy,
-                    clipwidth,
-                    clipheight,
-                    component,
-                    bounds.width,
-                    bounds.height,
-                    focus,
-                    enabled,
-                    (is(classname, "passwordfield")),
-                    0);
-        } else if (is(classname, "textarea")) {
-            Renderer.scroll(
-                    this,
-                    component,
-                    classname,
-                    pressed,
-                    inside,
-                    focus,
-                    true,
-                    enabled,
-                    g,
-                    clipx,
-                    clipy,
-                    clipwidth,
-                    clipheight);
-        } else if (is(classname, "tabbedpane")) {
-            Renderer.tabbedpane(
-                    this, component, bounds, g, clipx, clipy, clipwidth, clipheight, pressed, inside, focus, enabled);
-        } else if ((is(classname, "panel")) || (is(classname, "dialog"))) {
-            Renderer.container(
-                    this,
-                    component,
-                    classname,
-                    bounds,
-                    g,
-                    clipx,
-                    clipy,
-                    clipwidth,
-                    clipheight,
-                    pressed,
-                    inside,
-                    focus,
-                    enabled);
-        } else if (is(classname, "desktop")) {
-            paintRect(g, 0, 0, bounds.width, bounds.height, c_border, c_bg, false, false, false, false, true);
-            paintReverse(g, clipx, clipy, clipwidth, clipheight, get(component, ":comp"), enabled);
-            // g.setColor(Color.red); if (clip != null) g.drawRect(clipx, clipy, clipwidth, clipheight);
-            if ((tooltipowner != null) && (component == content)) {
-                Rectangle r = getRectangle(tooltipowner, ":tooltipbounds");
-                paintRect(g, r.x, r.y, r.width, r.height, c_border, c_bg, true, true, true, true, true);
-                String text = getString(tooltipowner, "tooltip", null);
-                g.setColor(c_text);
-                g.drawString(text, r.x + 2, r.y + g.getFontMetrics().getAscent() + 2); // +nullpointerexception
-            }
-        } else if (is(classname, "spinbox")) {
-            Renderer.spinbox(
-                    this, component, bounds, g, clipx, clipy, clipwidth, clipheight, pressed, inside, focus, enabled);
-        } else if (is(classname, "progressbar")) {
-            Renderer.progressbar(this, component, bounds, g, enabled);
-        } else if (is(classname, "slider")) {
-            Renderer.slider(this, component, bounds, g, focus, enabled);
-        } else if (is(classname, "splitpane")) {
-            Renderer.splitpane(this, component, bounds, g, clipx, clipy, clipwidth, clipheight, focus, enabled);
-        } else if ((is(classname, "list")) || (is(classname, "table")) || (is(classname, "tree"))) {
-            Renderer.scroll(
-                    this,
-                    component,
-                    classname,
-                    pressed,
-                    inside,
-                    focus,
-                    focus && (get(component, ":comp") == null),
-                    enabled,
-                    g,
-                    clipx,
-                    clipy,
-                    clipwidth,
-                    clipheight);
-        } else if (is(classname, "separator")) {
-            g.setColor(enabled ? c_border : c_disable);
-            g.fillRect(0, 0, bounds.width + evm, bounds.height + evm);
-        } else if (is(classname, "menubar")) {
-            Renderer.menubar(this, component, bounds, g, clipx, clipy, clipwidth, clipheight, enabled);
-        } else if (is(classname, ":popup")) {
-            Renderer.popup(this, component, bounds, g, clipx, clipy, clipwidth, clipheight);
-        } else if (is(classname, "bean")) {
-            g.clipRect(0, 0, bounds.width, bounds.height);
-            ((Component) get(component, "bean")).paint(g);
-            g.setClip(clipx, clipy, clipwidth, clipheight);
-        } else throw new IllegalArgumentException(classname);
-        g.translate(-bounds.x, -bounds.y);
-        clipx += bounds.x;
-        clipy += bounds.y;
+    /**
+     * The 2005 {@code desktop} paint branch, verbatim — hoisted (D48) so the classname
+     * dispatch can live in {@link Renderer#paint}. Stays in {@code Thinlet} because it
+     * paints the timer-coupled tooltip ({@code tooltipowner}), the one net-invisible
+     * paint path (D45); extraction waits for the tooltip capture.
+     */
+    // package-private for Renderer (D48 seam; japicmp-invisible)
+    void paintDesktop(
+            Object component,
+            Rectangle bounds,
+            Graphics g,
+            int clipx,
+            int clipy,
+            int clipwidth,
+            int clipheight,
+            boolean enabled) {
+        paintRect(g, 0, 0, bounds.width, bounds.height, c_border, c_bg, false, false, false, false, true);
+        paintReverse(g, clipx, clipy, clipwidth, clipheight, get(component, ":comp"), enabled);
+        // g.setColor(Color.red); if (clip != null) g.drawRect(clipx, clipy, clipwidth, clipheight);
+        if ((tooltipowner != null) && (component == content)) {
+            Rectangle r = getRectangle(tooltipowner, ":tooltipbounds");
+            paintRect(g, r.x, r.y, r.width, r.height, c_border, c_bg, true, true, true, true, true);
+            String text = getString(tooltipowner, "tooltip", null);
+            g.setColor(c_text);
+            g.drawString(text, r.x + 2, r.y + g.getFontMetrics().getAscent() + 2); // +nullpointerexception
+        }
     }
 
     private void paintReverse(
