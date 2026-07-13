@@ -1,5 +1,14 @@
 # Paint-pipeline map — `Thinlet.java`
 
+> **STALE ON LOCATIONS (kept as the 2005 map).** Written against the verbatim
+> 7779-line import, before the Phase-3a decomposition: every paint branch and the
+> classname dispatch now live in `Renderer.java` (D48–D55), and the icon+text
+> dispatcher ("large dispatcher", pre-decomposition L3393) takes a typed
+> `IconTextSpec` instead of 23 positional parameters (D56). The *semantic*
+> descriptions (pipeline shape, drawing vocabulary, `Object[]` model) remain
+> valid; treat every line number and "lives in `Thinlet.java`" claim as
+> historical. Current locations: grep `Renderer.java` / `DECISIONS.md` D48+.
+
 > Internal engineering reference (lives under `.claude/`, deliberately outside the
 > product source tree). Maps the paint/layout pipeline, drawing vocabulary, and
 > widget model of the verbatim 2005 `Thinlet.java`
