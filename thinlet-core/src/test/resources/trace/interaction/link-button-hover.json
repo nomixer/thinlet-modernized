@@ -1,0 +1,21 @@
+{
+  "calls": [
+    {"op": "setFont", "cat": ["SansSerif|0|12"], "num": []},
+    {"op": "translate", "cat": [], "num": [0, 0]},
+    {"op": "setColor", "cat": ["#909090FF"], "num": []},
+    {"op": "setColor", "cat": ["#E6E6E6FF"], "num": []},
+    {"op": "fillRect", "cat": [], "num": [0, 0, 1024, 768]},
+    {"op": "translate", "cat": [], "num": [0, 0]},
+    {"op": "translate", "cat": [], "num": [4, 4]},
+    {"op": "setColor", "cat": ["#0000FFFF"], "num": []},
+    {"op": "drawString", "cat": ["Visit site"], "num": [0, 12]},
+    {"op": "drawLine", "cat": [], "num": [0, 13, 53, 13]},
+    {"op": "translate", "cat": [], "num": [-4, -4]},
+    {"op": "translate", "cat": [], "num": [0, 0]},
+    {"op": "translate", "cat": [], "num": [0, 0]}
+  ],
+  "layout": [
+    {"class": "panel", "x": 0, "y": 0, "w": 1024, "h": 768},
+    {"class": "button", "x": 4, "y": 4, "w": 53, "h": 15}
+  ]
+}

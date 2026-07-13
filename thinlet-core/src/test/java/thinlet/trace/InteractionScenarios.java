@@ -61,6 +61,10 @@ final class InteractionScenarios {
         // Hover (mouseinside/insidepart held; renders only while no press is in flight)
         s.add(new Scenario("smoke-button-hover", "/input/smoke.xml", d -> d.hover(d.find("b1"))));
         s.add(new Scenario("smoke-checkbox-hover", "/input/smoke.xml", d -> d.hover(d.find("c1"))));
+        // Hovered link button: the only paint path that sets the icon+text
+        // underline flag (link style underlines on hover, inside != pressed) —
+        // without this golden an underline regression is net-invisible (D56)
+        s.add(new Scenario("link-button-hover", "/input/link.xml", d -> d.hover(d.find("lnk"))));
         // Press-and-hold (mousepressed/pressedpart held; checkbox also paints the
         // transient check-mark preview while pressed)
         s.add(new Scenario("smoke-button-press", "/input/smoke.xml", d -> d.pressAndHold(d.find("b1"))));
