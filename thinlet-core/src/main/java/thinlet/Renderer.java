@@ -235,28 +235,10 @@ final class Renderer {
             boolean enabled) {
         t.paint(
                 component,
-                0,
-                0,
-                bounds.width,
-                bounds.height,
                 g,
-                clipx,
-                clipy,
-                clipwidth,
-                clipheight,
-                false,
-                false,
-                false,
-                false,
-                0,
-                0,
-                0,
-                0,
-                false,
-                enabled ? 'e' : 'd',
-                "left",
-                true,
-                false);
+                new IconTextSpec(0, 0, bounds.width, bounds.height, enabled ? 'e' : 'd')
+                        .clip(clipx, clipy, clipwidth, clipheight)
+                        .mnemonic(true));
     }
 
     /** The 2005 {@code button}/{@code togglebutton} paint branch, verbatim. */
@@ -279,54 +261,25 @@ final class Renderer {
         if (link) {
             t.paint(
                     component,
-                    0,
-                    0,
-                    bounds.width,
-                    bounds.height,
                     g,
-                    clipx,
-                    clipy,
-                    clipwidth,
-                    clipheight,
-                    false,
-                    false,
-                    false,
-                    false,
-                    0,
-                    0,
-                    0,
-                    0,
-                    focus,
-                    enabled ? (pressed ? 'e' : 'l') : 'd',
-                    "center",
-                    true,
-                    enabled && (inside != pressed));
+                    new IconTextSpec(0, 0, bounds.width, bounds.height, enabled ? (pressed ? 'e' : 'l') : 'd')
+                            .clip(clipx, clipy, clipwidth, clipheight)
+                            .focus(focus)
+                            .align("center")
+                            .mnemonic(true)
+                            .underline(enabled && (inside != pressed)));
         } else { // disabled toggled
             char mode = enabled ? ((inside != pressed) ? 'h' : ((pressed || toggled) ? 'p' : 'g')) : 'd';
             t.paint(
                     component,
-                    0,
-                    0,
-                    bounds.width,
-                    bounds.height,
                     g,
-                    clipx,
-                    clipy,
-                    clipwidth,
-                    clipheight,
-                    true,
-                    true,
-                    true,
-                    true,
-                    2,
-                    5,
-                    2,
-                    5,
-                    focus,
-                    mode,
-                    "center",
-                    true,
-                    false);
+                    new IconTextSpec(0, 0, bounds.width, bounds.height, mode)
+                            .clip(clipx, clipy, clipwidth, clipheight)
+                            .border(true, true, true, true)
+                            .padding(2, 5, 2, 5)
+                            .focus(focus)
+                            .align("center")
+                            .mnemonic(true));
             // (enabled && (is(classname, "button")) && is(get(component, "type"), "default"))...
         }
     }
@@ -347,28 +300,11 @@ final class Renderer {
             boolean enabled) {
         t.paint(
                 component,
-                0,
-                0,
-                bounds.width,
-                bounds.height,
                 g,
-                clipx,
-                clipy,
-                clipwidth,
-                clipheight,
-                false,
-                false,
-                false,
-                false,
-                0,
-                t.block + 3,
-                0,
-                0,
-                false,
-                enabled ? 'e' : 'd',
-                "left",
-                true,
-                false);
+                new IconTextSpec(0, 0, bounds.width, bounds.height, enabled ? 'e' : 'd')
+                        .clip(clipx, clipy, clipwidth, clipheight)
+                        .padding(0, t.block + 3, 0, 0)
+                        .mnemonic(true));
 
         boolean selected = t.getBoolean(component, "selected", false);
         String group = t.getString(component, "group", null);
@@ -804,28 +740,11 @@ final class Renderer {
 
                         t.paint(
                                 column,
-                                x - view.x,
-                                0,
-                                width,
-                                port.y - 1,
                                 g,
-                                clipx,
-                                clipy,
-                                clipwidth,
-                                clipheight,
-                                true,
-                                true,
-                                false,
-                                lastcolumn,
-                                1,
-                                1,
-                                0,
-                                0,
-                                false,
-                                enabled ? 'g' : 'd',
-                                "left",
-                                false,
-                                false);
+                                new IconTextSpec(x - view.x, 0, width, port.y - 1, enabled ? 'g' : 'd')
+                                        .clip(clipx, clipy, clipwidth, clipheight)
+                                        .border(true, true, false, lastcolumn)
+                                        .padding(1, 1, 0, 0));
 
                         Object sort = Thinlet.get(column, "sort"); // "none", "ascent", "descent"
                         if (sort != null) {
@@ -947,28 +866,15 @@ final class Renderer {
                 }
                 t.paint(
                         choice,
-                        r.x,
-                        r.y,
-                        portwidth,
-                        r.height,
                         g,
-                        clipx,
-                        clipy,
-                        clipwidth,
-                        clipheight,
-                        false,
-                        false,
-                        false,
-                        false,
-                        2,
-                        4,
-                        2,
-                        4,
-                        false,
-                        t.getBoolean(choice, "enabled", true) ? ((lead == choice) ? 's' : 't') : 'd',
-                        "left",
-                        false,
-                        false);
+                        new IconTextSpec(
+                                        r.x,
+                                        r.y,
+                                        portwidth,
+                                        r.height,
+                                        t.getBoolean(choice, "enabled", true) ? ((lead == choice) ? 's' : 't') : 'd')
+                                .clip(clipx, clipy, clipwidth, clipheight)
+                                .padding(2, 4, 2, 4));
             }
         } else if ((Thinlet.is(classname, "panel")) || (Thinlet.is(classname, "dialog"))) {
             for (Object comp = Thinlet.get(component, ":comp"); comp != null; comp = Thinlet.get(comp, ":next")) {
@@ -1042,28 +948,10 @@ final class Renderer {
                     boolean itemenabled = enabled && t.getBoolean(item, "enabled", true);
                     t.paint(
                             item,
-                            r.x,
-                            r.y,
-                            viewwidth,
-                            r.height,
                             g,
-                            clipx,
-                            clipy,
-                            clipwidth,
-                            clipheight,
-                            false,
-                            false,
-                            false,
-                            false,
-                            1,
-                            3,
-                            1,
-                            3,
-                            false,
-                            itemenabled ? 'e' : 'd',
-                            "left",
-                            false,
-                            false);
+                            new IconTextSpec(r.x, r.y, viewwidth, r.height, itemenabled ? 'e' : 'd')
+                                    .clip(clipx, clipy, clipwidth, clipheight)
+                                    .padding(1, 3, 1, 3));
                     if (Thinlet.is(classname, "tree")) {
                         int x = r.x - t.block / 2;
                         int y = r.y + (r.height - 1) / 2;
@@ -1113,28 +1001,10 @@ final class Renderer {
                             boolean cellenabled = enabled && t.getBoolean(cell, "enabled", true);
                             t.paint(
                                     cell,
-                                    r.x + x,
-                                    r.y,
-                                    iwidth,
-                                    r.height - 1,
                                     g,
-                                    clipx,
-                                    clipy,
-                                    clipwidth,
-                                    clipheight,
-                                    false,
-                                    false,
-                                    false,
-                                    false,
-                                    1,
-                                    1,
-                                    1,
-                                    1,
-                                    false,
-                                    cellenabled ? 'e' : 'd',
-                                    "left",
-                                    false,
-                                    false);
+                                    new IconTextSpec(r.x + x, r.y, iwidth, r.height - 1, cellenabled ? 'e' : 'd')
+                                            .clip(clipx, clipy, clipwidth, clipheight)
+                                            .padding(1, 1, 1, 1));
                         }
                         i++;
                         x += iwidth;
@@ -1198,28 +1068,17 @@ final class Renderer {
         } else {
             t.paint(
                     component,
-                    0,
-                    0,
-                    bounds.width,
-                    bounds.height,
                     g,
-                    clipx,
-                    clipy,
-                    clipwidth,
-                    clipheight,
-                    true,
-                    true,
-                    true,
-                    true,
-                    1,
-                    1,
-                    1,
-                    1 + t.block,
-                    focus,
-                    enabled ? ((inside != pressed) ? 'h' : (pressed ? 'p' : 'g')) : 'd',
-                    "left",
-                    false,
-                    false);
+                    new IconTextSpec(
+                                    0,
+                                    0,
+                                    bounds.width,
+                                    bounds.height,
+                                    enabled ? ((inside != pressed) ? 'h' : (pressed ? 'p' : 'g')) : 'd')
+                            .clip(clipx, clipy, clipwidth, clipheight)
+                            .border(true, true, true, true)
+                            .padding(1, 1, 1, 1 + t.block)
+                            .focus(focus));
             g.setColor(enabled ? t.c_text : t.c_disable);
             Renderer.arrow(g, bounds.width - t.block, 0, t.block, bounds.height, 'S');
         }
@@ -1260,28 +1119,21 @@ final class Renderer {
                 boolean tabenabled = enabled && t.getBoolean(tab, "enabled", true);
                 t.paint(
                         tab,
-                        r.x + bx,
-                        r.y + by,
-                        r.width - bw,
-                        r.height - bh,
                         g,
-                        clipx,
-                        clipy,
-                        clipwidth,
-                        clipheight,
-                        (!Thinlet.is(placement, "bottom")),
-                        (!Thinlet.is(placement, "right")),
-                        !stacked && (!Thinlet.is(placement, "top")),
-                        (!Thinlet.is(placement, "left")),
-                        1,
-                        3,
-                        1,
-                        3,
-                        false,
-                        tabenabled ? (hover ? 'h' : 'g') : 'd',
-                        "left",
-                        true,
-                        false);
+                        new IconTextSpec(
+                                        r.x + bx,
+                                        r.y + by,
+                                        r.width - bw,
+                                        r.height - bh,
+                                        tabenabled ? (hover ? 'h' : 'g') : 'd')
+                                .clip(clipx, clipy, clipwidth, clipheight)
+                                .border(
+                                        (!Thinlet.is(placement, "bottom")),
+                                        (!Thinlet.is(placement, "right")),
+                                        !stacked && (!Thinlet.is(placement, "top")),
+                                        (!Thinlet.is(placement, "left")))
+                                .padding(1, 3, 1, 3)
+                                .mnemonic(true));
             } else {
                 selectedtab = tab;
                 // paint tabbedpane border
@@ -1321,28 +1173,17 @@ final class Renderer {
             int pv = stacked ? 1 : (horizontal ? 2 : 3);
             t.paint(
                     selectedtab,
-                    r.x,
-                    r.y,
-                    r.width,
-                    r.height,
                     g,
-                    clipx,
-                    clipy,
-                    clipwidth,
-                    clipheight,
-                    (!Thinlet.is(placement, "bottom")),
-                    (!Thinlet.is(placement, "right")),
-                    !stacked && (!Thinlet.is(placement, "top")),
-                    (!Thinlet.is(placement, "left")),
-                    pv,
-                    ph,
-                    pv,
-                    ph,
-                    focus,
-                    enabled ? 'b' : 'i',
-                    "left",
-                    true,
-                    false);
+                    new IconTextSpec(r.x, r.y, r.width, r.height, enabled ? 'b' : 'i')
+                            .clip(clipx, clipy, clipwidth, clipheight)
+                            .border(
+                                    (!Thinlet.is(placement, "bottom")),
+                                    (!Thinlet.is(placement, "right")),
+                                    !stacked && (!Thinlet.is(placement, "top")),
+                                    (!Thinlet.is(placement, "left")))
+                            .padding(pv, ph, pv, ph)
+                            .focus(focus)
+                            .mnemonic(true));
         }
         g.setClip(pcx, pcy, pcw, pch);
     }
@@ -1373,28 +1214,17 @@ final class Renderer {
             boolean hoover = (selected == null) && (t.insidepart == menu);
             t.paint(
                     menu,
-                    mb.x,
-                    0,
-                    mb.width,
-                    bounds.height,
                     g,
-                    clipx,
-                    clipy,
-                    clipwidth,
-                    clipheight, // TODO disabled
-                    armed,
-                    armed,
-                    true,
-                    armed,
-                    1,
-                    3,
-                    1,
-                    3,
-                    false,
-                    enabled ? (menuenabled ? (armed ? 's' : (hoover ? 'h' : 'g')) : 'r') : 'd',
-                    "left",
-                    true,
-                    false);
+                    new IconTextSpec(
+                                    mb.x,
+                                    0,
+                                    mb.width,
+                                    bounds.height,
+                                    enabled ? (menuenabled ? (armed ? 's' : (hoover ? 'h' : 'g')) : 'r') : 'd')
+                            .clip(clipx, clipy, clipwidth, clipheight) // TODO disabled
+                            .border(armed, armed, true, armed)
+                            .padding(1, 3, 1, 3)
+                            .mnemonic(true));
             lastx = mb.x + mb.width;
         }
         t.paintRect(
@@ -1443,28 +1273,11 @@ final class Renderer {
                 boolean menuenabled = t.getBoolean(menu, "enabled", true);
                 t.paint(
                         menu,
-                        r.x,
-                        r.y,
-                        bounds.width - 2,
-                        r.height,
                         g,
-                        clipx,
-                        clipy,
-                        clipwidth,
-                        clipheight,
-                        false,
-                        false,
-                        false,
-                        false,
-                        2,
-                        (Thinlet.is(itemclass, "checkboxmenuitem")) ? (t.block + 7) : 4,
-                        2,
-                        4,
-                        false,
-                        menuenabled ? (armed ? 's' : 't') : 'd',
-                        "left",
-                        true,
-                        false);
+                        new IconTextSpec(r.x, r.y, bounds.width - 2, r.height, menuenabled ? (armed ? 's' : 't') : 'd')
+                                .clip(clipx, clipy, clipwidth, clipheight)
+                                .padding(2, (Thinlet.is(itemclass, "checkboxmenuitem")) ? (t.block + 7) : 4, 2, 4)
+                                .mnemonic(true));
                 if (Thinlet.is(itemclass, "checkboxmenuitem")) {
                     boolean checked = t.getBoolean(menu, "selected", false);
                     String group = t.getString(menu, "group", null);
@@ -1664,28 +1477,11 @@ final class Renderer {
         if (Thinlet.is(classname, "dialog")) {
             t.paint(
                     component,
-                    0,
-                    0,
-                    bounds.width,
-                    3 + titleheight,
                     g,
-                    clipx,
-                    clipy,
-                    clipwidth,
-                    clipheight,
-                    true,
-                    true,
-                    false,
-                    true,
-                    1,
-                    2,
-                    1,
-                    2,
-                    false,
-                    'g',
-                    "left",
-                    false,
-                    false);
+                    new IconTextSpec(0, 0, bounds.width, 3 + titleheight, 'g')
+                            .clip(clipx, clipy, clipwidth, clipheight)
+                            .border(true, true, false, true)
+                            .padding(1, 2, 1, 2));
             int controlx = bounds.width - titleheight - 1;
             if (t.getBoolean(component, "closable", false)) {
                 t.paint(component, g, controlx, 3, titleheight - 2, titleheight - 2, 'c');
@@ -1739,28 +1535,10 @@ final class Renderer {
                     enabled ? 'e' : 'd');
             t.paint(
                     component,
-                    0,
-                    0,
-                    bounds.width,
-                    titleheight, // panel title
                     g,
-                    clipx,
-                    clipy,
-                    clipwidth,
-                    clipheight,
-                    false,
-                    false,
-                    false,
-                    false,
-                    0,
-                    3,
-                    0,
-                    3,
-                    false,
-                    enabled ? 'x' : 'd',
-                    "left",
-                    false,
-                    false);
+                    new IconTextSpec(0, 0, bounds.width, titleheight, enabled ? 'x' : 'd') // panel title
+                            .clip(clipx, clipy, clipwidth, clipheight)
+                            .padding(0, 3, 0, 3));
         }
 
         if (Thinlet.get(component, ":port") != null) {

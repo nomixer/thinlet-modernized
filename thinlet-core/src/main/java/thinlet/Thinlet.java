@@ -1905,34 +1905,35 @@ public class Thinlet extends Container implements Runnable, Serializable {
     }
 
     /**
-     * Paint component icon and text (using default or custom font)
-     * @param mnemonic find mnemonic index and underline text
+     * Paint component icon and text (using default or custom font). The box, clip,
+     * border edges, padding, and content flags arrive as a typed {@link IconTextSpec}
+     * (D56); {@code s.mnemonic} = find mnemonic index and underline text.
      */
     // package-private for Renderer (D48 seam; japicmp-invisible)
-    void paint(
-            Object component,
-            int x,
-            int y,
-            int width,
-            int height,
-            Graphics g,
-            int clipx,
-            int clipy,
-            int clipwidth,
-            int clipheight,
-            boolean top,
-            boolean left,
-            boolean bottom,
-            boolean right,
-            int toppadding,
-            int leftpadding,
-            int bottompadding,
-            int rightpadding,
-            boolean focus,
-            char mode,
-            String alignment,
-            boolean mnemonic,
-            boolean underline) {
+    void paint(Object component, Graphics g, IconTextSpec s) {
+        // Unpack the spec into the 2005 parameter names; the body below this
+        // prologue is the verbatim 2005 method body (D56 typing slice).
+        int x = s.x;
+        int y = s.y;
+        int width = s.width;
+        int height = s.height;
+        int clipx = s.clipx;
+        int clipy = s.clipy;
+        int clipwidth = s.clipwidth;
+        int clipheight = s.clipheight;
+        boolean top = s.top;
+        boolean left = s.left;
+        boolean bottom = s.bottom;
+        boolean right = s.right;
+        int toppadding = s.toppadding;
+        int leftpadding = s.leftpadding;
+        int bottompadding = s.bottompadding;
+        int rightpadding = s.rightpadding;
+        boolean focus = s.focus;
+        char mode = s.mode;
+        String alignment = s.alignment;
+        boolean mnemonic = s.mnemonic;
+        boolean underline = s.underline;
         paint(component, x, y, width, height, g, top, left, bottom, right, mode);
         if (top) {
             y++;

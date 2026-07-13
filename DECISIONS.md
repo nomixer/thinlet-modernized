@@ -2031,3 +2031,66 @@ would mean the move changed behavior and is a defect, never a re-baseline.
 
 **Cross-ref** D42/D43 (Cut 2 charter), D45 (tooltip = net-invisible), D48 (seam style,
 hoist, widening comment), D50 (guardrails), D52 (forecast + regex trap), D44 (container).
+
+## D56 — Type the drawing vocabulary: `IconTextSpec` for the icon+text paint dispatcher
+
+**Date:** 2026-07-13. **Status:** accepted. **Phase:** 3 (Cut 2 tail — "type the drawing
+vocabulary").
+
+**Context.** With the dispatch folded (D55), the remaining Cut 2 clause was typing the
+drawing vocabulary. The wart: the icon+text `paint` dispatcher — **23 formals** (D49's
+"22-arg" was off by one; pinned here as the sibling of the documented 11-arg-decoy trap) —
+called positionally from **15 sites, all in `Renderer`**: box ×4 + `Graphics` + clip ×4 +
+border edges ×4 + padding ×4 + `focus` + `char mode` + `String alignment` + `mnemonic` +
+`underline`, plus the component. The handoff's "two 22-arg overloads" premise was wrong:
+there is one 23-formal dispatcher that *delegates* border+background to the separate
+**11-arg** overload (its first body line).
+
+**Decision.**
+- **New package-private `thinlet.IconTextSpec`** — the fork's first parameter-object
+  class: fluent mutable spec (the builder is its own product; Java-8, one allocation per
+  call). Constructor carries the required box + `char mode`; `clip`/`border`/`padding`/
+  `focus`/`align`/`mnemonic`/`underline` are fluent with defaults (no borders, 0 padding,
+  no focus, `"left"`, no mnemonic/underline). No getters — same-package field reads.
+  **Rule: fresh instance at every call site, never cache or reuse one** — a reused mutable
+  spec is the shared-state hazard the D48 style exists to avoid. D48 note: this is a
+  transient *data carrier*, not a stateful subsystem — the "stateless, explicit-context"
+  discipline governs behavior classes; the spec is compatible with it. japicmp-invisible
+  (D43); new-code header (not Bajzat-attributed — nothing in the file is 2005 source).
+- **Dispatcher re-signatured** to `paint(Object component, Graphics g, IconTextSpec s)`
+  with an **unpack-prologue** (locals with the exact 2005 parameter names), so the method
+  body below the prologue is **byte-identical 2005 code** — including its `alignment`
+  reassignment and the 11-arg delegation. No shim: the dispatcher had zero
+  Thinlet-internal callers.
+- **Evaluation-order note.** The constructor evaluates `mode` *before* the clip/border/
+  padding expressions that positionally preceded it. Safe because every argument at all
+  15 sites is pure (`is`/`get`/`getBoolean`/`getString`/field reads/arithmetic) — the
+  conversion script *asserted* this with a call allowlist; any future impure argument
+  must not rely on group evaluation order.
+- **Scope cut — recorded honestly:** `char mode` keeps the 2005 12-value char vocabulary
+  (an enum would rewrite the verbatim `switch` bodies in both overloads); the 11-arg
+  border overload, the 7-arg dialog-glyph `paint`, `paintRect` (25 sites) and `drawFocus`
+  (8 sites) stay untyped. "Type the drawing vocabulary" is delivered for the wart, not
+  the whole surface; the rest can follow the same recipe if wanted.
+
+**Mechanical discipline.** 13 sites converted by script (paren-balanced top-level split,
+arity-23 match, purity allowlist), 2 comment-bearing sites by hand (`// TODO disabled`
+preserved). **Round-trip audit**: every emitted chain re-parsed and the 23-tuple
+reconstructed (defaults applied for elided groups) and compared token-for-token against
+the pre-conversion originals from git — **15/15 identical**, both before and after the
+elision pass (55 literal-default fluent calls removed). This audit closes the
+conversion-bug classes the golden net cannot see.
+
+**Net gap closed first (new golden, no re-record).** `underline` is non-literal at exactly
+one site (link button) and is drawn only while hovered; no golden hovered a link — an
+underline regression was provably zero-diff. New `input/link.xml` + `link-button-hover`
+interaction scenario, recorded in the CI container (D44), two runs byte-identical, the 48
+existing goldens untouched (now 49). The golden's single `drawLine` is the underline.
+
+**Verification.** Container net (D44): JDK-21 base row green (41 static + 50 interaction
+tests + input suite; Checkstyle/SpotBugs/Spotless clean) after both the typing and the
+elision commits, **zero golden diffs**; crossjdk rows 8/11/17 green on the final tree.
+
+**Cross-ref** D42/D43 (Cut 2 charter, visibility), D44 (container), D45 (net-invisible
+paths), D48 (seam style; parameter-object clarification above), D49 (the "22-arg" naming),
+D52 (mechanical-move discipline), D55 (dispatch fold).
