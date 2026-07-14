@@ -96,8 +96,9 @@ final class InteractionScenarios {
             d.enter();
             d.type("two");
         }));
-        // :offset scrolled branch (D61): a fixed-width (FontMetrics-independent)
-        // 40px field; six typed chars overflow the text space decisively, so
+        // :offset scrolled branch (D61): a fixed-size (FontMetrics-independent)
+        // 40x20 field — getPreferredSize honors width/height only when BOTH are
+        // set. Six typed chars overflow the 36px text space decisively, so
         // layoutField's clamp chain stores a positive :offset whose presence
         // cannot flip on sub-pixel metric drift (caret keyboard-driven per D41).
         s.add(new Scenario("offset-field-scrolled", "/input/offset.xml", d -> {
