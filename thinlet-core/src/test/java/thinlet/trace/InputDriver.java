@@ -51,18 +51,31 @@ final class InputDriver {
     static final int WIDTH = 1024;
     static final int HEIGHT = 768;
 
-    private final Funnel thinlet;
+    private final Thinlet thinlet;
     private final Object root;
+    private final EventSink sink;
     private long when = 1L;
 
-    private InputDriver(Funnel thinlet, Object root) {
+    private InputDriver(Thinlet thinlet, Object root, EventSink sink) {
         this.thinlet = thinlet;
         this.root = root;
+        this.sink = sink;
+    }
+
+    /**
+     * Routes a synthesized AWT event into a host's protected {@code processEvent}
+     * funnel — the seam that lets {@link #attach} drive an existing app host (a
+     * live Drafts, say) with the same gesture library {@link #load} fixtures use
+     * (DECISIONS.md D65).
+     */
+    interface EventSink {
+        void dispatch(AWTEvent e);
     }
 
     /** Thinlet subclass that exposes the protected event funnel to the driver. */
-    private static final class Funnel extends Thinlet {
-        void dispatch(AWTEvent e) {
+    private static final class Funnel extends Thinlet implements EventSink {
+        @Override
+        public void dispatch(AWTEvent e) {
             processEvent(e);
         }
     }
@@ -97,9 +110,24 @@ final class InputDriver {
             thinlet.setFont(base.deriveFont((float) (base.getSize2D() * fontScale)));
         }
         pump();
-        InputDriver driver = new InputDriver(thinlet, root);
+        InputDriver driver = new InputDriver(thinlet, root, thinlet);
         // Thinlet computes widget bounds during paint, not on resize. Run one
         // throwaway paint so coordinates are available before the first event.
+        driver.paint();
+        return driver;
+    }
+
+    /**
+     * Attaches the driver to an existing, already-populated Thinlet host (e.g. a
+     * live Drafts app whose constructor parsed and added its own UI). Mirrors
+     * {@link #load}'s host preparation — size, queue flush, one throwaway paint
+     * so widget bounds exist before the first event — but parses/adds nothing
+     * (DECISIONS.md D65).
+     */
+    static InputDriver attach(Thinlet host, Object root, EventSink sink) {
+        host.setSize(WIDTH, HEIGHT);
+        pump();
+        InputDriver driver = new InputDriver(host, root, sink);
         driver.paint();
         return driver;
     }
@@ -430,7 +458,7 @@ final class InputDriver {
     }
 
     private void dispatch(AWTEvent e) {
-        on(() -> thinlet.dispatch(e));
+        on(() -> sink.dispatch(e));
         pump();
     }
 

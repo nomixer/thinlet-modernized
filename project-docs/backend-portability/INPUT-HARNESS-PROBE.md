@@ -128,10 +128,13 @@ and run-to-run determinism is proven once in `InputSmokeTest`. There are **no co
 input golden files** (input state is read live), and `trace-tolerance.json` is unchanged
 (its ±2px is for cross-JDK *paint* goldens, not these same-JVM input diffs).
 
-**Still deferred** (unchanged from the probe limits): a standalone `thinlet-testkit` module
-(reactor-cycle constraint — D37), fully trace-backed `INPUT-SURFACE.md`, scroll-offset
-*item* targeting, tooltip/auto-repeat timers, and keyboard type-ahead (wall-clock +
-text-width dependent). **Resolved (D41):** the D40 **mouse click → caret index** deferral —
+**Still deferred** (unchanged from the probe limits): fully trace-backed
+`INPUT-SURFACE.md`, scroll-offset *item* targeting, and keyboard type-ahead (wall-clock +
+text-width dependent). **Resolved (D65):** the standalone `thinlet-testkit` module —
+landed instead as the `thinlet-core` test-jar consumed by `thinlet-drafts` (the D37
+reactor cycle never materializes). **Resolved (D62/D64):** tooltip/auto-repeat timers —
+the tooltip is captured via a bounded poll, and auto-repeat is neutralized structurally
+(clamp-adjacent positioning) in the D64 characterization suite. **Resolved (D41):** the D40 **mouse click → caret index** deferral —
 a manual real-desktop probe confirmed a click lands the caret on the nearest character
 boundary, and `processField`'s press branch self-primes its reference (`setReference` +
 `:offset`=0), so `InputDriver.clickAt` only has to aim the press. `InputTextEditTest` now

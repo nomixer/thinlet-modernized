@@ -27,12 +27,12 @@ if [ -z "$jdk" ]; then
   cmd='MAVEN_USER_HOME="$PWD/.m2" ./mvnw -B -Dmaven.repo.local=.m2/repository verify'
 else
   # Mirrors ci.yml `test` matrix row (same flags, same robot exclusion), scoped
-  # to thinlet-core (-pl … -am): the whole suite lives there, and the unscoped
-  # reactor `test` only works from CI's always-clean checkout — in a local
-  # workspace with populated target/ dirs, surefire in the test-less demos
-  # module skips its no-tests early-exit and dies on `excludedGroups` requiring
-  # a JUnit engine.
-  cmd='MAVEN_USER_HOME="$PWD/.m2" ./mvnw -B -Dmaven.repo.local=.m2/repository -pl thinlet-core -am -Pcrossjdk -Djdk.target='"$jdk"' -DexcludedGroups=robot -t .mvn/toolchains.xml test'
+  # to the two test-carrying modules (-pl … -am): thinlet-core's net plus the
+  # thinlet-drafts playthrough (D65), which rides the same crossjdk fork with
+  # its own DISPLAY/argLine surefire block. thinlet-demos comes along via -am
+  # but is harmless anywhere now: its pom pins surefire skipTests (the D44
+  # dirty-workspace `excludedGroups`-without-engine gotcha is de-fanged).
+  cmd='MAVEN_USER_HOME="$PWD/.m2" ./mvnw -B -Dmaven.repo.local=.m2/repository -pl thinlet-core,thinlet-drafts -am -Pcrossjdk -Djdk.target='"$jdk"' -DexcludedGroups=robot -t .mvn/toolchains.xml test'
 fi
 
 exec docker run --rm --user vscode \
