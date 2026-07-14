@@ -2385,3 +2385,40 @@ over-tolerance sidecar diff on a crossjdk row is a finding to triage — never w
 `defaultPx`, never re-record to mask (D7/D35); options are the reserved `perOp` hook
 or a D-referenced fixture allowlist. (Cross-ref D7 tolerance, D24 harness, D44/D52
 golden discipline, D45/D47/D53 interaction net, PHASE-3-GOALS Cut 4.)
+
+## D62 — Tooltip capture: the last D45-deferred interaction golden (timer absorbed by a bounded poll)
+
+**Date:** 2026-07-14. **Status:** accepted. **Phase:** 3 (net; test scope only — zero
+`src/main` change).
+
+**Context.** D45 designed the interaction goldens as held-state captures with no time
+dependence and deferred exactly one state as timer-coupled: the tooltip (the single
+`timer` thread's 750 ms delay). That left `paintDesktop`'s tooltip overlay the one
+net-invisible paint path, blocking the `paintDesktop`/`paintReverse` extraction
+(the D48 hoist's javadoc says so in place).
+
+**Decision — real timer, bounded poll; no synthetic hook.** The capture drives the
+production path end to end: `hover` lands as a `MOUSE_MOVED` onto a fresh widget,
+which `processEvent` turns into `MOUSE_ENTERED` + `setTimer(750L)`; `showTip` then
+fires on Thinlet's timer thread and writes `:tooltipbounds`. The new
+`InputDriver.awaitTooltip` polls that key (25 ms steps, 10 s deadline) — the **only**
+nondeterminism is *when* the timer fires, which the poll absorbs; the shown frame is
+a pure function of the scripted pointer position (tooltip x,y = mouse + 10, clamped
+to the desktop) and the tooltip text. Text kept short (`"Tip"`) so the
+FontMetrics-derived width/height sit inside the D7 ±2 px gate. The cross-thread
+write/read (timer thread → test thread) is unsynchronized in the 2005 code; the
+sleep-poll plus the post-poll paint re-read make it benign in practice.
+
+**Cost accepted.** Every regression run of the scenario waits the real ~750 ms
+(per JVM row). One scenario; not worth a test-only injection seam that would touch
+`src/main` during 3a.
+
+**Validation (container, D44).** `tooltip-shown` golden records the full overlay
+(border + fill + `drawString "Tip"` at mouse+10 — the `paintDesktop` branch);
+porcelain gate additions-only: all 50 pre-existing interaction goldens and 58 D61
+sidecars round-tripped byte-identical (the tooltip fixture itself carries no
+scroll state — its sidecar is correctly absent). Base row 268 tests green; crossjdk
+8/11/17 green. **Every interaction state D45 enumerated is now guarded; the
+`paintDesktop`/`paintReverse` extraction is unblocked** (the next Cut 2 close-out
+slice). (Cross-ref D45 determinism design, D47/D51/D53 the other packages, D48/D50
+hoist + shared-helper gates, D61 sidecars.)
