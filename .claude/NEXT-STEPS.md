@@ -14,7 +14,7 @@
   (no horizontal-scroll scenario).
 - Net: 41 static + 50 interaction goldens + 58 layout-state sidecars + input
   suite + 25 contract pins (`DescriptorContractTest`); strict-intern tripwire
-  live in every test JVM (D43). Base row: 268 tests.
+  live in every test JVM (D43). Base row: 266 tests.
 
 ## Next work, in order
 
