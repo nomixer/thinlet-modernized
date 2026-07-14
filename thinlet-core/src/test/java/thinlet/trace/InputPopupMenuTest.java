@@ -12,9 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * Input regression net — context menu ({@code popupmenu} attribute): open state is
- * the getter-less {@code ":popup"} chain plus the {@code menushown}/action
- * recordings; the trigger is a meta press ({@link InputDriver#metaClick}); one
- * re-paint diff corroborates the open (DECISIONS.md D64).
+ * the getter-less {@code ":popup"} chain plus {@code menushown}/action recordings;
+ * the trigger is a meta press ({@link InputDriver#metaClick}; DECISIONS.md D64).
  */
 @Tag("input")
 @ExtendWith(XvfbDisplayExtension.class)

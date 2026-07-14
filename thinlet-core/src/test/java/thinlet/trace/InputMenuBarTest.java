@@ -11,10 +11,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
- * Input regression net — menubar: the armed title ({@code "selected"}) and the open
- * chain ({@code ":popup"}) have no public getter (menubar registers no attributes),
- * so assertions chain-walk via {@link InputDriver#property} plus recorded action
- * firings; one re-paint diff corroborates the open (DECISIONS.md D64).
+ * Input regression net — menubar: armed title ({@code "selected"}) and open chain
+ * ({@code ":popup"}) have no public getter, so assertions chain-walk via
+ * {@link InputDriver#property} plus recorded action firings (DECISIONS.md D64).
  */
 @Tag("input")
 @ExtendWith(XvfbDisplayExtension.class)
