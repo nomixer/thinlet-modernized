@@ -72,9 +72,9 @@ keyboard `press`/type), and `InputSmokeTest` + per-widget `InputList`/`Tree`/`Co
 expand/collapse, and scrolling **black-box** via public getters + ephemeral same-JVM
 re-paint trace diffs (no input goldens). Green on JDK 21; cross-JDK (8/11/17) is on the
 `crossjdk` CI matrix. Findings + acceptance gate in
-`project-docs/backend-portability/INPUT-HARNESS-PROBE.md`. Deferred (D37): extracting the
-harness into a standalone `thinlet-testkit` module (reactor-cycle constraint — waits for a
-second consumer).
+`project-docs/backend-portability/INPUT-HARNESS-PROBE.md`. The testkit extraction D37
+deferred landed as the `thinlet-core` **test-jar** (no standalone module — the reactor
+cycle never materializes; D65), consumed by the `thinlet-drafts` test tree.
 
 Load-bearing design = **D7 trace-tolerance model**: method-name + arg
 type/arity **structural-exact**; booleans/colors/strings/enums

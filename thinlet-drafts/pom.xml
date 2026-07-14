@@ -24,6 +24,9 @@
   <properties>
     <!-- Reactor module only; never deployed (see DECISIONS.md D4). -->
     <maven.deploy.skip>true</maven.deploy.skip>
+    <!-- Mirrors thinlet-core's tripwire knob (D43) so a -DstrictIntern=false
+         bisect applies reactor-wide. -->
+    <strictIntern>true</strictIntern>
   </properties>
 
   <dependencies>
@@ -33,5 +36,44 @@
       <artifactId>thinlet-demos</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <!-- The thinlet-testkit consumption seam (DECISIONS.md D65): the live-Drafts
+         playthrough reuses the thinlet.trace harness from thinlet-core's
+         attached test-jar - no standalone testkit module (D37's reactor cycle). -->
+    <dependency>
+      <groupId>com.nomixer.thinlet</groupId>
+      <artifactId>thinlet-core</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <environmentVariables>
+            <!-- The controlled headless display (D22); XvfbDisplayExtension owns
+                 the server, surefire only points the fork at it. -->
+            <DISPLAY>:99</DISPLAY>
+          </environmentVariables>
+          <!-- D25 charset pin + D43 tripwire only. No trace.* knobs: the
+               playthrough commits no goldens (D37 getter-first doctrine). -->
+          <argLine>-Dfile.encoding=UTF-8 -Dthinlet.strictIntern=${strictIntern}</argLine>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

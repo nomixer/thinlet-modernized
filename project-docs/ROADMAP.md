@@ -103,11 +103,12 @@ never "confirmed behavior-preserving" (**D36**).
 - **Gate:** met for same-JDK — Phase 3 input-touching refactors may proceed against this
   net (cross-JDK confirmation pending CI). Two findings recorded in D37: the Thinlet
   KEY_PRESSED-vs-KEY_TYPED dispatch split, and the `MouseWheelEvent` requirement.
-- **Deferred to Phase 3 (D37):** extracting the harness into a standalone
-  `thinlet-testkit` Maven module — it hits a `thinlet-core(test) → testkit →
-  thinlet-core(main)` reactor cycle, so it waits for a second consumer. Also deferred (per
-  D36): graduating `INPUT-SURFACE.md` to fully trace-backed, scroll-offset item targeting,
-  drag pseudo-events, and keyboard type-ahead.
+- **Testkit extraction: landed as the `thinlet-core` test-jar (D65).** The standalone
+  `thinlet-testkit` module D37 deferred (its `thinlet-core(test) → testkit →
+  thinlet-core(main)` reactor cycle) never materializes: `thinlet-drafts`' live-app
+  playthrough consumes the harness from the attached tests-classifier jar instead.
+  Still deferred (per D36): graduating `INPUT-SURFACE.md` to fully trace-backed,
+  scroll-offset item targeting, drag pseudo-events, and keyboard type-ahead.
 
 ## Phase 2.y — Broaden the input net + font-scaling dimension ⏳ (splitpane slice landed)
 

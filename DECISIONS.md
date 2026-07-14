@@ -2508,3 +2508,70 @@ the 8/11/17 rows; no FontMetrics-derived number is asserted anywhere (fonts only
 gestures — arrow columns via `width-2`, bar thickness = the `:vertical`/`:horizontal`
 rect's own thickness), so the crossjdk rows are safe by construction. (Cross-ref
 D36/D37/D40/D41/D45/D51/D61/D62.)
+
+## D65 — thinlet-testkit realized as the thinlet-core test-jar; live-Drafts playthrough consumes it
+
+**Date:** 2026-07-14. **Status:** accepted. **Phase:** 3 (net/tooling; zero `src/main`
+change).
+
+**Context.** D37 deferred a standalone `thinlet-testkit` module on a real reactor
+cycle: the module needs a compile dependency on `thinlet-core`
+(`InputDriver.Funnel extends Thinlet` for the protected `processEvent`), while four
+core test classes (`DescriptorContractTest`, `InternTripwireTest`, both quirks tests)
+import `thinlet.trace.XvfbDisplayExtension` — `core(test) → testkit → core(main)`,
+and Maven reactor cycles are scope-blind hard errors. D53 named the live-`Drafts`
+playthrough as the awaited second consumer; it has arrived.
+
+**Decision — the test-jar shape, no new module (supersedes D37's anticipated
+module).** `thinlet-core` attaches a `tests`-classifier jar (`maven-jar-plugin`
+`test-jar` goal); `thinlet-drafts` gains its first test tree consuming
+`thinlet-core:test-jar` (test scope). One dependency edge, no cycle; nothing
+relocates — the golden suite, the four cross-package extension imports, and core's
+CI wiring stay exactly where they are, which is precisely the relocation cost D37
+balked at. Verified: Maven 3.9.11's reactor resolves the tests classifier from
+`target/test-classes` at the `test` phase, so CI's `test`-goal matrix rows work
+unchanged (flagged as a watch item for future Maven upgrades). The tests jar
+deploys with releases — suppressing one classifier is nonstandard gymnastics, the
+artifact is inert and versioned, and shipping it makes the testkit consumable
+outside the reactor (the actual "testkit" promise).
+
+- **The `attach()` seam.** `InputDriver` gains a package-private
+  `interface EventSink { void dispatch(AWTEvent e); }` and
+  `static InputDriver attach(Thinlet host, Object root, EventSink sink)` — the
+  same gesture library, driving an existing app host instead of a parsed fixture;
+  `load()` is unchanged in behavior (its `Funnel` now implements the sink).
+- **`DraftsHost` placement.** `Thinlet.parse(String, …)` resolves classpath-relative
+  to the RUNTIME class's package, so the funnel subclass must live in package
+  `thinlet.drafts`; the playthrough tests live in package `thinlet.trace` inside
+  `thinlet-drafts/src/test` — a split package across the test-jar and the module's
+  own test classes (classpath-legal; no JPMS anywhere; same rationale as the
+  package's own "reuse the package-private trace types" javadoc).
+- **`thinlet-demos` de-fanged (closes the D44 gotcha).** Explicit surefire
+  `<skipTests>true</skipTests>` in the demos pom (configuration, not the
+  `${skipTests}` property, so a CLI `-DskipTests=false` cannot re-arm it): the
+  src/main-only module no longer dies on `-DexcludedGroups=robot` in a dirty
+  workspace, and `local-ci.sh`'s crossjdk row now scopes
+  `-pl thinlet-core,thinlet-drafts -am`.
+- **Drafts surefire block**: `DISPLAY=:99` + `-Dfile.encoding=UTF-8
+  -Dthinlet.strictIntern=${strictIntern}` only — no `trace.*` knobs; the
+  playthrough commits **no goldens** (D37 getter-first doctrine).
+
+**The playthrough (second PR of this pair).** Deterministic-page allowlist, from a
+per-page audit of every `init=`/`action=` handler: interact on TabbedPane, TreeDemo,
+Lists, MDI, DialogDemo, EventLogger, Internationalization, Looks; navigate-only on
+Widgets, FolderBrowser, Choosers, BeanTest, FocusTest, ModalDemo, ProgressMonitor;
+never visit Style (installed-font inventory), System/* (system properties, toolkit
+colors, win.propNames), AutoFill (default locale + user.dir), ClassExplorer
+(JDK-varying reflection), Chart (static unseeded Random). Never click: BeanTest
+"Exit" (`System.exit`), ModalDemo "Start" (nested `EventQueue` loop — hang),
+Choosers (native dialog — hang), ProgressMonitor "Start" (450ms thread), Widgets
+"Load" (2005 relative path). Every scenario ends with a no-ExceptionDialog guard
+(`getCount(desktop) == 1`) so `Drafts.handleException` cannot swallow a real
+failure into a dialog. Q8 (FolderBrowser's hardcoded `C:` NPEs off-Windows into a
+live ExceptionDialog) is pinned there.
+
+**Validation (PR 1).** Full reactor `test` in the CI container: core 326 green
+(the `attach()` refactor is behavior-neutral by the whole existing net), demos
+"Tests are skipped", drafts `DraftsBootTest` green — the live app boots headless
+through the seam, ten nav nodes, real paint frame. (Cross-ref D22/D37/D43/D44/D53,
+PHASE-3-GOALS 3b — the Drafts app becomes the first living test bed.)

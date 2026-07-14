@@ -85,6 +85,22 @@
           <argLine>-Dfile.encoding=UTF-8 -Dthinlet.strictIntern=${strictIntern} -Dtrace.dump.dir=${traceDumpDir} -Dtrace.record=${traceRecord} -Dtrace.diff.inputDir=${traceDiffInputDir} -Dtrace.diff.out=${traceDiffOut}</argLine>
         </configuration>
       </plugin>
+      <!-- Attach the test classes as a tests-classifier jar: the thinlet-testkit
+           consumption seam (DECISIONS.md D65). thinlet-drafts' playthrough tests
+           depend on this artifact instead of a standalone testkit module, which
+           D37 showed creates a reactor cycle. Deploys with releases; inert. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-test-jar</id>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 

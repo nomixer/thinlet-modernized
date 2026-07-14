@@ -32,4 +32,22 @@
       <version>${project.version}</version>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- src/main-only display module: no tests, never will. Without this,
+               surefire in a dirty workspace gets past its no-tests early-exit
+               and fails hard on -DexcludedGroups=robot (no JUnit engine on the
+               module classpath) - the D44 gotcha, permanently de-fanged here.
+               Explicit configuration, not the skipTests property, so a CLI
+               -DskipTests=false cannot re-arm it. See DECISIONS.md D65. -->
+          <skipTests>true</skipTests>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
