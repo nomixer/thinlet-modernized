@@ -122,6 +122,10 @@ absorbed by the coordinate tolerance, not asserted directly.
   session — the maintainer prunes merged branches (GitHub Branches page), and the
   repo's "Automatically delete head branches" setting handles it on merge.
 - Watch CI to green after pushing (webhooks deliver failures, not successes).
+- **Pre-PR Java comment pass (D60), hook-enforced:** `gh pr create` is blocked on
+  branches with Java changes until the D57 comment review is attested — run
+  `scripts/comment-pass.sh` (checklist + files), review, then `scripts/comment-pass.sh
+  done`. Re-attest after new commits.
 - **Precise language:** a non-exhaustive look is a *smoke test*, not
   "verified/confirmed". Reserve "confirmed" for a named source of truth /
   byte-hash / deterministic test / direct observation.
