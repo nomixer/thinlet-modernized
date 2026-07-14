@@ -155,6 +155,24 @@ Each entry, added as quirks are discovered during Phase 1+ test authoring:
 - **Enhanced Thinlet disposition:** fix — wire the glyphs (close/maximize/iconify)
   or stop drawing them when they do nothing.
 
+### Q8 — Drafts FolderBrowser NPEs off-Windows, surfaced as a live ExceptionDialog
+- **What happens:** the Folder browser page roots its lazy filesystem tree at the
+  hardcoded path `C:`; expanding it calls `new File("C:/").list()`, which returns
+  `null` on any non-Windows system, and the unguarded `.length` dereference throws
+  `NullPointerException`. Thinlet's reflective invoke catches it and routes it to
+  `Drafts.handleException`, which pops a real ExceptionDialog over the app.
+- **Why it's a quirk:** a 2005 Windows-era assumption plus a missing null guard —
+  the page is unusable everywhere the modernization fork's CI runs, but it fails
+  *gracefully by accident* (the exception-dialog plumbing works as designed).
+- **Where:** `thinlet-drafts` `FolderBrowser.init` (the `"C:"` root) and
+  `FolderBrowser.expand` (the unguarded `File.list()`); the surfacing path is
+  `Thinlet.handleException` → `Drafts.handleException` → `ExceptionDialog`.
+- **Locked by:** `thinlet.trace.DraftsPlaythroughTest`
+  `#folderBrowserExpandPopsAnExceptionDialogOffWindows` (tagged
+  documents-current-behavior) — deterministic on the Linux CI container.
+- **Enhanced Thinlet disposition:** fix — guard the `null` and root the tree at
+  `File.listRoots()`/`user.home` instead of a hardcoded drive letter.
+
 ## Triaged for Enhanced Thinlet (not behavior-locked)
 
 These D13 candidate findings were investigated during Phase 1 but are *not* pinned

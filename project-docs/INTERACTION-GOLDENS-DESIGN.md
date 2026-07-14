@@ -132,11 +132,12 @@ reasons as every other interaction golden: stub handler = no dynamic content, no
 timer-coupled state, one paint after a held gesture — verified by byte-identical re-record
 and cross-JDK green.
 
-**Deferred:** the *live-`Drafts`-app* playthrough (navigate the nav tree into pages,
-System→Colors) — it would cover the dynamically-injected content, but needs the
-`thinlet-testkit` extraction (D37) and a deterministic-page allowlist (excluding
-system/filesystem/locale-bound pages). Corpus-driven scenarios expand a nav node's child
-rows but cannot follow a click into a page (the navigation handler is stubbed).
+**Landed (D65):** the *live-`Drafts`-app* playthrough — `DraftsPlaythroughTest` in
+`thinlet-drafts` drives the real navigation handler into the pages on the
+deterministic allowlist (system/filesystem/locale-bound pages excluded, hazardous
+clicks structurally never made), asserting the dynamically-injected content via
+public getters with no committed goldens. The corpus-driven scenarios above remain
+the paint-golden half; the playthrough is the behavior half.
 
 ## Deferred / non-goals
 
