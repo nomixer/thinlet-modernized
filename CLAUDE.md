@@ -62,19 +62,18 @@ diff (D33), and the `trace-curator` curation of `project-docs/backend-portabilit
 (D34 rendering + layout; `INPUT-SURFACE.md` source-derived per D35). The harness design
 below remains load-bearing.
 
-**Phase 2.x** (ROADMAP) is the **input-capture harness**, a gate before Phase 3: the
-golden net is paint + layout only, so the input surface of `Thinlet.java` is untested,
-and a regression net must capture that baseline *before* any input-touching refactor
-(D36). The **input regression MVP has landed (D37)**: `InputDriver` drives scripted AWT
-events through the real `processEvent` headless on Xvfb `:99` (mouse click/wheel,
-keyboard `press`/type), and `InputSmokeTest` + per-widget `InputList`/`Tree`/`ComboBox`/
-`Scroll` tests (`@Tag("input")`, run by default) assert list/tree/combobox selection,
-expand/collapse, and scrolling **black-box** via public getters + ephemeral same-JVM
-re-paint trace diffs (no input goldens). Green on JDK 21; cross-JDK (8/11/17) is on the
-`crossjdk` CI matrix. Findings + acceptance gate in
-`project-docs/backend-portability/INPUT-HARNESS-PROBE.md`. The testkit extraction D37
-deferred landed as the `thinlet-core` **test-jar** (no standalone module — the reactor
-cycle never materializes; D65), consumed by the `thinlet-drafts` test tree.
+**Phase 2.x** (ROADMAP) built the **input-capture harness** as a gate before Phase 3:
+the golden net was paint + layout only, leaving `Thinlet.java`'s input surface
+untested, and a regression net must capture its baseline *before* any input-touching
+refactor (D36). The MVP landed with D37 — `InputDriver` drives scripted AWT events
+through the real `processEvent` headless on Xvfb `:99` — and the net has since grown
+through the D64 Cut-6-surface characterization suite and the D65 live-`Drafts`
+playthrough: `@Tag("input")` suites, run by default, asserting **black-box** via
+public getters + ephemeral same-JVM re-paint trace diffs (no input goldens), green on
+all JDK rows. Findings + acceptance gate in
+`project-docs/backend-portability/INPUT-HARNESS-PROBE.md`. The testkit ships as the
+`thinlet-core` **test-jar** (no standalone module — the reactor cycle never
+materializes; D65), consumed by the `thinlet-drafts` test tree.
 
 Load-bearing design = **D7 trace-tolerance model**: method-name + arg
 type/arity **structural-exact**; booleans/colors/strings/enums
