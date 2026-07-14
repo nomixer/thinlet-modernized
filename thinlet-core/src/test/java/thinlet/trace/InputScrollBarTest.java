@@ -10,19 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
- * Input regression net — scrollbar mouse parts: arrows, tracks, knob (D64). The
- * scroll offset lives in the private {@code :view} rectangle (no public getter), so
- * assertions read it via {@link InputDriver#viewRect} — with one re-paint diff
- * corroboration on the first arrow test since the primary observable is a
- * chain-walk, not a public getter.
- *
- * <p>Timer posture (D64): arrow/track presses arm the 300ms auto-repeat, so every
- * mouse assertion here is positioned to make repeats clamped no-ops: arrows are
- * clicked one 10px step from their clamp, and the fixture's page extent (the
- * {@code :port} height) exceeds the whole scroll range, so a track click lands
- * exactly at the clamp. Knob drags arm no timer. The scrollbar thickness equals
- * the {@code :vertical} rect width (/{@code :horizontal} height), which is how the
- * arrow-adjacent aim points are derived without touching FontMetrics.
+ * Input regression net — scrollbar arrows/tracks/knob: the offset lives in the
+ * private {@code :view} rect (chain-walk read; one re-paint diff corroboration),
+ * and every mouse assertion is positioned so 300ms auto-repeat steps clamp to
+ * no-ops (DECISIONS.md D64).
  */
 @Tag("input")
 @ExtendWith(XvfbDisplayExtension.class)

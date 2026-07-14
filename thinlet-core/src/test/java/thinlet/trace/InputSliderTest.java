@@ -12,14 +12,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import thinlet.Thinlet;
 
 /**
- * Input regression net — {@code slider} (D64). The value is the integer
- * {@code "value"} attribute, so assertions are exact getter reads and the re-paint
- * diff corroboration is skipped (InputSplitPaneTest precedent). Interior mouse
- * positions map through the font-derived knob size, so only the clamped extremes
- * are asserted exactly; interior clicks assert ordering.
- *
- * <p>Keyboard tests focus via {@code requestFocus} — a mouse click would itself
- * jump the value. Keyboard changes never arm a timer.
+ * Input regression net — slider: the integer {@code "value"} getter is exact
+ * (re-paint diff skipped); interior mouse positions are font-mapped so only the
+ * clamps are exact and interior clicks assert ordering (DECISIONS.md D64).
  */
 @Tag("input")
 @ExtendWith(XvfbDisplayExtension.class)

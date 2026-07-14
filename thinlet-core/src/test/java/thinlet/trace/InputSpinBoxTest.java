@@ -11,14 +11,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import thinlet.Thinlet;
 
 /**
- * Input regression net — {@code spinbox} (D64). The live value is the {@code "text"}
- * string attribute, so every assertion is an exact getter read and the re-paint diff
- * corroboration is skipped (InputSplitPaneTest precedent).
- *
- * <p>Timer posture (D64): a mouse press on a spin arrow arms the 375ms auto-repeat,
- * so mouse tests spin from a clamp-adjacent value — the first {@code processSpin}
- * succeeds and every repeat is a clamped no-op, making the final text exact with no
- * flake window. Keyboard spinning never arms the timer.
+ * Input regression net — spinbox: the live value is the {@code "text"} string, so
+ * assertions are exact getter reads (re-paint diff skipped) and mouse spins start
+ * clamp-adjacent to neutralize the 375ms auto-repeat (DECISIONS.md D64).
  */
 @Tag("input")
 @ExtendWith(XvfbDisplayExtension.class)

@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Event handler that records invocations in order, for asserting getter-less
- * behavior (menu/action firing, focus traversal) via Thinlet's
- * {@code method(this.name)} String-argument binding (DECISIONS.md D64).
+ * Event handler recording invocations in order — the assertion vehicle for
+ * getter-less behavior (which action/menushown fired, where focus went) via
+ * Thinlet's {@code method(this.name)} String-argument binding (DECISIONS.md D64).
  */
 public class RecordingHandler extends InputHandler {
 

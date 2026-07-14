@@ -10,11 +10,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import thinlet.Thinlet;
 
 /**
- * Input regression net — {@code tabbedpane} (D64). Selection is the public
- * {@code getSelectedIndex}; focus movement — which has no public getter — is
- * observed through recorded {@code focusgained} handler invocations
- * ({@link RecordingHandler}). Exact getters/recordings, so the re-paint diff
- * corroboration is skipped (InputSplitPaneTest precedent).
+ * Input regression net — tabbedpane: selection via the public getSelectedIndex;
+ * focus movement (no public getter) via recorded focusgained sequences
+ * ({@link RecordingHandler}); exact, so the re-paint diff is skipped (D64).
  */
 @Tag("input")
 @ExtendWith(XvfbDisplayExtension.class)
