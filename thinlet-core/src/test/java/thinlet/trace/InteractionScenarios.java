@@ -96,6 +96,15 @@ final class InteractionScenarios {
             d.enter();
             d.type("two");
         }));
+        // :offset scrolled branch (D61): a fixed-width (FontMetrics-independent)
+        // 40px field; six typed chars overflow the text space decisively, so
+        // layoutField's clamp chain stores a positive :offset whose presence
+        // cannot flip on sub-pixel metric drift (caret keyboard-driven per D41).
+        s.add(new Scenario("offset-field-scrolled", "/input/offset.xml", d -> {
+            d.focusGained();
+            d.click(d.find("nf"));
+            d.type("wwwwww");
+        }));
         // Focused list: selected row fill + lead-row focus rect (model state via
         // gesture; :lead set by the click)
         s.add(new Scenario("list-selected-lead-focus", "/input/list.xml", d -> {
@@ -316,12 +325,23 @@ final class InteractionScenarios {
 
     /** Runs a scenario and captures the post-gesture paint trace. */
     static Trace capture(Scenario scenario) throws Exception {
+        return captureAll(scenario).trace;
+    }
+
+    /** Like {@link #capture} but also walks the post-gesture layout state (D61). */
+    static GoldenTraceRecorder.Rendered captureAll(Scenario scenario) throws Exception {
         InputDriver d = InputDriver.load(scenario.fixture, scenario.handler.get());
         scenario.script.run(d);
-        return d.paint();
+        Trace trace = d.paint();
+        return new GoldenTraceRecorder.Rendered(trace, LayoutStateTrace.walk(d.root()));
     }
 
     static File goldenFile(String name) {
         return new File(GoldenTraceRecorder.TRACE_DIR, "interaction/" + name + ".json");
+    }
+
+    /** A scenario's D61 layout-state sidecar under {@code trace/layout-state/interaction/}. */
+    static File layoutStateFile(String name) {
+        return new File(GoldenTraceRecorder.TRACE_DIR, "layout-state/interaction/" + name + ".json");
     }
 }

@@ -38,7 +38,8 @@ final class LayoutTrace {
         }
     }
 
-    private static Object attr(Object widget, String key) {
+    /** Package-private for {@link LayoutStateTrace} (D61): the one chain-walk implementation. */
+    static Object attr(Object widget, String key) {
         Object[] entry = (Object[]) widget;
         while (entry != null) {
             if (key.equals(entry[0])) {

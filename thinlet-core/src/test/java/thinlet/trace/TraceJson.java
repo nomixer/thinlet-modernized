@@ -44,6 +44,49 @@ final class TraceJson {
         return sb.toString();
     }
 
+    /**
+     * Serializes a layout-state sidecar document (D61) — a separate golden file
+     * format from {@link #write}: {@code {"layoutState": [...]}} with the fixed
+     * per-node key order {@code class, x, y, w, h, :port, :view, :widths,
+     * :offset} and sparse keys omitted when absent.
+     */
+    static String writeLayoutState(List<LayoutStateNode> nodes) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\n  \"layoutState\": [");
+        for (int i = 0; i < nodes.size(); i++) {
+            LayoutStateNode n = nodes.get(i);
+            sb.append(i == 0 ? "\n" : ",\n");
+            sb.append("    {\"class\": ").append(quote(n.className));
+            sb.append(", \"x\": ").append(n.x);
+            sb.append(", \"y\": ").append(n.y);
+            sb.append(", \"w\": ").append(n.w);
+            sb.append(", \"h\": ").append(n.h);
+            writeIntsKey(sb, ":port", n.port);
+            writeIntsKey(sb, ":view", n.view);
+            writeIntsKey(sb, ":widths", n.widths);
+            if (n.offset != null) {
+                sb.append(", ").append(quote(":offset")).append(": ").append(n.offset);
+            }
+            sb.append("}");
+        }
+        sb.append(nodes.isEmpty() ? "" : "\n  ").append("]\n}\n");
+        return sb.toString();
+    }
+
+    private static void writeIntsKey(StringBuilder sb, String key, int[] values) {
+        if (values == null) {
+            return;
+        }
+        sb.append(", ").append(quote(key)).append(": [");
+        for (int i = 0; i < values.length; i++) {
+            if (i > 0) {
+                sb.append(", ");
+            }
+            sb.append(values[i]);
+        }
+        sb.append("]");
+    }
+
     private static void writeStrings(StringBuilder sb, List<String> values) {
         sb.append("[");
         for (int i = 0; i < values.size(); i++) {
@@ -131,6 +174,42 @@ final class TraceJson {
                     (String) m.get("class"), intOf(m, "x"), intOf(m, "y"), intOf(m, "w"), intOf(m, "h")));
         }
         return new Trace(calls, layout);
+    }
+
+    /** Reader for the {@link #writeLayoutState} sidecar document (D61). */
+    static List<LayoutStateNode> readLayoutState(String json) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> root = (Map<String, Object>) parseValue(json);
+        List<LayoutStateNode> out = new ArrayList<>();
+        for (Object o : asList(root.get("layoutState"))) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> m = (Map<String, Object>) o;
+            Object offset = m.get(":offset");
+            out.add(new LayoutStateNode(
+                    (String) m.get("class"),
+                    intOf(m, "x"),
+                    intOf(m, "y"),
+                    intOf(m, "w"),
+                    intOf(m, "h"),
+                    intsOf(m, ":port"),
+                    intsOf(m, ":view"),
+                    intsOf(m, ":widths"),
+                    (offset == null) ? null : Integer.valueOf((int) ((Number) offset).doubleValue())));
+        }
+        return out;
+    }
+
+    private static int[] intsOf(Map<String, Object> m, String key) {
+        Object o = m.get(key);
+        if (o == null) {
+            return null;
+        }
+        List<Object> values = asList(o);
+        int[] out = new int[values.size()];
+        for (int i = 0; i < out.length; i++) {
+            out[i] = (int) ((Number) values.get(i)).doubleValue();
+        }
+        return out;
     }
 
     @SuppressWarnings("unchecked")

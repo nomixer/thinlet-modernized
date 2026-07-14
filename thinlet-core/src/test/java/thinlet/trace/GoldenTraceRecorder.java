@@ -30,7 +30,23 @@ final class GoldenTraceRecorder {
 
     private GoldenTraceRecorder() {}
 
+    /** A render's paired outputs: the {@code {calls, layout}} trace plus the D61 layout-state walk. */
+    static final class Rendered {
+
+        final Trace trace;
+        final List<LayoutStateNode> state;
+
+        Rendered(Trace trace, List<LayoutStateNode> state) {
+            this.trace = trace;
+            this.state = state;
+        }
+    }
+
     static Trace render(String resource) throws IOException {
+        return renderAll(resource).trace;
+    }
+
+    static Rendered renderAll(String resource) throws IOException {
         Thinlet thinlet = new Thinlet();
         Object root;
         InputStream in = GoldenTraceRecorder.class.getResourceAsStream(resource);
@@ -62,7 +78,9 @@ final class GoldenTraceRecorder {
         } finally {
             g.dispose();
         }
-        return new Trace(sink, LayoutTrace.walk(root));
+        // Both walks run after paint: bounds and the :port/:view scroll state
+        // are computed lazily during layout validation on the way to painting.
+        return new Rendered(new Trace(sink, LayoutTrace.walk(root)), LayoutStateTrace.walk(root));
     }
 
     private static void pumpEventQueue() {
@@ -120,6 +138,13 @@ final class GoldenTraceRecorder {
         return new File(TRACE_DIR, rel);
     }
 
+    /** Maps a corpus resource to its D61 layout-state sidecar under {@code trace/layout-state/}. */
+    static File layoutStateFileFor(String corpusResource) {
+        String rel = corpusResource.substring("/corpus/".length());
+        rel = rel.substring(0, rel.length() - ".xml".length()) + ".json";
+        return new File(TRACE_DIR, "layout-state/" + rel);
+    }
+
     /**
      * Maps a corpus resource to its trace file under an arbitrary base directory,
      * preserving the {@code demo/drafts/amazon} sub-path. Used by the cross-JDK
@@ -171,10 +196,12 @@ final class GoldenTraceRecorder {
         }
         for (File f : files) {
             if (f.isDirectory()) {
-                // trace/interaction/ holds the D45 interaction-state goldens, which
-                // map to scenarios (GoldenInteractionTraceTest), not corpus XML —
-                // corpusResourceFor would resolve them to nonexistent files.
-                if (!"interaction".equals(f.getName())) {
+                // trace/interaction/ holds the D45 interaction-state goldens and
+                // trace/layout-state/ the D61 sidecars; both map to their own test
+                // classes (GoldenInteractionTraceTest / GoldenLayoutStateTraceTest),
+                // not corpus XML — corpusResourceFor would resolve them to
+                // nonexistent files.
+                if (!"interaction".equals(f.getName()) && !"layout-state".equals(f.getName())) {
                     collectFiles(f, out);
                 }
             } else if (f.getName().endsWith(".json") && !"trace-tolerance.json".equals(f.getName())) {

@@ -27,4 +27,20 @@ class GoldenTraceSelfConsistencyTest {
         List<String> diffs = TraceComparator.compare(roundTripped, second, 2.0);
         assertThat(diffs).as("trace diffs").isEmpty();
     }
+
+    // widgets.xml carries table :widths and alignment-branch (negative) :offset
+    // nodes, round-tripping every sparse field the sidecar format has (D61).
+    @Test
+    void layoutStateIsDeterministicThroughJsonRoundTrip() throws Exception {
+        List<LayoutStateNode> first = GoldenTraceRecorder.renderAll("/corpus/drafts/widgets.xml").state;
+        List<LayoutStateNode> second = GoldenTraceRecorder.renderAll("/corpus/drafts/widgets.xml").state;
+        List<LayoutStateNode> roundTripped = TraceJson.readLayoutState(TraceJson.writeLayoutState(first));
+
+        assertThat(first)
+                .as("widgets.xml should carry scroll/table/offset state")
+                .isNotEmpty();
+
+        List<String> diffs = TraceComparator.compareLayoutState(roundTripped, second, 2.0);
+        assertThat(diffs).as("layout-state diffs").isEmpty();
+    }
 }
