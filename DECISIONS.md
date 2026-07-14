@@ -2254,3 +2254,42 @@ robot excluded). japicmp trivially green: new types package-private, every chang
 method private, public methods body-only. (Cross-ref D42/D43 charter + tripwire, D44
 container loop, D48 seam style, D52/D56 mechanical discipline, D57 documentation policy,
 PR #81 net, this PR.)
+
+## D59 — Cut 3 closes: accessor-façade cleanup (the dead default-parameter helper inlined)
+
+**Date:** 2026-07-14. **Status:** accepted. **Phase:** 3 (3a, Cut 3 close).
+
+**Context.** The last Cut 3 item after D58: the private 4-arg
+`setString(component, key, value, defaultvalue)` whose `defaultvalue` parameter was dead
+2005 code (`return set(component, key, value); // use defaultvalue`) — the reason string
+setters, unlike boolean/integer, never omit-at-default (pinned by
+`DescriptorContractTest` before any of this moved).
+
+**Decision.** **Inline the helper away** rather than drop the parameter: removing the
+4th parameter would collide with the public `setString(Object, String, String)` overload
+(same erasure, different return type). Its callers become direct model writes —
+behavior-identical since the helper ignored the parameter:
+
+- public `setString` → `set(component, definition.name, value)`;
+- `addAttribute`'s string branch → `set(component, key, value)` (`key` already
+  re-canonicalized);
+- `processSpin` → `set(component, "text", value)` — a **third caller** the plan's
+  inventory missed (it passed a literal `null` default, so the
+  `definition.defaultValue`-shaped greps never saw it); the compiler surfaced it on the
+  first build, which is the point of doing such removals compile-gated.
+
+The storage-asymmetry contract now lives as a fact-dense comment at the raw-setter
+cluster (D57 rules; cites the pinning test): boolean/integer setters remove the entry at
+the declared default; string setters always store; choice stores the default on null;
+parse stores integers even at default but omits booleans at theirs.
+
+**Cut 3 is closed.** Scope cuts and the one recorded divergence are in D58; non-goals
+held: no public/protected signature change (japicmp green), `Renderer` untouched, no
+token enums, no new raw overloads. The D50 closing-checklist note stands for 3a's end
+(re-narrow unused widenings before the subpackage split) — nothing to re-narrow from
+this cut: no visibility was widened.
+
+**Validation.** Container base row green (**171 tests, 0 failures** — goldens + input
+suite + robot + tripwire + the 25 contract pins, spinbox input tests exercising the
+inlined `processSpin` path), zero golden diffs; crossjdk rows 8/11/17 green. (Cross-ref
+D42/D43 charter, D57 comment rules, D58 core, PR #81 net.)

@@ -3865,7 +3865,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     ? (itext + step <= getInteger(component, "maximum", Integer.MAX_VALUE))
                     : (itext - step >= getInteger(component, "minimum", Integer.MIN_VALUE))) {
                 String value = String.valueOf((is(part, "up")) ? (itext + step) : (itext - step));
-                setString(component, "text", value, null);
+                set(component, "text", value);
                 setInteger(component, "start", value.length(), 0);
                 setInteger(component, "end", 0, 0);
                 repaint(component, "spinbox", "text");
@@ -5467,7 +5467,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         key = definition.name;
         if (is(definition.type, "string")) {
             value = (encoding == null) ? new String(value) : new String(value.getBytes(), 0, value.length(), encoding);
-            setString(component, key, value, (String) definition.defaultValue);
+            set(component, key, value);
         } else if (is(definition.type, "choice")) {
             String[] values = (String[]) definition.defaultValue;
             setChoice(component, key, value, values, values[0]);
@@ -5594,7 +5594,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      */
     public void setString(Object component, String key, String value) {
         AttributeDescriptor definition = getDefinition(getClass(component), key, "string");
-        if (setString(component, definition.name, value, (String) definition.defaultValue)) {
+        if (set(component, definition.name, value)) {
             update(component, definition.invalidate);
         }
     }
@@ -5996,9 +5996,11 @@ public class Thinlet extends Container implements Runnable, Serializable {
 
     // ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
 
-    private boolean setString(Object component, String key, String value, String defaultvalue) {
-        return set(component, key, value); // use defaultvalue
-    }
+    // Storage asymmetries (pinned: DescriptorContractTest): boolean/integer
+    // setters remove the model entry at the declared default; string setters
+    // always store (the 2005 4-arg setString's defaultvalue param was dead —
+    // helper inlined, D59); choice stores the default on null; parse stores
+    // integers even at default but omits booleans at theirs.
 
     // package-private for Renderer (D48 seam; japicmp-invisible)
     String getString(Object component, String key, String defaultvalue) {

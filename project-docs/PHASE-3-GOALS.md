@@ -116,15 +116,13 @@ Detailed rationale in D42/D43.
 |-----|-------|--------|
 | **1** | Neutralise the interned-`String` `==` contract behind one helper (`is`) | ✅ **done** (D42/D43) |
 | **2** | Paint → typed Renderer (net captures the full primitive stream) | ✅ **done** (D48–D56; `desktop`/tooltip stays, D45) |
-| **3** | DTD → typed descriptors + accessor-façade cleanup | ⏳ **in progress** — net (#81) + typed core (D58) landed; façade cleanup remains |
+| **3** | DTD → typed descriptors + accessor-façade cleanup | ✅ **done** (net #81; D58/D59) |
 | **4** | Layout → per-widget strategies (a hub; second) | pending |
 | **5** | `Object[]` model → typed `Widget` (late; highest blast radius) | pending |
 | **6** | Event/input/focus (last; thinnest net) | pending |
 
-Cuts 2 and 3 are **overlappable** (D43): Cut 2's prerequisites (the local CI loop, the
-interaction-golden determinism design) take real time, and Cut 3's descriptor-table core can
-proceed behind `getDefinition` meanwhile — design the Renderer dispatch anticipating typed
-descriptor keys so Cut 3 doesn't force a re-key.
+(The D43 "Cuts 2/3 overlappable" sequencing note is resolved: both closed; the Renderer
+dispatch needed zero re-keying — D58.)
 
 **Net-strengthening prerequisites** (interleaved): the **dev-container local CI loop** —
 ✅ done (D44, `.devcontainer/ci/local-ci.sh`); interaction-state
