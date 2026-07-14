@@ -222,6 +222,15 @@ final class InteractionScenarios {
         // NON-selected tab renders the hover tint; hover the tab itself (its
         // bounds are the header rect)
         s.add(new Scenario("tabs-tab-hover", "/input/tabs.xml", d -> d.hover(d.find("t2"))));
+        // Tooltip (D62) — the last D45-deferred interaction state, guarding the
+        // paintDesktop tooltip overlay. hover lands as a MOUSE_MOVED onto a new
+        // widget, which Thinlet turns into MOUSE_ENTERED and arms the 750ms
+        // timer; awaitTooltip absorbs the timer's arrival-time nondeterminism.
+        s.add(new Scenario("tooltip-shown", "/input/tooltip.xml", d -> {
+            Object b = d.find("tip");
+            d.hover(b);
+            d.awaitTooltip(b);
+        }));
         s.add(new Scenario("menu-title-hover", "/input/menu.xml", d -> d.hover(d.find("m1"))));
         // clicking a menubar title arms it and opens its popup, which stays
         // open after release — held model/popup state, no timer involvement

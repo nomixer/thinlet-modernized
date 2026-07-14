@@ -380,6 +380,23 @@ final class InputDriver {
     }
 
     /**
+     * Waits (bounded) for the 750ms tooltip timer to fire after a {@link #hover}:
+     * polls the widget's {@code :tooltipbounds}, written by {@code showTip} on
+     * Thinlet's timer thread. Only the arrival time is nondeterministic — the
+     * poll absorbs it; the shown frame is a pure function of the scripted
+     * pointer position and the tooltip text (D62).
+     */
+    void awaitTooltip(Object widget) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + 10_000;
+        while (property(widget, ":tooltipbounds") == null) {
+            if (System.currentTimeMillis() > deadline) {
+                throw new IllegalStateException("tooltip did not appear within 10s of hover");
+            }
+            Thread.sleep(25);
+        }
+    }
+
+    /**
      * Reads a property value straight from the {@code Object[]} chain (key matched
      * by {@code .equals} on the same interned literals Thinlet stores under),
      * mirroring {@link LayoutTrace}. Returns {@code null} when absent — e.g. a
