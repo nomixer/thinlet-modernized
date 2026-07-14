@@ -115,7 +115,7 @@ Detailed rationale in D42/D43.
 | Cut | Scope | Status |
 |-----|-------|--------|
 | **1** | Neutralise the interned-`String` `==` contract behind one helper (`is`) | ✅ **done** (D42/D43) |
-| **2** | Paint → typed Renderer (net captures the full primitive stream) | ✅ **done** (D48–D56; `desktop`/tooltip stays, D45) |
+| **2** | Paint → typed Renderer (net captures the full primitive stream) | ✅ **done** (D48–D56; closed by D62/D63 — every branch body in `Renderer`) |
 | **3** | DTD → typed descriptors + accessor-façade cleanup | ✅ **done** (net #81; D58/D59) |
 | **4** | Layout → per-widget strategies (a hub; second) | pending |
 | **5** | `Object[]` model → typed `Widget` (late; highest blast radius) | pending |

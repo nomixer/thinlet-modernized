@@ -55,7 +55,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
     private transient String findprefix = "";
     private transient long findtime;
 
-    private Object content = createImpl("desktop");
+    Object content = createImpl("desktop"); // package-private for Renderer (D48 seam; japicmp-invisible)
     transient Object mouseinside; // package-private for Renderer (D48 seam; japicmp-invisible)
     transient Object insidepart; // package-private for Renderer (D48 seam; japicmp-invisible)
     transient Object mousepressed; // package-private for Renderer (D48 seam; japicmp-invisible)
@@ -65,7 +65,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
     transient Object focusowner; // package-private for Renderer (D48 seam; japicmp-invisible)
     transient boolean focusinside; // package-private for Renderer (D48 seam; japicmp-invisible)
     private transient Object popupowner;
-    private transient Object tooltipowner;
+    transient Object tooltipowner; // package-private for Renderer (D48 seam; japicmp-invisible)
     // private transient int pressedkey;
 
     private static final int DRAG_ENTERED = AWTEvent.RESERVED_ID_MAX + 1;
@@ -1645,48 +1645,6 @@ public class Thinlet extends Container implements Runnable, Serializable {
     // package-private for Renderer (D48 seam; japicmp-invisible)
     void paint(Graphics g, int clipx, int clipy, int clipwidth, int clipheight, Object component, boolean enabled) {
         Renderer.paint(this, g, clipx, clipy, clipwidth, clipheight, component, enabled);
-    }
-
-    /**
-     * The 2005 {@code desktop} paint branch, verbatim — hoisted (D48) so the classname
-     * dispatch can live in {@link Renderer#paint}. Stays in {@code Thinlet} because it
-     * paints the timer-coupled tooltip ({@code tooltipowner}), the one net-invisible
-     * paint path (D45); extraction waits for the tooltip capture.
-     */
-    // package-private for Renderer (D48 seam; japicmp-invisible)
-    void paintDesktop(
-            Object component,
-            Rectangle bounds,
-            Graphics g,
-            int clipx,
-            int clipy,
-            int clipwidth,
-            int clipheight,
-            boolean enabled) {
-        paintRect(g, 0, 0, bounds.width, bounds.height, c_border, c_bg, false, false, false, false, true);
-        paintReverse(g, clipx, clipy, clipwidth, clipheight, get(component, ":comp"), enabled);
-        // g.setColor(Color.red); if (clip != null) g.drawRect(clipx, clipy, clipwidth, clipheight);
-        if ((tooltipowner != null) && (component == content)) {
-            Rectangle r = getRectangle(tooltipowner, ":tooltipbounds");
-            paintRect(g, r.x, r.y, r.width, r.height, c_border, c_bg, true, true, true, true, true);
-            String text = getString(tooltipowner, "tooltip", null);
-            g.setColor(c_text);
-            g.drawString(text, r.x + 2, r.y + g.getFontMetrics().getAscent() + 2); // +nullpointerexception
-        }
-    }
-
-    private void paintReverse(
-            Graphics g, int clipx, int clipy, int clipwidth, int clipheight, Object component, boolean enabled) {
-        if (component != null) {
-            Rectangle bounds = getRectangle(component, "bounds");
-            if ((clipx < bounds.x)
-                    || (clipx + clipwidth > bounds.x + bounds.width)
-                    || (clipy < bounds.y)
-                    || (clipy + clipheight > bounds.y + bounds.height)) {
-                paintReverse(g, clipx, clipy, clipwidth, clipheight, get(component, ":next"), enabled);
-            }
-            paint(g, clipx, clipy, clipwidth, clipheight, component, enabled);
-        }
     }
 
     // package-private for Renderer (D48 seam; japicmp-invisible)
@@ -4475,23 +4433,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
     private static final boolean STRICT_INTERN = Boolean.getBoolean("thinlet.strictIntern");
 
     /**
-     * Identity comparison of an interned toolkit token (a widget classname, a
-     * part key, or an enum-like attribute value) against a string literal. This
-     * centralizes the 2005 interned-String {@code ==} contract in one place, so a
-     * later typed refactor changes this method rather than the hundreds of call
-     * sites. Semantics are deliberately identical to {@code ==} (reference
-     * identity), NOT {@code equals}: the tokens are interned literals drawn from
-     * the DTD constant pool, and the toolkit relies on that identity.
-     *
-     * <p>Tripwire: with the {@code thinlet.strictIntern} system property set to
-     * {@code true} (the test net enables it via surefire argLine; off — and
-     * dead-code-eliminated — otherwise), a token that is {@code equals}-equal to
-     * the literal but not identical throws instead of silently comparing false.
-     * That is the contract's silent failure mode: a refactor that breaks the
-     * interning chain (DTD pool / {@code create} re-canonicalization) would
-     * otherwise flip these comparisons with no compile error and no test signal.
-     * Package-private (not private) only so {@code InternTripwireTest} can guard
-     * the wiring; not part of the public API (japicmp scope is public+protected).
+     * Identity (never {@code equals}) comparison of an interned toolkit token against a
+     * literal — the one home of the 2005 interned-{@code ==} contract (D42/D43). The
+     * strict-intern tripwire throws on de-interned tokens; pinned by {@code InternTripwireTest}.
      */
     static boolean is(Object token, String literal) {
         if (STRICT_INTERN && token != literal && literal.equals(token)) {

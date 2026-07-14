@@ -2422,3 +2422,28 @@ scroll state — its sidecar is correctly absent). Base row 268 tests green; cro
 `paintDesktop`/`paintReverse` extraction is unblocked** (the next Cut 2 close-out
 slice). (Cross-ref D45 determinism design, D47/D51/D53 the other packages, D48/D50
 hoist + shared-helper gates, D61 sidecars.)
+
+## D63 — Cut 2 closes: `paintDesktop`/`paintReverse` move to `Renderer` behind the D62 golden
+
+**Date:** 2026-07-14. **Status:** accepted. **Phase:** 3 (Cut 2 close-out).
+
+**Context.** D48 hoisted the `desktop` paint branch but left its body in `Thinlet` —
+the tooltip overlay it paints was the one net-invisible path (D45), and the hoist
+javadoc pinned the condition in place: "extraction waits for the tooltip capture."
+D62 landed that golden.
+
+**Decision.** Pure code motion, D48 seam style: `Renderer.desktop` (the widget-name
+convention) + private `Renderer.paintReverse`, both static with explicit `Thinlet t`
+context; the dispatch's last `t.`-callback branch now calls the local method, and the
+`Thinlet` bodies are deleted. `paintReverse`'s recursive `t.paint(g, …)` shim call
+becomes the direct `Renderer.paint(t, g, …)` — the shim is a pure forward (D55), so
+the dispatch behavior is identical. Widened on demand, commented per D48: `content`
+and `tooltipowner` (private → package-private). With this, **every 2005 paint branch
+body lives in `Renderer`**; what stays in `Thinlet` are the D50-gated shared helpers
+(`paintRect`/`paintScroll`/`paintArrow`/icon-text) called through the `t.` context.
+
+**Validation (container, D44).** Behavior-preserving by the net: base row 268 tests
+green — including `tooltip-shown` (the moved overlay) and the 48 D53 corpus-driven
+scenarios that exercise `paintReverse`'s clip-overlap recursion under open popups —
+plus crossjdk 8/11/17 green, zero golden diffs, japicmp unchanged. (Cross-ref
+D45/D48/D50/D55/D62.)
