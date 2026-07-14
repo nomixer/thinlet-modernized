@@ -37,10 +37,11 @@
    jump-to-pointer?, Q7 wire-or-remove the dialog glyphs?; candidates:
    empty-tab focus-escape, disabled-menuitem release-closes-silently.
    Behavior is pinned either way — decisions feed Enhanced Thinlet (3c).
-4. **Live-`Drafts` playthrough (D65, two PRs)** — PR 1 landed: the testkit
-   extraction as the `thinlet-core` test-jar (no module, no reactor cycle) +
-   `InputDriver.attach` seam + `DraftsBootTest` (live app boots headless);
-   next: PR 2, the playthrough scenarios (S1–S12 per the D65 allowlist) + Q8.
+4. **Live-`Drafts` playthrough: DONE (D65, two PRs)** — the testkit landed as
+   the `thinlet-core` test-jar + `InputDriver.attach` seam;
+   `DraftsPlaythroughTest` (12 scenarios) drives the real app over the
+   deterministic allowlist; Q8 locked (FolderBrowser off-Windows NPE →
+   ExceptionDialog). The Drafts app is the first 3b living test bed.
 5. **Optional vocabulary follow-ons** (D56 scope cut) — only if they earn their
    keep against Cut 3+.
 

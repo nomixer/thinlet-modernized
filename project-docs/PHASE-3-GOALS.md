@@ -151,9 +151,10 @@ input characterization tests for the unasserted widgets (before Cut 6) —
   collapsed trees / behind closed popups was never painted by the static net (the gap that
   hid D52). **Now actively covered (D53):** corpus-driven scenarios drive the vendored
   `corpus/{drafts,demo}/*.xml` through `CorpusHandler`, selecting non-default tabs and
-  expanding collapsed nodes (48 interaction goldens total). Deferred: the live-`Drafts`-app
-  navigation playthrough (needs the `thinlet-testkit` extraction + a deterministic-page
-  allowlist).
+  expanding collapsed nodes (48 interaction goldens total). The live-`Drafts`-app
+  navigation playthrough landed with D65 (`DraftsPlaythroughTest`: real handlers over
+  the deterministic-page allowlist, getter-asserted, no goldens) — the Drafts app is
+  the first 3b living test bed.
 - **The input-surface blind spot is closed (D64):** the formerly unasserted areas —
   menus, spinner, tooltip-hide, slider, tabbedpane, dialog drag/resize,
   scrollbar-mouse, context-menu, focus-traversal and clipboard — are
