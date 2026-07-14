@@ -9,9 +9,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import thinlet.drafts.DraftsHost;
 
 /**
- * Boots the live Drafts app headlessly through the thinlet-core test-jar seam
- * (DECISIONS.md D65): proves the tests-classifier dependency edge, the split
- * {@code thinlet.trace} package, and the Xvfb fork in this module's surefire.
+ * Boots the live Drafts app headlessly through the thinlet-core test-jar seam:
+ * proves the tests-classifier edge, the split {@code thinlet.trace} package, and
+ * this module's Xvfb surefire fork (DECISIONS.md D65).
  */
 @Tag("input")
 @ExtendWith(XvfbDisplayExtension.class)
