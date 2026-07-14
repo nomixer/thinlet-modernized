@@ -9,9 +9,9 @@ import thinlet.Thinlet;
 /**
  * Walks Thinlet's {@code Object[]} widget tree and records each widget's computed
  * bounds. Widgets are {@code Object[]} chains {@code [key, value, next]} with
- * interned-string keys; we traverse them directly (matching keys with {@code
- * equals}) rather than touch Thinlet's private accessors. See
- * {@code .claude/PAINT-PIPELINE-MAP.md}.
+ * interned-string keys (schema documented at the model core in {@code
+ * Thinlet.java}, above {@code createImpl}); we traverse them directly (matching
+ * keys with {@code equals}) rather than touch Thinlet's private accessors.
  */
 final class LayoutTrace {
 

@@ -7,7 +7,7 @@
 > D42) so the append-only log stays the authority.
 >
 > **Created:** 2026-07-07 (Opus 4.8 session). Aligns with D42, `ROADMAP.md`, and the readiness
-> assessment summarized in `.claude/FABLE-NEXT-STEPS.md`.
+> assessment (folded into D43).
 
 ---
 
@@ -110,13 +110,13 @@ itself changes for the first time. This supersedes the "toolchain not library" p
 
 ## The sequenced cuts (3a) — net-strength-driven
 
-Detailed rationale in D42 and the readiness assessment (`.claude/FABLE-NEXT-STEPS.md` §2).
+Detailed rationale in D42/D43.
 
 | Cut | Scope | Status |
 |-----|-------|--------|
-| **1** | Neutralise the interned-`String` `==` contract behind one helper (`is`) | ✅ **done** (merged `7796f79`; follow-up + tripwire: D43) |
-| **2** | Paint → typed Renderer (net captures the full primitive stream) | ⏳ **branches extracted** — hoists (D48), then slice-by-slice zero-diff extraction (D49 recipe; golden-guarded first, D50 gate). **Every widget paint branch + shared helper now lives in `Renderer`** (label/button/checkbox/combobox/tabbedpane/menubar/`:popup`/progressbar/slider/splitpane/panel/dialog/spinbox + `field`/`arrow`/`scroll`/`content`); only the `desktop` branch stays in `Thinlet` (it paints the timer-coupled tooltip, the one net-invisible path — D45). The dispatch chain itself is folded into `Renderer.paint` (D55), and the drawing vocabulary's wart — the 23-formal icon+text `paint` dispatcher — is typed via the package-private `IconTextSpec` parameter object (D56; the 11-arg border overload / 7-arg glyph / `paintRect` / `drawFocus` stay untyped, recorded there) |
-| **3** | DTD → typed descriptors + accessor-façade cleanup | pending |
+| **1** | Neutralise the interned-`String` `==` contract behind one helper (`is`) | ✅ **done** (D42/D43) |
+| **2** | Paint → typed Renderer (net captures the full primitive stream) | ✅ **done** (D48–D56; `desktop`/tooltip stays, D45) |
+| **3** | DTD → typed descriptors + accessor-façade cleanup | ⏳ **in progress** — net landed (`DescriptorContractTest`, #81) |
 | **4** | Layout → per-widget strategies (a hub; second) | pending |
 | **5** | `Object[]` model → typed `Widget` (late; highest blast radius) | pending |
 | **6** | Event/input/focus (last; thinnest net) | pending |
@@ -177,7 +177,6 @@ apps become the 3b test beds.
 - **`DECISIONS.md` D42** — the decision this charter expands (also D7 tolerance, D31 single-jar
   + cross-JDK matrix, D35 tolerance posture, D36/D37 input net as refactor-safety net).
 - **`project-docs/ROADMAP.md`** — phase-level navigation.
-- **`.claude/FABLE-NEXT-STEPS.md`** — session handoff: readiness assessment, Cut 1 detail +
-  correctness evidence, and open review questions.
+- **`.claude/NEXT-STEPS.md`** — the live session handoff (current state + ordered next work).
 - **`project-docs/backend-portability/`** — the reverse-engineered paint/layout/input spec.
 - **`KNOWN-QUIRKS.md`** — Q1/Q2 (deferred; the earmarked first enhancements).

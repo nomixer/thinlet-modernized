@@ -16,10 +16,10 @@ Public artifacts, unsupported.
 - **`KNOWN-QUIRKS.md`** — locked 2005 bugs/quirks (populated during Phase 1).
 - **`README.md`** — project posture, build instructions, attribution.
 - **`project-docs/ROADMAP.md`** — the phase plan (Phases 0–3, done vs. pending).
-- **`.claude/PAINT-PIPELINE-MAP.md`** — engineering reference for
-  `Thinlet.java`'s paint/layout pipeline, drawing vocabulary, FontMetrics
-  surface, and `Object[]` widget model. Background for the Phase 1 golden-trace
-  harness; lives under `.claude/`, outside the product source tree.
+- **The code documents the pipeline/model in-source (D57):** `Renderer.java`'s
+  javadoc carries the paint-pipeline shape; the widget-model schema + reserved
+  `:`-key vocabulary sit above `createImpl` in `Thinlet.java`; the DTD/accessor
+  contract is `DescriptorContractTest` (sentence-named tests are the spec).
 
 ## Documentation layout (where docs belong) — see DECISIONS.md D27
 
@@ -34,13 +34,23 @@ Public artifacts, unsupported.
   Exceptions kept lowercase/fixed by ecosystem or the harness: `README.md`, `CLAUDE.md`,
   and Claude Code agent files under `.claude/agents/*.md`.
 
+## Documentation policy (D57)
+
+- **Single home per fact:** rationale/evidence → `DECISIONS.md`; charter/invariants →
+  `project-docs/PHASE-3-GOALS.md`; current state → `.claude/NEXT-STEPS.md`; behavior
+  contracts → `KNOWN-QUIRKS.md` + sentence-named tests. Everything else
+  cross-references — never recaps.
+- **Comments state only:** facts checkable in the code beneath them, facts pinned by a
+  named test (cite it), or tagged `// UNVERIFIED:` hypotheses. Fact-density, not
+  narrative; grep-stable names, never line numbers or cross-file location claims.
+- **New files:** license header + ≤3-line class doc + a `DECISIONS.md D<n>` pointer.
+
 ## Current work — Phase 3a (God-class decomposition behind the net)
 
 > **Live handoff: `.claude/NEXT-STEPS.md`** — read it first for the current state
-> (Cut 2 slices merged through PR #57, `Renderer.java` growing, 26 interaction
-> goldens), the ordered next work, and the capture/extraction discipline.
-> Authority: `DECISIONS.md` through **D51**; charter: `project-docs/PHASE-3-GOALS.md`.
-> The Phase 2.x section below is retained as background on the harness design.
+> and the ordered next work. Authority: `DECISIONS.md`; charter:
+> `project-docs/PHASE-3-GOALS.md`. The Phase 2.x section below is retained as
+> background on the harness design.
 
 ## Background — Phase 2.x (input-capture harness)
 

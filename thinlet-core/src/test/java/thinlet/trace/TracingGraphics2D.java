@@ -31,10 +31,10 @@ import java.util.Map;
 
 /**
  * A {@link Graphics2D} that delegates everything to a backing graphics while
- * recording the drawing primitives Thinlet uses (see
- * {@code .claude/PAINT-PIPELINE-MAP.md}). Wrapping the {@code Graphics} handed to
- * Thinlet's public {@code paint(Graphics)} captures the whole draw stream with
- * zero edits to {@code Thinlet.java}.
+ * recording the drawing primitives Thinlet uses (the recorded overrides below are
+ * that vocabulary). Wrapping the {@code Graphics} handed to Thinlet's public
+ * {@code paint(Graphics)} captures the whole draw stream with zero edits to
+ * {@code Thinlet.java}.
  *
  * <p>Per DECISIONS.md D7, {@code getFontMetrics} delegates but is NOT recorded —
  * its JDK-to-JDK variance is absorbed by the ±2 px tolerance on the recorded

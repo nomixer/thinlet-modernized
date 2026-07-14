@@ -12,12 +12,10 @@ project source and stay.
 | Path | Purpose | Safe to delete? |
 | --- | --- | --- |
 | `CLAUDE.md` (repo root) | Session orientation, auto-loaded by Claude Code at startup. The only Claude file that must live outside `.claude/` (only the root `CLAUDE.md` is auto-loaded). | Yes — loses auto-orientation only |
-| `.claude/PAINT-PIPELINE-MAP.md` | Engineering reference for `Thinlet.java`'s paint/layout pipeline, drawing vocabulary, and widget model (Phase 1 golden-trace harness background). | Yes |
 | `.claude/agents/trace-curator.md` | Reusable agent definition codifying the trace-curation procedure that populates `project-docs/backend-portability/` from the committed goldens (D34). | Yes |
-| `.claude/FABLE-NEXT-STEPS.md` | Session handoff / review brief for Phase 3 Cut 1 (pivot, readiness assessment, Cut 1 detail + correctness evidence, open review questions). Transient — delete once the Fable review is folded in. | Yes |
 | `.claude/settings.json` | Claude Code harness permissions for this repo (maintainer-added, 2026-07-08): allowlists `gh pr merge` so PR auto-merge delegation (D42 opt-in) works in auto mode without a classifier denial. Functional config, not an orientation doc. | Yes — auto-merge delegation then needs manual approval again |
 | `.claude/SELF-REVIEWS.md` | Rolling log of lull-time independent-model self-reviews (full findings; material outcomes go to `DECISIONS.md`, e.g. D50). | Yes |
-| `.claude/NEXT-STEPS.md` | Session handoff (2026-07-09): state after PRs #50–#57, ordered next work (Package C goldens → branch slices → fork mapping), and the standing capture/extraction discipline. Supersedes `FABLE-NEXT-STEPS.md`. | Yes |
+| `.claude/NEXT-STEPS.md` | The live session handoff: state pointers, ordered next work, one-line discipline reminders (D57 format — no rationale recaps). | Yes |
 | `.claude/MANIFEST.md` | This file. | Yes |
 
 ## Policy (keep the repo tidy)

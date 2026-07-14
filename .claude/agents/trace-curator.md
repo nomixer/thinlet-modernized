@@ -35,8 +35,9 @@ layout), **D33** (cross-JDK trace diff), **D34** (this curation slice).
    (CI artifact `trace-diff-report`; regenerable per
    `project-docs/backend-portability/CROSS-JDK-TRACE-DIFF.md`). Read it **only if
    you actually have it in hand.**
-4. **Source + map** — `thinlet-core/src/main/java/thinlet/Thinlet.java` and the
-   line-referenced `.claude/PAINT-PIPELINE-MAP.md`, for call-site citations.
+4. **Source** — `thinlet-core/src/main/java/thinlet/Thinlet.java` and
+   `Renderer.java` (paint branches live there post-Cut-2, D48+), for call-site
+   citations.
 
 ## Outputs
 
@@ -62,8 +63,9 @@ layout), **D33** (cross-JDK trace diff), **D34** (this curation slice).
 2. **Distinguish observed vs. implemented.** If `Thinlet.java` has a primitive
    the corpus never exercises (e.g. `drawRect`), say so explicitly — the doc's
    spine is the *observed* surface.
-3. **Cite call sites.** Map each op/pass to `Thinlet.java` line refs via
-   `.claude/PAINT-PIPELINE-MAP.md`; spot-check the refs still resolve.
+3. **Cite call sites.** Map each op/pass to grep-stable method names in
+   `Thinlet.java`/`Renderer.java` (line numbers rot across extractions);
+   spot-check the refs still resolve.
 4. **Use real examples.** Pull concrete tuples from named goldens (e.g. the
    four-`drawLine` button border in `demo/calculator.json`).
 5. **Respect the tolerance posture.** Method/arg structure and categorical args

@@ -2094,3 +2094,67 @@ elision commits, **zero golden diffs**; crossjdk rows 8/11/17 green on the final
 **Cross-ref** D42/D43 (Cut 2 charter, visibility), D44 (container), D45 (net-invisible
 paths), D48 (seam style; parameter-object clarification above), D49 (the "22-arg" naming),
 D52 (mechanical-move discipline), D55 (dispatch fold).
+
+## D57 — Documentation policy: single-home facts, pinned in-source annotations; retire the code-explaining maps
+
+**Date:** 2026-07-14. **Status:** accepted. **Phase:** 3 (process/documentation; no product behavior).
+
+**Context.** After Cut 3 planning, the maintainer flagged the recurring per-session cost of
+reconciling the doc surface, and supplied an external documentation-philosophy thread whose
+lens was applied to the repo's ~3,900 markdown lines. Findings: the same fact was living in
+three places (the D49 "22-arg" miscount survived precisely because it was recapped in
+DECISIONS, NEXT-STEPS, *and* the PHASE-3-GOALS cuts table — D56 had to correct it in each);
+`.claude/PAINT-PIPELINE-MAP.md` self-declared "stale on locations" (an out-of-source map of
+code that moved — negative-value navigation); `.claude/FABLE-NEXT-STEPS.md` self-declared
+transient, folded into D43 on 2026-07-07 and still present a week later. Meanwhile the
+repo's primary reader of `Thinlet.java` is an agent re-reading sections cold every session:
+spatially-indexed facts (comments at the point of use) beat date-indexed decision entries
+for that reader, and the standard comment-rot objection is structurally weak here — the
+2005 semantics are frozen by charter, so a comment on a verbatim body cannot rot from
+under itself; only *locations* rot, which is exactly what killed the out-of-source map.
+
+**Decision.**
+
+1. **Single-home rule.** Every fact has exactly one home: rationale/evidence (including
+   alternatives considered and verification results) → `DECISIONS.md`;
+   charter/invariants → `project-docs/PHASE-3-GOALS.md`; current state →
+   `.claude/NEXT-STEPS.md`; behavior contracts → `KNOWN-QUIRKS.md` + sentence-named
+   tests. Everything else cross-references by D-number/test name — never recaps.
+2. **In-source annotation layer** over the frozen 2005 core, governed by three comment
+   rules: **(a) pin-or-tag** — a comment states only facts mechanically checkable in the
+   code directly beneath it, facts pinned by a named test (cite it, e.g. `// pinned:
+   DescriptorContractTest`), or hypotheses explicitly tagged `// UNVERIFIED:`;
+   **(b) fact-density, not narrative** — terse schema/invariant blocks, vocabularies not
+   counts, no essays (an agent re-reading pays per token); **(c) names, not locations** —
+   grep-stable member names only, never line numbers or cross-file location claims (the
+   one thing that still rots across extractions). Growth is **evidence-gated**: each cut
+   annotates what its tests just proved, rather than a big-bang annotation PR writing
+   ~100 unpinned claims at once. First anchor landed with this entry: the widget-model
+   schema + reserved `:`-key vocabulary above `createImpl` (pinned by
+   `DescriptorContractTest` and the golden net).
+3. **New files:** license header + ≤3-line class doc + a `DECISIONS.md D<n>` pointer; no
+   design-narrating javadoc (typed field/method names are the documentation). Existing
+   multi-paragraph javadoc (`Renderer`, `IconTextSpec`, `is()`) is trimmed
+   opportunistically when a PR already touches the file — comments are
+   bytecode-invisible (goldens, japicmp, and the tripwire are all indifferent), so
+   trimming carries zero behavior risk; no churn PR.
+4. **Retire the code-explaining reference docs.** `PAINT-PIPELINE-MAP.md` deleted — the
+   decomposition made the code the map (`Renderer.java`'s javadoc carries the pipeline
+   shape; `TracingGraphics2D`'s recorded overrides *are* the drawing vocabulary; the
+   model schema moved in-source per Decision 2). `FABLE-NEXT-STEPS.md` deleted (folded
+   into D43); inbound references retargeted (PHASE-3-GOALS, `trace-curator.md`,
+   two test javadocs, `CLAUDE.md`). Mentions inside prior D-entries stay — this log is
+   append-only and its references are accurate as-of-writing. PHASE-3-GOALS cuts-table
+   cells and NEXT-STEPS thinned to status + D-pointers; `CLAUDE.md` carries the
+   operational summary (the auto-loaded file is where a rule must live to steer
+   sessions).
+
+**Scope / non-goals.** Markdown + comments only — no product-source semantics, no golden
+re-record, no API change. Audit scripts/round-trip reports for mechanical cuts stay
+uncommitted (scratchpad artifacts; results one line in the PR description, method in the
+cut's D-entry).
+
+**Validation.** Full container base row (D44) green after the edits; `git status` clean of
+golden diffs (comments are bytecode-invisible). japicmp untouched (no signature changes).
+(Cross-ref D27 doc layout, D38 filenames, D42/D43 charter + visibility, D49/D56 the
+miscount that motivated single-home, D53 tests-as-spec precedent.)
