@@ -186,4 +186,72 @@ final class TraceComparator {
                     + ")");
         }
     }
+
+    /**
+     * Compares two layout-state sidecar documents (D61) under the same D7 model:
+     * node count, class, key presence/absence and array length are categorical-
+     * exact; every numeric value is tolerant within {@code tol}.
+     */
+    static List<String> compareLayoutState(List<LayoutStateNode> exp, List<LayoutStateNode> act, double tol) {
+        List<String> diffs = new ArrayList<>();
+        if (exp.size() != act.size()) {
+            diffs.add("state node count: expected " + exp.size() + " but was " + act.size());
+        }
+        int n = Math.min(exp.size(), act.size());
+        for (int i = 0; i < n; i++) {
+            LayoutStateNode e = exp.get(i);
+            LayoutStateNode a = act.get(i);
+            if (!e.className.equals(a.className)) {
+                diffs.add("state[" + i + "].class: expected " + e.className + " but was " + a.className);
+                continue;
+            }
+            checkStatePx(diffs, i, e.className, "x", e.x, a.x, tol);
+            checkStatePx(diffs, i, e.className, "y", e.y, a.y, tol);
+            checkStatePx(diffs, i, e.className, "w", e.w, a.w, tol);
+            checkStatePx(diffs, i, e.className, "h", e.h, a.h, tol);
+            checkStateInts(diffs, i, e.className, ":port", e.port, a.port, tol);
+            checkStateInts(diffs, i, e.className, ":view", e.view, a.view, tol);
+            checkStateInts(diffs, i, e.className, ":widths", e.widths, a.widths, tol);
+            if ((e.offset == null) != (a.offset == null)) {
+                diffs.add("state[" + i + "] " + e.className + ".:offset: expected " + presence(e.offset) + " but was "
+                        + presence(a.offset));
+            } else if (e.offset != null && Math.abs(e.offset - a.offset) > tol) {
+                diffs.add("state[" + i + "] " + e.className + ".:offset: expected " + e.offset + " but was " + a.offset
+                        + " (tol " + tol + ")");
+            }
+        }
+        return diffs;
+    }
+
+    private static void checkStatePx(List<String> diffs, int i, String cls, String field, int e, int a, double tol) {
+        if (Math.abs(e - a) > tol) {
+            diffs.add("state[" + i + "] " + cls + "." + field + ": expected " + e + " but was " + a + " (tol " + tol
+                    + ")");
+        }
+    }
+
+    private static void checkStateInts(
+            List<String> diffs, int i, String cls, String key, int[] e, int[] a, double tol) {
+        if ((e == null) != (a == null)) {
+            diffs.add("state[" + i + "] " + cls + "." + key + ": expected " + presence(e) + " but was " + presence(a));
+            return;
+        }
+        if (e == null) {
+            return;
+        }
+        if (e.length != a.length) {
+            diffs.add("state[" + i + "] " + cls + "." + key + " length: expected " + e.length + " but was " + a.length);
+            return;
+        }
+        for (int j = 0; j < e.length; j++) {
+            if (Math.abs(e[j] - a[j]) > tol) {
+                diffs.add("state[" + i + "] " + cls + "." + key + "[" + j + "]: expected " + e[j] + " but was " + a[j]
+                        + " (tol " + tol + ")");
+            }
+        }
+    }
+
+    private static String presence(Object value) {
+        return (value == null) ? "absent" : "present";
+    }
 }

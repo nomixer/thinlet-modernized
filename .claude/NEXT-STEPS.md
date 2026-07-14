@@ -8,19 +8,22 @@
 
 - **Cuts 1–3 done** (D42–D59). Cut 3 landed 2026-07-14: net #81, typed core
   D58 (one recorded divergence there), façade cleanup + close D59.
-- Net: 41 static + 49 interaction goldens + input suite + 25 contract pins
-  (`DescriptorContractTest`); strict-intern tripwire live in every test JVM
-  (D43).
+- **Cut 4 net prerequisite done (D61)**: layout-state sidecar goldens pin
+  `:port`/`:view`/`:widths`/`:offset` (58 sidecars / 184 nodes, bidirectional
+  regression + permanent coverage guard). Residual gap: non-zero `:view.x`
+  (no horizontal-scroll scenario).
+- Net: 41 static + 50 interaction goldens + 58 layout-state sidecars + input
+  suite + 25 contract pins (`DescriptorContractTest`); strict-intern tripwire
+  live in every test JVM (D43). Base row: 266 tests.
 
 ## Next work, in order
 
 1. **Fork mapping** — maintainer's fork sources expected ~2026-07-17/19; check
-   at session start. Fork files → subsystems; boundaries vs Cut 2–6 seams;
-   enhancement backlog; static-ability map. **Lands before any Cut 4/5/6 seam
-   commitments.**
-2. **Cut 4 prep (after fork mapping)** — `LayoutTrace` extension to record
-   `:port`/`:view`/`:widths`/`:offset` is the chartered prerequisite
-   (PHASE-3-GOALS); seam commitments wait for the fork mapping.
+   at session start (2026-07-14: not arrived). Fork files → subsystems;
+   boundaries vs Cut 2–6 seams; enhancement backlog; static-ability map.
+   **Lands before any Cut 4/5/6 seam commitments.**
+2. **Cut 4 (after fork mapping)** — layout → per-widget strategies; the D61
+   net prerequisite is in place, seam commitments wait for the fork mapping.
 3. **Tooltip capture** — the last interaction golden; needs the 750ms timer
    handled (D45); unblocks extracting `paintDesktop`/`paintReverse`. Low
    priority.

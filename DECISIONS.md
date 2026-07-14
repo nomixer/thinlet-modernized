@@ -2326,3 +2326,62 @@ command; matching + no Java diff; matching + Java diff + no marker → deny JSON
 the checklist pointer; attested → allow). Live-fire proven via a sentinel prefix on a
 harmless command, then removed. `jq -e` schema check green. (Cross-ref D42/D46 PR
 workflow, D57 comment rules, D59 the near-miss.)
+
+## D61 — Layout-state sidecar goldens: `:port`/`:view`/`:widths`/`:offset` pinned before Cut 4
+
+**Date:** 2026-07-14. **Status:** accepted. **Phase:** 3 (Cut 4 net prerequisite; test
+scope only — zero `src/main` change).
+
+**Context.** The chartered Cut 4 prerequisite (PHASE-3-GOALS net-strengthening list):
+the layout half of a golden records only class + `bounds`, so the scroll/layout state
+the Cut 4 refactor will move — `layoutScroll`'s `:port`/`:view`, `doLayout`'s table
+`:widths`, `layoutField`'s `:offset` — was almost unpinned (only `:view` had two
+direction assertions in `InputScrollTest`). Fork mapping (NEXT-STEPS item 1) stays
+blocked on the maintainer's sources; this is net work, not a seam commitment.
+
+**Decision — sidecar files, not a format change.** The four keys are recorded into
+**new sidecar goldens** (`trace/layout-state/{demo,drafts,amazon,interaction}/…`,
+document shape `{"layoutState": […]}`), leaving every committed `{calls, layout}`
+golden byte-untouched. The rejected alternative — extending `LayoutNode`/`TraceJson`
+in place — would force re-recording all 90 existing goldens: a baseline replacement
+that could silently absorb sub-tolerance drift against the original record (the exact
+failure mode the D44/D52 discipline exists to prevent).
+
+- **Node shape:** `class, x, y, w, h` (bounds anchor) + sparse `:port`/`:view`
+  (`[x,y,w,h]`), `:widths` (int[]), `:offset` (int; negative = alignment branch).
+  A node is emitted if and only if the widget has bounds and ≥1 of the four keys.
+  D7 model: presence/class/array-length categorical-exact, numbers ±`defaultPx`.
+- **Traversal:** `LayoutStateTrace` follows `:comp`/`:next` **plus the `:combolist`/
+  `:popup` attachment edges** — popups are inserted as siblings of the parsed root on
+  the private desktop content chain, so they are unreachable through child links;
+  the combolist `:port`/`:view` (the `popupCombo → layoutScroll` call site) is pinned
+  via the held-open combobox scenarios. The existing `LayoutTrace.walk` output is
+  untouched (its goldens depend on it).
+- **Bidirectional regression** (`GoldenLayoutStateTraceTest`): a non-empty walk
+  requires a matching sidecar, an empty walk forbids one; orphan check mirrors the
+  interaction net; `allFourKeysExercised` is a **permanent coverage guard** (all four
+  keys + a non-zero `:view` scroll + a positive `:offset` must stay exercised).
+- **One new scenario** (`offset-field-scrolled`): the positive (scrolled) `:offset`
+  branch had zero coverage — corpus alignment fields only produce the negative
+  branch. A fixed-size 40×20 field (`getPreferredSize` honors `width`/`height` only
+  when **both** are set — the first record attempt with `width` alone silently laid
+  out at the 80px default and wrote no sidecar) overflowed by six typed chars gives
+  `:offset` 18, decisively past any ±2 px drift.
+
+**Recorded set (CI container, D44).** 58 sidecars / 184 state nodes (41 static
+renders → 24 non-empty; 50 scenarios → 34 non-empty); the record run round-tripped
+all 49 pre-existing interaction goldens byte-identically (porcelain gate: additions
+only). Static sidecars see more than the paint net: `doLayout` lays out every tab's
+content, so never-painted tabs still pin their `:port`/`:view`.
+
+**Accepted residual gap.** No scenario moves a horizontal scrollbar, so a non-zero
+`:view.x` specifically is unexercised (the coverage guard requires x-or-y). Optional
+follow-on only if Cut 4 shows the need.
+
+**Cross-JDK posture.** `:view` content extents accumulate font-derived row heights;
+assessed low-risk (the scrolled-list paint golden already embeds
+`contentheight − portheight` in bottom-row y-coords and is green on 8/11/17). An
+over-tolerance sidecar diff on a crossjdk row is a finding to triage — never widen
+`defaultPx`, never re-record to mask (D7/D35); options are the reserved `perOp` hook
+or a D-referenced fixture allowlist. (Cross-ref D7 tolerance, D24 harness, D44/D52
+golden discipline, D45/D47/D53 interaction net, PHASE-3-GOALS Cut 4.)
