@@ -12,9 +12,11 @@
   `:port`/`:view`/`:widths`/`:offset` (58 sidecars / 184 nodes, bidirectional
   regression + permanent coverage guard). Residual gap: non-zero `:view.x`
   (no horizontal-scroll scenario).
-- Net: 41 static + 50 interaction goldens + 58 layout-state sidecars + input
+- **Tooltip captured (D62)**: the last D45-deferred interaction state; every
+  interaction state D45 enumerated is now guarded.
+- Net: 41 static + 51 interaction goldens + 58 layout-state sidecars + input
   suite + 25 contract pins (`DescriptorContractTest`); strict-intern tripwire
-  live in every test JVM (D43). Base row: 266 tests.
+  live in every test JVM (D43). Base row: 268 tests.
 
 ## Next work, in order
 
@@ -24,9 +26,9 @@
    **Lands before any Cut 4/5/6 seam commitments.**
 2. **Cut 4 (after fork mapping)** — layout → per-widget strategies; the D61
    net prerequisite is in place, seam commitments wait for the fork mapping.
-3. **Tooltip capture** — the last interaction golden; needs the 750ms timer
-   handled (D45); unblocks extracting `paintDesktop`/`paintReverse`. Low
-   priority.
+3. **Extract `paintDesktop`/`paintReverse` into Renderer** — the Cut 2
+   close-out slice, unblocked by the D62 tooltip golden; hoist-don't-relocate
+   + widening discipline (D48).
 4. **Live-`Drafts` playthrough** — needs the `thinlet-testkit` extraction +
    determinism allowlist (D37/D53). Separately scoped.
 5. **Optional vocabulary follow-ons** (D56 scope cut) — only if they earn their

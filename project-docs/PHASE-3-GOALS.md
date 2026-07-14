@@ -129,8 +129,8 @@ dispatch needed zero re-keying — D58.)
 paint goldens (before lifting hover/press/focus/selection paint branches) — determinism
 design ✅ done (D45, `project-docs/INTERACTION-GOLDENS-DESIGN.md`: paint has **no time
 dependence** — the caret does not blink, contrary to D43's premise; hover/press are
-held-state captures); capture harness + first 10 goldens ✅ landed (D47) — remaining
-scenarios (scrollbar/spinbox arrows, tabs, menubar, tooltip) follow as 2.y fixtures land;
+held-state captures); capture harness + first 10 goldens ✅ landed (D47), and the follow-on
+scenarios (scrollbar/spinbox arrows, tabs, menubar — D51/D53; tooltip — D62) are all in;
 `LayoutTrace` extension to record `:port/:view/:widths/:offset` (before Cut 4) —
 ✅ done (D61, layout-state sidecar goldens + coverage guard);
 input characterization tests for the unasserted widgets (before Cut 6) — i.e. **finishing
@@ -144,8 +144,9 @@ Phase 2.y**.
   D51 (no-op-press protocol), then tree/table selected+lead+expanded and the combobox
   body/arrow hover+press + editable-caret scenarios — closing the
   D50 combobox gap and guarding the port-content painter's tree/table row paths ahead
-  of its extraction; then tab hover + menubar hover/armed. The only
-  remaining unguarded interaction state is the tooltip (timer-coupled, deferred by D45).
+  of its extraction; then tab hover + menubar hover/armed. The tooltip — the last
+  D45-deferred state — landed with D62 (bounded poll absorbs the 750ms timer), so
+  **every interaction state D45 enumerated is now guarded**.
 - **Interaction-revealed paint paths (D52 class)** — content on non-selected tabs / inside
   collapsed trees / behind closed popups was never painted by the static net (the gap that
   hid D52). **Now actively covered (D53):** corpus-driven scenarios drive the vendored

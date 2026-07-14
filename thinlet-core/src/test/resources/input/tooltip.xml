@@ -1,0 +1,3 @@
+<panel gap="4" top="4" left="4">
+	<button name="tip" text="Save" tooltip="Tip" />
+</panel>
