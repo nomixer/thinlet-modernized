@@ -18,9 +18,8 @@
    at session start. Fork files → subsystems; boundaries vs Cut 2–6 seams;
    enhancement backlog; static-ability map. **Lands before any Cut 4/5/6 seam
    commitments.**
-2. **Cut 3 continues** — typed-descriptor core (verbatim table move → typed
-   transform + token round-trip audit → convert the 15 consumers; design lands
-   as its own D-entry), then accessor-façade cleanup + close.
+2. **Cut 3 continues** — typed core landed (D58); remaining: accessor-façade
+   cleanup + close (dead `defaultvalue` param, asymmetry-table comment, D59).
 3. **Tooltip capture** — the last interaction golden; needs the 750ms timer
    handled (D45); unblocks extracting `paintDesktop`/`paintReverse`. Low
    priority.

@@ -2158,3 +2158,99 @@ cut's D-entry).
 golden diffs (comments are bytecode-invisible). japicmp untouched (no signature changes).
 (Cross-ref D27 doc layout, D38 filenames, D42/D43 charter + visibility, D49/D56 the
 miscount that motivated single-home, D53 tests-as-spec precedent.)
+
+## D58 — Cut 3 core: the definition table and its consumers typed (`AttributeDescriptor`/`WidgetDescriptor`/`DescriptorTable`)
+
+**Date:** 2026-07-14. **Status:** accepted. **Phase:** 3 (3a, Cut 3).
+
+**Context.** Cut 3 (charter D42/D43: "DTD → typed descriptors + accessor-façade cleanup")
+opened after the fork-sources check came back empty (expected ~2026-07-17/19; Cuts 1–3
+don't depend on the fork shape). Net-before-refactor: `DescriptorContractTest` (#81)
+pinned the lookup walk, defaults, storage asymmetries, canonicalization, and exact error
+messages first. The in-code table was a flat triple-stride `Object[]`
+(`{classname, parentClassname, Object[][] attrs}`; 35 widgets, 109 attribute rows, the 18
+`"method"` rows 2-element) behind the private chokepoint `getDefinition`, consumed by 15
+sites (14 callers + `finishParse`, which receives rows deferred through the parse-time
+Vector).
+
+**Decision (the typed design).** Three package-private classes in package `thinlet` (D43
+visibility discipline; Java 8):
+
+- **`AttributeDescriptor`** `{String type, String name, String invalidate, Object
+  defaultValue}` — strictly the 2005 slot order `[0..3]`; a 2-arg `(type, name)`
+  constructor maps the method rows (no 2005 code read `[2]`/`[3]` on them — one reachable
+  exception below). `name` is the interning anchor: the canonical key object the model
+  layer stores and compares by identity.
+- **`WidgetDescriptor`** `{String name, String parent, AttributeDescriptor[] attributes}`
+  — `parent` stays a **name** re-looked-up by identity each hop, not an object reference:
+  this transliterates the 2005 walk exactly, preserving its quirk (a classname absent
+  from the table loops forever — unreachable, `":class"` is always canonical via
+  `create`; commented inline per D57, not "fixed", not test-pinned).
+- **`DescriptorTable`** — the relocated 2005 data (Bajzat extraction header), typed
+  `WIDGETS` built in a static block that keeps the 2005 initializer shape (shared locals,
+  comments, `new Integer(...)` boxing) so the transform stays strictly positional.
+
+**Why interning survives the move (the D43 tripwire question).** The canonical objects
+are compile-time string literals; per JLS 3.10.5 same-content literals resolve to the
+same interned object across classes and files, so moving them from `Thinlet`'s static
+block into `DescriptorTable` yields the identical objects the `is(…)` sites, `Renderer`
+reads, and the model's `entry[0] == key` compares already use. The three
+re-canonicalization points are preserved structurally (`create` returns
+`WIDGETS[i].name`; `addAttribute` re-keys via `definition.name`; setters store under
+`definition.name`), and `Renderer`'s classname dispatch needs **zero re-keying** (the
+model still stores `":class"` → interned String; typed widgets are Cut 5). Empirical:
+the strict-intern tripwire (armed by D43 for exactly this cut) ran in every test JVM of
+every row, green.
+
+**`getDefinition` retyped in one step** (returns `AttributeDescriptor`; it is private, so
+japicmp-free): no transitional `Object[]` — the compiler becomes the completeness check
+(any surviving `definition[n]` is a compile error). `update(Object component, Object
+mode)` narrowed to `String mode` in the same commit, so a
+`.name`/`.invalidate`/`.defaultValue` transposition at the nine
+`update(component, definition.invalidate)` sites cannot compile.
+
+**Commit-split deviation from the plan.** The planned move → type-table → convert split
+collapsed to move → (type + convert): a typed table cannot compile behind an
+`Object[]`-returning `getDefinition` without bridge scaffolding that would rebuild the
+rows at init (new object identities, twice-changed runtime structures — worse than the
+bigger commit). Commit 1 (verbatim move, 10 reads retargeted) still isolated the
+interning question for the tripwire before any typing.
+
+**One recorded divergence (exception type on a malformed-input path).** A method-binding
+argument naming a **method-type** attribute (e.g. `setMethod(b, "action",
+"doIt(this.action)", …)` or the same via parse) threw
+`ArrayIndexOutOfBoundsException` in 2005 — `definition[3]` on the 2-element row — before
+`getMethod`'s type ladder could reject it. The typed row has no out-of-bounds to hit:
+`defaultValue` reads `null` and the ladder throws `IllegalArgumentException("method")`.
+Reachable only from malformed binding strings; still a crash-on-error, different class.
+Accepted rather than fabricating an AIOOBE; pinned by
+`methodTypedBindingParameterIsRejectedWithTheTypeToken` (added in the same PR). This is
+the cut's only known observable change.
+
+**Scope cuts (recorded, D56-mirroring).** Type tokens and invalidate tokens stay interned
+`String`s — **no enums**: enum-ification would rewrite three verbatim `is(…)` ladders
+(`addAttribute`, `update` — also fed by non-DTD `"validate"` literal sites — and
+`getMethod`) for zero net-strength gain; revisit at Cut 5. `defaultValue` stays one
+`Object` slot holding the allowed-values `String[]` for choice rows (slot-faithful; the
+three `(String[])` casts stay). No new raw `getFont`/`getComponent` overloads; `Renderer`
+untouched (this cut touches no paint code — that is what makes goldens-zero-diff
+trivially arguable).
+
+**Mechanical discipline (D52/D56 recipe).** Move audit: old-vs-new table parsed to
+normalized token trees — 35 widgets + 109 rows + shared locals identical. Typing
+transform scripted (comment-preserving text surgery); same token audit against the
+committed legacy table — identical. Consumer conversion scripted with per-pattern count
+assertions (13 `Object[] definition =` decls; 52 `definition[N]` index expressions
+{16, 16, 9, 11} mapped positionally digit→field — a transposition is impossible by
+construction; 7 now-redundant `(String)` casts dropped; the singleton edits by
+exact-substring match asserting count 1). A first-run assertion failure (cast count 10
+vs actual 7) aborted before writing — the file is written only after every assertion
+holds. Audit scripts stay uncommitted (D57); method recorded here.
+
+**Validation.** Container (D44): base row **171 tests, 0 failures** (41 static + 50
+interaction golden tests + input suite + robot + tripwire + 25 contract pins), **zero
+golden diffs** (`git status` clean post-run); crossjdk rows 8/11/17 green (168 each,
+robot excluded). japicmp trivially green: new types package-private, every changed
+method private, public methods body-only. (Cross-ref D42/D43 charter + tripwire, D44
+container loop, D48 seam style, D52/D56 mechanical discipline, D57 documentation policy,
+PR #81 net, this PR.)
