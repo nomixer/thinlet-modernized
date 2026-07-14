@@ -33,8 +33,12 @@
    to 07-19). When they arrive: fork files → subsystems; boundaries vs Cut 2–6 seams;
    enhancement backlog; static-ability map. **Lands before any Cut 4/5/6 seam
    commitments.** Check for them at session start.
-2. **Cut 3 — DTD → typed descriptors** (D43) — the next chartered cut; overlappable,
-   start if fork sources haven't arrived.
+2. **Cut 3 — DTD → typed descriptors** (D43) — **in progress** (fork sources hadn't
+   arrived, checked 2026-07-14). Net landed first: `DescriptorContractTest` (24 pins:
+   lookup walk, defaults, omit-at-default asymmetries, canonicalization, exact IAE
+   messages). Next: typed-descriptor core (verbatim table move → typed transform →
+   convert the 15 consumers; design in the D57 entry when it lands), then façade
+   cleanup.
 3. **Tooltip capture** — the last interaction golden; needs the 750ms timer handled
    (D45); unblocks extracting `paintDesktop`/`paintReverse`. Low priority.
 4. **Live-`Drafts` playthrough (D53 deferred)** — needs the `thinlet-testkit`
