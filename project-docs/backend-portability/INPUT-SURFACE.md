@@ -117,11 +117,11 @@ calling out so a backend does not invent behavior for them:
 ## Capturing input behavior (the input-capture harness — Phase 2.x)
 
 This doc is **source-derived**: it records what the source is wired to do, not what
-Thinlet *observably does* when driven. Closing that gap needs an executable
-**input-capture harness**, which D36 resequenced into **Phase 2.x** (a gate before
-Phase 3) and reframed — its primary purpose is a **same-JDK refactor-safety net** over
-the untested ~26% input surface above; cross-JDK input comparison is a later layer on
-top. The design, validated by a landed feasibility probe (D36,
+Thinlet *observably does* when driven. The executable **input-capture harness** that
+closes that gap has since landed and grown — the D37 MVP, the D64 Cut-6-surface
+characterization suite, and the D65 live-Drafts playthrough now behavior-pin the
+input surface above as a **same-JDK refactor-safety net**; cross-JDK input comparison
+remains a later layer on top. The design, validated by the feasibility probe (D36,
 `INPUT-HARNESS-PROBE.md`), is deliberately small:
 
 1. **An input driver** — a test-side component that synthesizes a *scripted* sequence

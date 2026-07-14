@@ -21,9 +21,15 @@
   across spinbox/slider/tabbedpane/scrollbar-mouse (A), menubar/context-menu
   (B), focus/clipboard/dialog/tooltip-hide (C); quirks Q4–Q7 locked;
   Phase 2.y finished — the Cut 6 net is in place.
+- **Testkit + live-Drafts playthrough done (D65, PRs #92/#93)**: the harness
+  ships as the `thinlet-core` test-jar (no module — the D37 reactor cycle
+  never materializes); `InputDriver.attach` drives existing hosts;
+  `DraftsPlaythroughTest` (12 scenarios, deterministic-page allowlist) makes
+  the Drafts app the first 3b living test bed; Q8 locked.
 - Net: 41 static + 51 interaction goldens + 58 layout-state sidecars + input
-  suite + 25 contract pins (`DescriptorContractTest`); strict-intern tripwire
-  live in every test JVM (D43). Base row: 268 tests.
+  suite + 25 contract pins (`DescriptorContractTest`) + the live playthrough;
+  strict-intern tripwire live in every test JVM (D43, both modules). Base
+  row: 326 (core) + 13 (drafts) tests.
 
 ## Next work, in order
 
@@ -33,16 +39,12 @@
    **Lands before any Cut 4/5/6 seam commitments.**
 2. **Cut 4 (after fork mapping)** — layout → per-widget strategies; the D61
    net prerequisite is in place, seam commitments wait for the fork mapping.
-3. **Maintainer quirk dispositions (from D64)** — Q5 gate-spinning?, Q6 keep
-   jump-to-pointer?, Q7 wire-or-remove the dialog glyphs?; candidates:
-   empty-tab focus-escape, disabled-menuitem release-closes-silently.
-   Behavior is pinned either way — decisions feed Enhanced Thinlet (3c).
-4. **Live-`Drafts` playthrough: DONE (D65, two PRs)** — the testkit landed as
-   the `thinlet-core` test-jar + `InputDriver.attach` seam;
-   `DraftsPlaythroughTest` (12 scenarios) drives the real app over the
-   deterministic allowlist; Q8 locked (FolderBrowser off-Windows NPE →
-   ExceptionDialog). The Drafts app is the first 3b living test bed.
-5. **Optional vocabulary follow-ons** (D56 scope cut) — only if they earn their
+3. **Maintainer quirk dispositions (from D64/D65)** — Q5 gate-spinning?, Q6
+   keep jump-to-pointer?, Q7 wire-or-remove the dialog glyphs?, Q8 fix the
+   FolderBrowser root?; candidates: empty-tab focus-escape,
+   disabled-menuitem release-closes-silently. Behavior is pinned either way —
+   decisions feed Enhanced Thinlet (3c).
+4. **Optional vocabulary follow-ons** (D56 scope cut) — only if they earn their
    keep against Cut 3+.
 
 ## Discipline (one-liners; the D-entries carry the why)

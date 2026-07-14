@@ -1,9 +1,11 @@
 # Input-capture harness — feasibility probe findings (Phase 2.x gate)
 
-**Status:** probe complete *and* **MVP landed (D37)** on the base JVM (JDK 21); cross-JDK
-confirmation pending CI. **Recommendation (was):** feasible — proceed to the MVP; this has
-since shipped. The probe findings below are the historical spike record; the **MVP
-graduation** section at the end records what the suite became (and the renamed classes).
+**Status:** probe complete, **MVP landed (D37)**, and the crossjdk 8/11/17 rows have run
+the suite green on every slice since; the net has since grown through D64 (the Cut-6
+surface characterization) and D65 (the live-Drafts playthrough). **Recommendation
+(was):** feasible — proceed to the MVP; this has since shipped. The probe findings below
+are the historical spike record; the **MVP graduation** section at the end records what
+the suite became (and the renamed classes).
 
 > A *feasibility probe* (XP "spike") is a short, throwaway investigation that answers one
 > risky question and produces a decision, not shippable code. This note is that decision

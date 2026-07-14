@@ -295,8 +295,9 @@ final class InteractionScenarios {
         // fragile, per InputTreeTest); select the node first so the arrow targets
         // it. demo.xml "Tree node C" (index 2) is in the already-selected Lists
         // tab; drafts.xml "System" (index 4) is in the launcher nav tree and
-        // reveals its Properties/Colors/Windows child rows (following a click
-        // into those pages is live-app only, deferred).
+        // reveals its Properties/Colors/Windows child rows. Clicking INTO pages
+        // is live-app territory — DraftsPlaythroughTest (D65) covers the
+        // deterministic ones; the System pages stay excluded by its allowlist.
         s.add(new Scenario(
                 "corpus-demo-tree-expand",
                 "/corpus/demo/demo.xml",
