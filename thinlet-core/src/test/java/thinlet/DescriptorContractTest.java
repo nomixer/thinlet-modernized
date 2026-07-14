@@ -230,6 +230,19 @@ class DescriptorContractTest {
     }
 
     @Test
+    void methodTypedBindingParameterIsRejectedWithTheTypeToken() {
+        // Deliberate Cut 3 divergence (DECISIONS.md D58): a binding arg naming a
+        // method-type attribute threw ArrayIndexOutOfBoundsException in 2005 (the
+        // 2-element table row had no default slot); the typed row reads null and
+        // the type ladder rejects it instead.
+        Thinlet thinlet = new Thinlet();
+        Object button = Thinlet.create("button");
+        assertThatThrownBy(() -> thinlet.setMethod(button, "action", "doIt(this.action)", button, new ActionHandler()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("method");
+    }
+
+    @Test
     void methodBindingRecordsCanonicalParameterSpecs() {
         Thinlet thinlet = new Thinlet();
         Object button = Thinlet.create("button");
