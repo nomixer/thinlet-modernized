@@ -6,11 +6,11 @@
 
 ## State
 
-- **Cuts 1–2 done** (D42–D56). **Cut 3 in progress** (fork sources hadn't
-  arrived, checked 2026-07-14): the characterization net
-  `DescriptorContractTest` (24 contract pins) is merged (#81).
-- Net: 41 static + 49 interaction goldens + input suite + the Cut 3 pins;
-  strict-intern tripwire live in every test JVM (D43).
+- **Cuts 1–3 done** (D42–D59). Cut 3 landed 2026-07-14: net #81, typed core
+  D58 (one recorded divergence there), façade cleanup + close D59.
+- Net: 41 static + 49 interaction goldens + input suite + 25 contract pins
+  (`DescriptorContractTest`); strict-intern tripwire live in every test JVM
+  (D43).
 
 ## Next work, in order
 
@@ -18,8 +18,9 @@
    at session start. Fork files → subsystems; boundaries vs Cut 2–6 seams;
    enhancement backlog; static-ability map. **Lands before any Cut 4/5/6 seam
    commitments.**
-2. **Cut 3 continues** — typed core landed (D58); remaining: accessor-façade
-   cleanup + close (dead `defaultvalue` param, asymmetry-table comment, D59).
+2. **Cut 4 prep (after fork mapping)** — `LayoutTrace` extension to record
+   `:port`/`:view`/`:widths`/`:offset` is the chartered prerequisite
+   (PHASE-3-GOALS); seam commitments wait for the fork mapping.
 3. **Tooltip capture** — the last interaction golden; needs the 750ms timer
    handled (D45); unblocks extracting `paintDesktop`/`paintReverse`. Low
    priority.
