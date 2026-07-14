@@ -11,8 +11,7 @@
 > is described by event ids, handler routing, and resulting widget state — all
 > categorical/structural, not pixel metrics. Line refs are against
 > `thinlet-core/src/main/java/thinlet/Thinlet.java` and were spot-checked at
-> authoring; `.claude/PAINT-PIPELINE-MAP.md` covers paint/layout/model only, so
-> this doc is greenfield.
+> authoring; no prior reference covered input, so this doc is greenfield.
 
 Three purposes:
 

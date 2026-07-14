@@ -4426,6 +4426,14 @@ public class Thinlet extends Container implements Runnable, Serializable {
         return content;
     }
 
+    // The widget model: a component is an Object[]{key, value, next} assoc-list
+    // (entry[2] links the next entry). Keys are interned Strings compared by
+    // IDENTITY (see is()); the canonical key objects are the definition table's
+    // literals. Reserved ":"-prefixed keys share the chain with the DTD
+    // attributes: ":class" (canonical classname), ":comp"/":next"/":parent"
+    // (tree links), ":bind" (putProperty Hashtable), and part/state keys such as
+    // ":port"/":view"/":combolist"/":popup"/":lead"; "bounds" holds a Rectangle.
+    // Pinned: DescriptorContractTest (canonical-key identity, storage semantics).
     private static Object createImpl(String classname) {
         return new Object[] {":class", classname, null};
     }

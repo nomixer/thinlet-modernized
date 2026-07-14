@@ -78,7 +78,7 @@ exact observed set (verify with
 
 - `getPreferredSize` → child measurement; relies on `FontMetrics` for any text.
 - `FontMetrics.getHeight()/getAscent()/stringWidth()/charWidth()` — text extents
-  (call sites enumerated in `.claude/PAINT-PIPELINE-MAP.md`). **The drift source.**
+  (call sites: grep `getFontMetrics` in `Thinlet.java`). **The drift source.**
 - `Dimension`, `Rectangle`, `Insets` — value types for sizes/bounds/padding.
 - `setRectangle`/`getRectangle` (`Thinlet.java:7482`/`:7494`) — bounds stored on
   the widget under `"bounds"`.
