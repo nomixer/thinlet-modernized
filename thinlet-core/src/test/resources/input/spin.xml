@@ -1,0 +1,7 @@
+<panel columns="1" gap="4" top="4" left="4" right="4" bottom="4">
+	<spinbox name="spup" text="99" maximum="100" action="record(this.name)" weightx="1" />
+	<spinbox name="spdn" text="1" minimum="0" action="record(this.name)" weightx="1" />
+	<spinbox name="spmid" text="50" step="7" action="record(this.name)" weightx="1" />
+	<spinbox name="spro" text="10" editable="false" weightx="1" />
+	<spinbox name="spdead" text="5" value="42" weightx="1" />
+</panel>

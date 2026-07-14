@@ -29,10 +29,12 @@
    **Lands before any Cut 4/5/6 seam commitments.**
 2. **Cut 4 (after fork mapping)** — layout → per-widget strategies; the D61
    net prerequisite is in place, seam commitments wait for the fork mapping.
-3. **Input characterization tests for the unasserted widgets** (before Cut 6;
-   PHASE-3-GOALS blind spots: menus, spinner, slider, tabbedpane, dialog
-   drag/resize, scrollbar-mouse, context-menu, focus-traversal, clipboard).
-   Not urgent — Cut 6 is last.
+3. **Input characterization tests (D64, three slices)** — slice A landed
+   (spinbox/slider/tabbedpane/scrollbar-mouse, 29 tests, Q4–Q6); next:
+   slice B (menubar/context-menu + `metaClick`), then slice C
+   (focus-traversal/clipboard/dialog/tooltip-hide). Two quirk dispositions
+   await the maintainer (Q5 gate-spinning?, Q6 keep?; plus the
+   empty-tab focus-escape candidate).
 4. **Live-`Drafts` playthrough** — needs the `thinlet-testkit` extraction +
    determinism allowlist (D37/D53). Separately scoped.
 5. **Optional vocabulary follow-ons** (D56 scope cut) — only if they earn their
