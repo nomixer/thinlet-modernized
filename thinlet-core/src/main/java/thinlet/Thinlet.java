@@ -4399,9 +4399,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @throws java.lang.IllegalArgumentException for unknown widget type
      */
     public static Object create(String classname) { // #
-        for (int i = 0; i < dtd.length; i += 3) {
-            if (dtd[i].equals(classname)) {
-                return createImpl((String) dtd[i]);
+        for (int i = 0; i < DescriptorTable.WIDGETS.length; i++) {
+            if (DescriptorTable.WIDGETS[i].name.equals(classname)) {
+                return createImpl(DescriptorTable.WIDGETS[i].name);
             }
         }
         throw new IllegalArgumentException("unknown " + classname);
@@ -5376,20 +5376,20 @@ public class Thinlet extends Container implements Runnable, Serializable {
         if (methods != null)
             for (int i = 0; i < methods.size(); i += 3) {
                 Object component = methods.elementAt(i);
-                Object[] definition = (Object[]) methods.elementAt(i + 1);
+                AttributeDescriptor definition = (AttributeDescriptor) methods.elementAt(i + 1);
                 String value = (String) methods.elementAt(i + 2);
 
-                if (is(definition[0], "method")) {
+                if (is(definition.type, "method")) {
                     Object[] method = getMethod(component, value, root, handler);
-                    if (is(definition[1], "init")) {
+                    if (is(definition.name, "init")) {
                         invokeImpl(method, null);
                     } else {
-                        set(component, definition[1], method);
+                        set(component, definition.name, method);
                     }
-                } else { // (is(definition[0], "component"))
+                } else { // (is(definition.type, "component"))
                     Object reference = find(root, value); // +start find from the component
                     if (reference == null) throw new IllegalArgumentException(value + " not found");
-                    set(component, definition[1], reference);
+                    set(component, definition.name, reference);
                 }
             }
     }
@@ -5437,9 +5437,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
         if (classname == extendclass) {
             return true;
         }
-        for (int i = 0; i < dtd.length; i += 3) {
-            if (classname == dtd[i]) {
-                return instance(dtd[i + 1], extendclass);
+        for (int i = 0; i < DescriptorTable.WIDGETS.length; i++) {
+            if (classname == DescriptorTable.WIDGETS[i].name) {
+                return instance(DescriptorTable.WIDGETS[i].parent, extendclass);
             }
         }
         return false;
@@ -5463,36 +5463,36 @@ public class Thinlet extends Container implements Runnable, Serializable {
             value = resourcebundle.getString(value.substring(5));
         }
 
-        Object[] definition = getDefinition(getClass(component), key, null);
-        key = (String) definition[1];
-        if (is(definition[0], "string")) {
+        AttributeDescriptor definition = getDefinition(getClass(component), key, null);
+        key = definition.name;
+        if (is(definition.type, "string")) {
             value = (encoding == null) ? new String(value) : new String(value.getBytes(), 0, value.length(), encoding);
-            setString(component, key, value, (String) definition[3]);
-        } else if (is(definition[0], "choice")) {
-            String[] values = (String[]) definition[3];
+            setString(component, key, value, (String) definition.defaultValue);
+        } else if (is(definition.type, "choice")) {
+            String[] values = (String[]) definition.defaultValue;
             setChoice(component, key, value, values, values[0]);
-        } else if (is(definition[0], "boolean")) {
+        } else if (is(definition.type, "boolean")) {
             if ("true".equals(value)) {
-                if (definition[3] == Boolean.FALSE) {
+                if (definition.defaultValue == Boolean.FALSE) {
                     set(component, key, Boolean.TRUE);
                 }
             } else if ("false".equals(value)) {
-                if (definition[3] == Boolean.TRUE) {
+                if (definition.defaultValue == Boolean.TRUE) {
                     set(component, key, Boolean.FALSE);
                 }
             } else throw new IllegalArgumentException(value);
-        } else if (is(definition[0], "integer")) {
+        } else if (is(definition.type, "integer")) {
             set(component, key, Integer.valueOf(value));
-        } else if (is(definition[0], "icon")) {
+        } else if (is(definition.type, "icon")) {
             set(component, key, getIcon(value));
-        } else if ((is(definition[0], "method")) || (is(definition[0], "component"))) {
+        } else if ((is(definition.type, "method")) || (is(definition.type, "component"))) {
             if (lasts == null) {
                 lasts = new Vector();
             }
             lasts.addElement(component);
             lasts.addElement(definition);
             lasts.addElement(value);
-        } else if (is(definition[0], "property")) {
+        } else if (is(definition.type, "property")) {
             StringTokenizer st = new StringTokenizer(value, ";");
             while (st.hasMoreTokens()) {
                 String token = st.nextToken();
@@ -5502,7 +5502,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 }
                 putProperty(component, new String(token.substring(0, equals)), new String(token.substring(equals + 1)));
             }
-        } else if (is(definition[0], "font")) {
+        } else if (is(definition.type, "font")) {
             String name = null;
             boolean bold = false;
             boolean italic = false;
@@ -5529,7 +5529,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 size = font.getSize();
             }
             set(component, key, new Font(name, (bold ? Font.BOLD : 0) | (italic ? Font.ITALIC : 0), size));
-        } else if (is(definition[0], "color")) {
+        } else if (is(definition.type, "color")) {
             int color = 0;
             if (value.startsWith("#")) {
                 color = Integer.parseInt(value.substring(1), 16);
@@ -5543,16 +5543,16 @@ public class Thinlet extends Container implements Runnable, Serializable {
                         | (Integer.parseInt(st.nextToken()) & 0xff);
             }
             set(component, key, new Color(color));
-        } else if (is(definition[0], "keystroke")) {
+        } else if (is(definition.type, "keystroke")) {
             setKeystrokeImpl(component, key, value);
-        } else if (is(definition[0], "bean")) {
+        } else if (is(definition.type, "bean")) {
             try {
                 Component bean = (Component) Class.forName(value).newInstance();
                 set(component, key, bean);
             } catch (Exception exc) {
                 throw new IllegalArgumentException(value);
             }
-        } else throw new IllegalArgumentException((String) definition[0]);
+        } else throw new IllegalArgumentException(definition.type);
         return lasts;
     }
 
@@ -5560,23 +5560,26 @@ public class Thinlet extends Container implements Runnable, Serializable {
      *
      * @throws java.lang.IllegalArgumentException
      */
-    private static Object[] getDefinition(Object classname, String key, String type) {
+    private static AttributeDescriptor getDefinition(Object classname, String key, String type) {
         Object currentname = classname;
+        // 2005 quirk, preserved: a classname absent from the table never nulls the
+        // walk variable, so this loops forever; unreachable (":class" is always a
+        // canonical table literal via create).
         while (classname != null) {
-            for (int i = 0; i < dtd.length; i += 3) {
-                if (dtd[i] == classname) {
-                    Object[][] attributes = (Object[][]) dtd[i + 2];
+            for (int i = 0; i < DescriptorTable.WIDGETS.length; i++) {
+                if (DescriptorTable.WIDGETS[i].name == classname) {
+                    AttributeDescriptor[] attributes = DescriptorTable.WIDGETS[i].attributes;
                     if (attributes != null) {
                         for (int j = 0; j < attributes.length; j++) {
-                            if (attributes[j][1].equals(key)) {
-                                if ((type != null) && (type != attributes[j][0])) {
-                                    throw new IllegalArgumentException(attributes[j][0].toString());
+                            if (attributes[j].name.equals(key)) {
+                                if ((type != null) && (type != attributes[j].type)) {
+                                    throw new IllegalArgumentException(attributes[j].type);
                                 }
                                 return attributes[j];
                             }
                         }
                     }
-                    classname = dtd[i + 1];
+                    classname = DescriptorTable.WIDGETS[i].parent;
                     break;
                 }
             }
@@ -5590,9 +5593,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * Sets the given property pair (key and value) for the component
      */
     public void setString(Object component, String key, String value) {
-        Object[] definition = getDefinition(getClass(component), key, "string");
-        if (setString(component, (String) definition[1], value, (String) definition[3])) {
-            update(component, definition[2]);
+        AttributeDescriptor definition = getDefinition(getClass(component), key, "string");
+        if (setString(component, definition.name, value, (String) definition.defaultValue)) {
+            update(component, definition.invalidate);
         }
     }
 
@@ -5607,10 +5610,10 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * Sets the given property pair (key and value) for the component
      */
     public void setChoice(Object component, String key, String value) {
-        Object[] definition = getDefinition(getClass(component), key, "choice");
-        String[] values = (String[]) definition[3];
-        if (setChoice(component, (String) definition[1], value, values, values[0])) {
-            update(component, definition[2]);
+        AttributeDescriptor definition = getDefinition(getClass(component), key, "choice");
+        String[] values = (String[]) definition.defaultValue;
+        if (setChoice(component, definition.name, value, values, values[0])) {
+            update(component, definition.invalidate);
         }
     }
 
@@ -5618,17 +5621,17 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * Gets the property value of the given component by the property key
      */
     public String getChoice(Object component, String key) {
-        Object[] definition = getDefinition(getClass(component), key, "choice");
-        return getString(component, (String) definition[1], ((String[]) definition[3])[0]);
+        AttributeDescriptor definition = getDefinition(getClass(component), key, "choice");
+        return getString(component, definition.name, ((String[]) definition.defaultValue)[0]);
     }
 
     /**
      * Sets the given property pair (key and value) for the component
      */
     public void setBoolean(Object component, String key, boolean value) {
-        Object[] definition = getDefinition(getClass(component), key, "boolean");
-        if (setBoolean(component, (String) definition[1], value, (definition[3] == Boolean.TRUE))) {
-            update(component, definition[2]);
+        AttributeDescriptor definition = getDefinition(getClass(component), key, "boolean");
+        if (setBoolean(component, definition.name, value, (definition.defaultValue == Boolean.TRUE))) {
+            update(component, definition.invalidate);
         }
     }
 
@@ -5643,9 +5646,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * Sets the given property pair (key and value) for the component
      */
     public void setInteger(Object component, String key, int value) {
-        Object[] definition = getDefinition(getClass(component), key, "integer");
-        if (setInteger(component, (String) definition[1], value, ((Integer) definition[3]).intValue())) {
-            update(component, definition[2]);
+        AttributeDescriptor definition = getDefinition(getClass(component), key, "integer");
+        if (setInteger(component, definition.name, value, ((Integer) definition.defaultValue).intValue())) {
+            update(component, definition.invalidate);
         }
     }
 
@@ -5660,9 +5663,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * Sets the given property pair (key and value) for the component
      */
     public void setIcon(Object component, String key, Image icon) {
-        Object[] definition = getDefinition(getClass(component), key, "icon");
-        if (set(component, definition[1], icon)) {
-            update(component, definition[2]);
+        AttributeDescriptor definition = getDefinition(getClass(component), key, "icon");
+        if (set(component, definition.name, icon)) {
+            update(component, definition.invalidate);
         }
     }
 
@@ -5674,10 +5677,10 @@ public class Thinlet extends Container implements Runnable, Serializable {
     }
 
     public void setKeystroke(Object component, String key, String value) {
-        Object[] definition = getDefinition(getClass(component), key, "keystroke");
+        AttributeDescriptor definition = getDefinition(getClass(component), key, "keystroke");
         // TODO check if changed
-        setKeystrokeImpl(component, (String) definition[1], value);
-        update(component, definition[2]);
+        setKeystrokeImpl(component, definition.name, value);
+        update(component, definition.invalidate);
     }
 
     /**
@@ -5706,9 +5709,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @param font custom font to use, or null to reset component to use default font
      */
     public void setFont(Object component, String key, Font font) {
-        Object[] definition = getDefinition(getClass(component), key, "font");
-        if (set(component, definition[1], font)) {
-            update(component, definition[2]);
+        AttributeDescriptor definition = getDefinition(getClass(component), key, "font");
+        if (set(component, definition.name, font)) {
+            update(component, definition.invalidate);
         }
     }
 
@@ -5736,9 +5739,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @param color custom color to use, or null to reset component to use default color
      */
     public void setColor(Object component, String key, Color color) {
-        Object[] definition = getDefinition(getClass(component), key, "color");
-        if (set(component, definition[1], color)) {
-            update(component, definition[2]);
+        AttributeDescriptor definition = getDefinition(getClass(component), key, "color");
+        if (set(component, definition.name, color)) {
+            update(component, definition.invalidate);
         }
     }
 
@@ -5760,9 +5763,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @param bean an AWT component, or null
      */
     public void setComponent(Object component, String key, Component bean) {
-        Object[] definition = getDefinition(getClass(component), key, "bean");
-        if (set(component, definition[1], bean)) { // noticed by Dawid Weiss
-            update(component, definition[2]);
+        AttributeDescriptor definition = getDefinition(getClass(component), key, "bean");
+        if (set(component, definition.name, bean)) { // noticed by Dawid Weiss
+            update(component, definition.invalidate);
         }
     }
 
@@ -5801,9 +5804,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
     }
 
     private static Object get(Object component, String key, String type) {
-        Object[] definition = getDefinition(getClass(component), key, type);
-        Object value = get(component, definition[1]);
-        return (value != null) ? value : definition[3];
+        AttributeDescriptor definition = getDefinition(getClass(component), key, type);
+        Object value = get(component, definition.name);
+        return (value != null) ? value : definition.defaultValue;
     }
 
     /**
@@ -5819,7 +5822,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @throws java.lang.IllegalArgumentException
      */
     public void setMethod(Object component, String key, String value, Object root, Object handler) {
-        key = (String) getDefinition(getClass(component), key, "method")[1];
+        key = getDefinition(getClass(component), key, "method").name;
         Object[] method = getMethod(component, value, root, handler);
         set(component, key, method);
     }
@@ -5904,10 +5907,10 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 if (dot == -1) {
                     parametertypes[i] = Object.class; // Widget.class
                 } else {
-                    Object[] definition = getDefinition(classname, arg.substring(dot + 1), null);
-                    data[2 + 3 * i + 1] = definition[1]; // parameter name, e.g. enabled
-                    data[2 + 3 * i + 2] = definition[3]; // default value, e.g. Boolean.TRUE
-                    Object fieldclass = definition[0];
+                    AttributeDescriptor definition = getDefinition(classname, arg.substring(dot + 1), null);
+                    data[2 + 3 * i + 1] = definition.name; // parameter name, e.g. enabled
+                    data[2 + 3 * i + 2] = definition.defaultValue; // default value, e.g. Boolean.TRUE
+                    String fieldclass = definition.type;
                     if ((is(fieldclass, "string")) || (is(fieldclass, "choice"))) {
                         parametertypes[i] = String.class;
                     } else if (is(fieldclass, "boolean")) {
@@ -5916,7 +5919,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                         parametertypes[i] = Integer.TYPE;
                     } else if (is(fieldclass, "icon")) {
                         parametertypes[i] = Image.class;
-                    } else throw new IllegalArgumentException((String) fieldclass);
+                    } else throw new IllegalArgumentException(fieldclass);
                 }
             }
         }
@@ -5929,7 +5932,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         }
     }
 
-    private void update(Object component, Object mode) {
+    private void update(Object component, String mode) {
         if (is(mode, "parent")) {
             component = getParent(component);
             mode = "validate";
@@ -6132,215 +6135,5 @@ public class Thinlet extends Container implements Runnable, Serializable {
      */
     public boolean destroy() {
         return true;
-    }
-
-    private static Object[] dtd;
-
-    static {
-        Integer integer_1 = new Integer(-1);
-        Integer integer0 = new Integer(0);
-        Integer integer1 = new Integer(1);
-        String[] orientation = {"horizontal", "vertical"};
-        String[] leftcenterright = {"left", "center", "right"};
-        String[] selections = {"single", "interval", "multiple"}; // +none
-        dtd = new Object[] {
-            "component", null,
-                    new Object[][] {
-                        {"string", "name", null, null},
-                        {"boolean", "enabled", "paint", Boolean.TRUE},
-                        {"boolean", "visible", "parent", Boolean.TRUE},
-                        {"string", "tooltip", null, null},
-                        {"font", "font", "validate", null},
-                        {"color", "foreground", "paint", null},
-                        {"color", "background", "paint", null},
-                        {"integer", "width", "validate", integer0},
-                        {"integer", "height", "validate", integer0},
-                        {"integer", "colspan", "validate", integer1},
-                        {"integer", "rowspan", "validate", integer1},
-                        {"integer", "weightx", "validate", integer0},
-                        {"integer", "weighty", "validate", integer0},
-                        {"choice", "halign", "validate", new String[] {"fill", "center", "left", "right"}},
-                        {"choice", "valign", "validate", new String[] {"fill", "center", "top", "bottom"}},
-                        // component class String null*
-                        // parent Object null
-                        // (bounds) Rectangle 0 0 0 0
-                        {"property", "property", null, null},
-                        {"method", "init"},
-                        {"method", "focuslost"},
-                        {"method", "focusgained"}
-                    },
-            "label", "component",
-                    new Object[][] {
-                        {"string", "text", "validate", null},
-                        {"icon", "icon", "validate", null},
-                        {"choice", "alignment", "validate", leftcenterright},
-                        {"integer", "mnemonic", "paint", integer_1},
-                        {"component", "for", null, null}
-                    },
-            "button", "label",
-                    new Object[][] {
-                        {"choice", "alignment", "validate", new String[] {"center", "left", "right"}},
-                        {"method", "action"},
-                        {"choice", "type", "paint", new String[] {"normal", "default", "cancel", "link"}}
-                    },
-            "checkbox", "label",
-                    new Object[][] {
-                        {"boolean", "selected", "paint", Boolean.FALSE}, // ...group
-                        {"string", "group", "paint", null}, // ...group
-                        {"method", "action"}
-                    },
-            "togglebutton", "checkbox", null,
-            "combobox", "textfield",
-                    new Object[][] {
-                        {"icon", "icon", "validate", null},
-                        {"integer", "selected", "layout", integer_1}
-                    },
-            "choice", null,
-                    new Object[][] {
-                        {"string", "name", null, null},
-                        {"boolean", "enabled", "paint", Boolean.TRUE},
-                        {"string", "text", "parent", null},
-                        {"icon", "icon", "parent", null},
-                        {"choice", "alignment", "parent", leftcenterright},
-                        {"string", "tooltip", null, null},
-                        {"font", "font", "validate", null},
-                        {"color", "foreground", "paint", null},
-                        {"color", "background", "paint", null},
-                        {"property", "property", null, null}
-                    },
-            "textfield", "component",
-                    new Object[][] {
-                        {"string", "text", "layout", ""},
-                        {"integer", "columns", "validate", integer0},
-                        {"boolean", "editable", "paint", Boolean.TRUE},
-                        {"choice", "alignment", "validate", leftcenterright},
-                        {"integer", "start", "layout", integer0},
-                        {"integer", "end", "layout", integer0},
-                        {"method", "action"},
-                        {"method", "insert"},
-                        {"method", "remove"},
-                        {"method", "caret"},
-                        {"method", "perform"}
-                    },
-            "passwordfield", "textfield", null,
-            "textarea", "textfield",
-                    new Object[][] {
-                        {"integer", "rows", "validate", integer0},
-                        {"boolean", "border", "validate", Boolean.TRUE},
-                        {"boolean", "wrap", "layout", Boolean.FALSE}
-                    },
-            "tabbedpane", "component",
-                    new Object[][] {
-                        {"choice", "placement", "validate", new String[] {"top", "left", "bottom", "right", "stacked"}},
-                        {"integer", "selected", "paint", integer0},
-                        {"method", "action"}
-                    }, // ...focus
-            "tab", "choice", new Object[][] {{"integer", "mnemonic", "paint", integer_1}},
-            "panel", "component",
-                    new Object[][] {
-                        {"integer", "columns", "validate", integer0},
-                        {"integer", "top", "validate", integer0},
-                        {"integer", "left", "validate", integer0},
-                        {"integer", "bottom", "validate", integer0},
-                        {"integer", "right", "validate", integer0},
-                        {"integer", "gap", "validate", integer0},
-                        {"string", "text", "validate", null},
-                        {"icon", "icon", "validate", null},
-                        {"boolean", "border", "validate", Boolean.FALSE},
-                        {"boolean", "scrollable", "validate", Boolean.FALSE}
-                    },
-            "desktop", "component", null,
-            "dialog", "panel",
-                    new Object[][] {
-                        {"boolean", "modal", null, Boolean.FALSE},
-                        {"boolean", "resizable", null, Boolean.FALSE},
-                        {"boolean", "closable", "paint", Boolean.FALSE},
-                        {"boolean", "maximizable", "paint", Boolean.FALSE},
-                        {"boolean", "iconifiable", "paint", Boolean.FALSE}
-                    },
-            "spinbox", "textfield",
-                    new Object[][] {
-                        {"integer", "minimum", null, new Integer(Integer.MIN_VALUE)},
-                        {"integer", "maximum", null, new Integer(Integer.MAX_VALUE)},
-                        {"integer", "step", null, integer1},
-                        {"integer", "value", null, integer0}
-                    }, // == text? deprecated
-            "progressbar", "component",
-                    new Object[][] {
-                        {"choice", "orientation", "validate", orientation},
-                        {"integer", "minimum", "paint", integer0}, // ...checkvalue
-                        {"integer", "maximum", "paint", new Integer(100)},
-                        {"integer", "value", "paint", integer0}
-                    },
-            // change stringpainted
-            "slider", "progressbar",
-                    new Object[][] {
-                        {"integer", "unit", null, new Integer(5)},
-                        {"integer", "block", null, new Integer(25)},
-                        {"method", "action"}
-                    },
-            // minor/majortickspacing
-            // inverted
-            // labelincrement labelstart
-            "splitpane", "component",
-                    new Object[][] {
-                        {"choice", "orientation", "validate", orientation},
-                        {"integer", "divider", "layout", integer_1}
-                    },
-            "list", "component",
-                    new Object[][] {
-                        {"choice", "selection", "paint", selections},
-                        {"method", "action"},
-                        {"method", "perform"},
-                        {"boolean", "line", "validate", Boolean.TRUE}
-                    },
-            "item", "choice", new Object[][] {{"boolean", "selected", null, Boolean.FALSE}},
-            "table", "list", new Object[][] {
-                        /*{ "choice", "selection",
-                        new String[] { "singlerow", "rowinterval", "multiplerow",
-                        	"cell", "cellinterval",
-                        	"singlecolumn", "columninterval", "multiplecolumn" } }*/
-                    },
-            "header", null, null,
-            // reordering allowed
-            // autoresize mode: off next (column boundries) subsequents last all columns
-            // column row selection
-            // selection row column cell
-            // editing row/column
-            "column", "choice",
-                    new Object[][] {
-                        {"integer", "width", null, new Integer(80)},
-                        {"choice", "sort", null, new String[] {"none", "ascent", "descent"}}
-                    },
-            "row", null, new Object[][] {{"boolean", "selected", null, Boolean.FALSE}},
-            "cell", "choice", null,
-            "tree", "list",
-                    new Object[][] {
-                        {"boolean", "angle", null, Boolean.FALSE},
-                        {"method", "expand"},
-                        {"method", "collapse"}
-                    },
-            "node", "choice",
-                    new Object[][] {
-                        {"boolean", "selected", null, Boolean.FALSE},
-                        {"boolean", "expanded", null, Boolean.TRUE}
-                    },
-            "separator", "component", null,
-            "menubar", "component", null,
-            "menu", "choice", new Object[][] {{"integer", "mnemonic", "paint", integer_1}},
-            "menuitem", "choice",
-                    new Object[][] {
-                        {"keystroke", "accelerator", null, null},
-                        {"method", "action"},
-                        {"integer", "mnemonic", "paint", integer_1}
-                    },
-            "checkboxmenuitem", "menuitem",
-                    new Object[][] {
-                        {"boolean", "selected", "paint", Boolean.FALSE}, // ...group
-                        {"string", "group", "paint", null}
-                    }, // ...group
-            "popupmenu", "component", new Object[][] {{"method", "menushown"}}, // Post menu: Shift+F10
-            "bean", "component", new Object[][] {{"bean", "bean", null, null}}
-        };
     }
 }
