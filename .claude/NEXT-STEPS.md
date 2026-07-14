@@ -17,6 +17,10 @@
 - **Cut 2 fully closed (D63)**: `paintDesktop`/`paintReverse` moved to
   `Renderer` behind the D62 golden — every 2005 paint branch body now lives
   in `Renderer`; `Thinlet` keeps only the D50-gated shared paint helpers.
+- **Input blind spot closed (D64, three slices)**: 58 characterization tests
+  across spinbox/slider/tabbedpane/scrollbar-mouse (A), menubar/context-menu
+  (B), focus/clipboard/dialog/tooltip-hide (C); quirks Q4–Q7 locked;
+  Phase 2.y finished — the Cut 6 net is in place.
 - Net: 41 static + 51 interaction goldens + 58 layout-state sidecars + input
   suite + 25 contract pins (`DescriptorContractTest`); strict-intern tripwire
   live in every test JVM (D43). Base row: 268 tests.
@@ -29,12 +33,10 @@
    **Lands before any Cut 4/5/6 seam commitments.**
 2. **Cut 4 (after fork mapping)** — layout → per-widget strategies; the D61
    net prerequisite is in place, seam commitments wait for the fork mapping.
-3. **Input characterization tests (D64, three slices)** — slices A+B landed
-   (A: spinbox/slider/tabbedpane/scrollbar-mouse, 29 tests, Q4–Q6;
-   B: menubar/context-menu + `metaClick`, 12 tests); next: slice C
-   (focus-traversal/clipboard/dialog/tooltip-hide). Maintainer dispositions
-   pending: Q5 gate-spinning?, Q6 keep?, empty-tab focus-escape candidate,
-   disabled-menuitem release-closes-silently candidate.
+3. **Maintainer quirk dispositions (from D64)** — Q5 gate-spinning?, Q6 keep
+   jump-to-pointer?, Q7 wire-or-remove the dialog glyphs?; candidates:
+   empty-tab focus-escape, disabled-menuitem release-closes-silently.
+   Behavior is pinned either way — decisions feed Enhanced Thinlet (3c).
 4. **Live-`Drafts` playthrough** — needs the `thinlet-testkit` extraction +
    determinism allowlist (D37/D53). Separately scoped.
 5. **Optional vocabulary follow-ons** (D56 scope cut) — only if they earn their

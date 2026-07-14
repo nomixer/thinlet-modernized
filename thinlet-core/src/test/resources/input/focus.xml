@@ -1,0 +1,11 @@
+<panel columns="1" gap="4" top="4" left="4" right="4" bottom="4">
+	<textfield name="f1" focusgained="focusGained(this.name)" focuslost="focusLost(this.name)" />
+	<button name="f2" text="Two" focusgained="focusGained(this.name)" />
+	<button name="f3" text="Off" enabled="false" focusgained="focusGained(this.name)" />
+	<checkbox name="f4" text="Check" focusgained="focusGained(this.name)" />
+	<label name="lb" text="never focused" />
+	<tabbedpane name="ftp" focusgained="focusGained(this.name)" weightx="1" weighty="1">
+		<tab text="A"><panel><textfield name="f5" focusgained="focusGained(this.name)" /></panel></tab>
+		<tab text="B"><panel><button name="f6" text="Hidden" focusgained="focusGained(this.name)" /></panel></tab>
+	</tabbedpane>
+</panel>
