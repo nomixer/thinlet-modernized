@@ -2293,3 +2293,36 @@ this cut: no visibility was widened.
 suite + robot + tripwire + the 25 contract pins, spinbox input tests exercising the
 inlined `processSpin` path), zero golden diffs; crossjdk rows 8/11/17 green. (Cross-ref
 D42/D43 charter, D57 comment rules, D58 core, PR #81 net.)
+
+## D60 — Pre-PR Java comment pass, hook-enforced (`scripts/comment-pass.sh`)
+
+**Date:** 2026-07-14. **Status:** accepted. **Phase:** 3 (process; workflow tooling only).
+
+**Context.** After Cut 3 the maintainer asked for an automated guarantee that a "Java
+comment update" pass happens before every PR. The D57 rule already assigns *what* the
+pass checks, but its trigger was recall — and the failure mode is real: PRs #83/#84
+touched `Thinlet.java` without trimming the pre-D57 `is()` javadoc, exactly the
+opportunistic trim D57 prescribes. Recall does not survive sessions; a harness hook
+does (the harness executes hooks, not the model).
+
+**Decision.** A Claude Code `PreToolUse` hook on `Bash` (repo `.claude/settings.json`)
+runs `scripts/comment-pass.sh hook` on every shell call. It denies `gh pr create` if and
+only if (a) the command contains `gh pr create`, (b) the branch's diff vs `main`
+contains `*.java` changes, and (c) no attestation marker matches the current HEAD SHA.
+The pass itself stays a judgment task: `scripts/comment-pass.sh` prints the D57-derived
+checklist (comment only what code cannot say, pin-or-tag; fix staleness; trim pre-D57
+verbose javadoc in touched files; new-file header rules) plus the changed Java files;
+`scripts/comment-pass.sh done` attests by writing the HEAD SHA to
+`.git/java-comment-pass` (untracked, per-clone). New commits invalidate the attestation
+by construction. Docs-only PRs never hit the gate.
+
+**Known edges (accepted).** The command match is a substring — a shell command merely
+*mentioning* `gh pr create` on a Java-diff branch triggers the gate (cost: one
+attestation); PRs created outside the harness (maintainer running `gh` directly)
+bypass it (the gate targets Claude's workflow, which is where the forgetting happens).
+
+**Validation.** All four hook paths pipe-tested with synthesized stdin (non-matching
+command; matching + no Java diff; matching + Java diff + no marker → deny JSON with
+the checklist pointer; attested → allow). Live-fire proven via a sentinel prefix on a
+harmless command, then removed. `jq -e` schema check green. (Cross-ref D42/D46 PR
+workflow, D57 comment rules, D59 the near-miss.)

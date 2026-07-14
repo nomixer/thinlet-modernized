@@ -13,7 +13,7 @@ project source and stay.
 | --- | --- | --- |
 | `CLAUDE.md` (repo root) | Session orientation, auto-loaded by Claude Code at startup. The only Claude file that must live outside `.claude/` (only the root `CLAUDE.md` is auto-loaded). | Yes — loses auto-orientation only |
 | `.claude/agents/trace-curator.md` | Reusable agent definition codifying the trace-curation procedure that populates `project-docs/backend-portability/` from the committed goldens (D34). | Yes |
-| `.claude/settings.json` | Claude Code harness permissions for this repo (maintainer-added, 2026-07-08): allowlists `gh pr merge` so PR auto-merge delegation (D42 opt-in) works in auto mode without a classifier denial. Functional config, not an orientation doc. | Yes — auto-merge delegation then needs manual approval again |
+| `.claude/settings.json` | Claude Code harness permissions for this repo (maintainer-added, 2026-07-08): allowlists `gh pr merge` so PR auto-merge delegation (D42 opt-in) works in auto mode without a classifier denial; runs the D60 pre-PR comment-pass hook (`scripts/comment-pass.sh`). Functional config, not an orientation doc. | Yes — auto-merge delegation and the D60 gate then stop working |
 | `.claude/SELF-REVIEWS.md` | Rolling log of lull-time independent-model self-reviews (full findings; material outcomes go to `DECISIONS.md`, e.g. D50). | Yes |
 | `.claude/NEXT-STEPS.md` | The live session handoff: state pointers, ordered next work, one-line discipline reminders (D57 format — no rationale recaps). | Yes |
 | `.claude/MANIFEST.md` | This file. | Yes |
