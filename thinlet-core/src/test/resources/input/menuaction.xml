@@ -1,0 +1,13 @@
+<panel columns="1" gap="4" top="4" left="4" right="4" bottom="4">
+	<menubar name="mb">
+		<menu name="m1" text="File">
+			<menuitem name="mi1" text="Open" action="record(this.name)" />
+			<menuitem name="mi2" text="Off" enabled="false" action="record(this.name)" />
+			<menuitem name="mi3" text="Save" action="record(this.name)" />
+		</menu>
+		<menu name="m2" text="Edit">
+			<menuitem name="mi4" text="Copy" action="record(this.name)" />
+		</menu>
+	</menubar>
+	<button name="body" text="Body" weighty="1" />
+</panel>
