@@ -4399,9 +4399,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @throws java.lang.IllegalArgumentException for unknown widget type
      */
     public static Object create(String classname) { // #
-        for (int i = 0; i < dtd.length; i += 3) {
-            if (dtd[i].equals(classname)) {
-                return createImpl((String) dtd[i]);
+        for (int i = 0; i < DescriptorTable.DTD.length; i += 3) {
+            if (DescriptorTable.DTD[i].equals(classname)) {
+                return createImpl((String) DescriptorTable.DTD[i]);
             }
         }
         throw new IllegalArgumentException("unknown " + classname);
@@ -5437,9 +5437,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
         if (classname == extendclass) {
             return true;
         }
-        for (int i = 0; i < dtd.length; i += 3) {
-            if (classname == dtd[i]) {
-                return instance(dtd[i + 1], extendclass);
+        for (int i = 0; i < DescriptorTable.DTD.length; i += 3) {
+            if (classname == DescriptorTable.DTD[i]) {
+                return instance(DescriptorTable.DTD[i + 1], extendclass);
             }
         }
         return false;
@@ -5563,9 +5563,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
     private static Object[] getDefinition(Object classname, String key, String type) {
         Object currentname = classname;
         while (classname != null) {
-            for (int i = 0; i < dtd.length; i += 3) {
-                if (dtd[i] == classname) {
-                    Object[][] attributes = (Object[][]) dtd[i + 2];
+            for (int i = 0; i < DescriptorTable.DTD.length; i += 3) {
+                if (DescriptorTable.DTD[i] == classname) {
+                    Object[][] attributes = (Object[][]) DescriptorTable.DTD[i + 2];
                     if (attributes != null) {
                         for (int j = 0; j < attributes.length; j++) {
                             if (attributes[j][1].equals(key)) {
@@ -5576,7 +5576,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                             }
                         }
                     }
-                    classname = dtd[i + 1];
+                    classname = DescriptorTable.DTD[i + 1];
                     break;
                 }
             }
@@ -6132,215 +6132,5 @@ public class Thinlet extends Container implements Runnable, Serializable {
      */
     public boolean destroy() {
         return true;
-    }
-
-    private static Object[] dtd;
-
-    static {
-        Integer integer_1 = new Integer(-1);
-        Integer integer0 = new Integer(0);
-        Integer integer1 = new Integer(1);
-        String[] orientation = {"horizontal", "vertical"};
-        String[] leftcenterright = {"left", "center", "right"};
-        String[] selections = {"single", "interval", "multiple"}; // +none
-        dtd = new Object[] {
-            "component", null,
-                    new Object[][] {
-                        {"string", "name", null, null},
-                        {"boolean", "enabled", "paint", Boolean.TRUE},
-                        {"boolean", "visible", "parent", Boolean.TRUE},
-                        {"string", "tooltip", null, null},
-                        {"font", "font", "validate", null},
-                        {"color", "foreground", "paint", null},
-                        {"color", "background", "paint", null},
-                        {"integer", "width", "validate", integer0},
-                        {"integer", "height", "validate", integer0},
-                        {"integer", "colspan", "validate", integer1},
-                        {"integer", "rowspan", "validate", integer1},
-                        {"integer", "weightx", "validate", integer0},
-                        {"integer", "weighty", "validate", integer0},
-                        {"choice", "halign", "validate", new String[] {"fill", "center", "left", "right"}},
-                        {"choice", "valign", "validate", new String[] {"fill", "center", "top", "bottom"}},
-                        // component class String null*
-                        // parent Object null
-                        // (bounds) Rectangle 0 0 0 0
-                        {"property", "property", null, null},
-                        {"method", "init"},
-                        {"method", "focuslost"},
-                        {"method", "focusgained"}
-                    },
-            "label", "component",
-                    new Object[][] {
-                        {"string", "text", "validate", null},
-                        {"icon", "icon", "validate", null},
-                        {"choice", "alignment", "validate", leftcenterright},
-                        {"integer", "mnemonic", "paint", integer_1},
-                        {"component", "for", null, null}
-                    },
-            "button", "label",
-                    new Object[][] {
-                        {"choice", "alignment", "validate", new String[] {"center", "left", "right"}},
-                        {"method", "action"},
-                        {"choice", "type", "paint", new String[] {"normal", "default", "cancel", "link"}}
-                    },
-            "checkbox", "label",
-                    new Object[][] {
-                        {"boolean", "selected", "paint", Boolean.FALSE}, // ...group
-                        {"string", "group", "paint", null}, // ...group
-                        {"method", "action"}
-                    },
-            "togglebutton", "checkbox", null,
-            "combobox", "textfield",
-                    new Object[][] {
-                        {"icon", "icon", "validate", null},
-                        {"integer", "selected", "layout", integer_1}
-                    },
-            "choice", null,
-                    new Object[][] {
-                        {"string", "name", null, null},
-                        {"boolean", "enabled", "paint", Boolean.TRUE},
-                        {"string", "text", "parent", null},
-                        {"icon", "icon", "parent", null},
-                        {"choice", "alignment", "parent", leftcenterright},
-                        {"string", "tooltip", null, null},
-                        {"font", "font", "validate", null},
-                        {"color", "foreground", "paint", null},
-                        {"color", "background", "paint", null},
-                        {"property", "property", null, null}
-                    },
-            "textfield", "component",
-                    new Object[][] {
-                        {"string", "text", "layout", ""},
-                        {"integer", "columns", "validate", integer0},
-                        {"boolean", "editable", "paint", Boolean.TRUE},
-                        {"choice", "alignment", "validate", leftcenterright},
-                        {"integer", "start", "layout", integer0},
-                        {"integer", "end", "layout", integer0},
-                        {"method", "action"},
-                        {"method", "insert"},
-                        {"method", "remove"},
-                        {"method", "caret"},
-                        {"method", "perform"}
-                    },
-            "passwordfield", "textfield", null,
-            "textarea", "textfield",
-                    new Object[][] {
-                        {"integer", "rows", "validate", integer0},
-                        {"boolean", "border", "validate", Boolean.TRUE},
-                        {"boolean", "wrap", "layout", Boolean.FALSE}
-                    },
-            "tabbedpane", "component",
-                    new Object[][] {
-                        {"choice", "placement", "validate", new String[] {"top", "left", "bottom", "right", "stacked"}},
-                        {"integer", "selected", "paint", integer0},
-                        {"method", "action"}
-                    }, // ...focus
-            "tab", "choice", new Object[][] {{"integer", "mnemonic", "paint", integer_1}},
-            "panel", "component",
-                    new Object[][] {
-                        {"integer", "columns", "validate", integer0},
-                        {"integer", "top", "validate", integer0},
-                        {"integer", "left", "validate", integer0},
-                        {"integer", "bottom", "validate", integer0},
-                        {"integer", "right", "validate", integer0},
-                        {"integer", "gap", "validate", integer0},
-                        {"string", "text", "validate", null},
-                        {"icon", "icon", "validate", null},
-                        {"boolean", "border", "validate", Boolean.FALSE},
-                        {"boolean", "scrollable", "validate", Boolean.FALSE}
-                    },
-            "desktop", "component", null,
-            "dialog", "panel",
-                    new Object[][] {
-                        {"boolean", "modal", null, Boolean.FALSE},
-                        {"boolean", "resizable", null, Boolean.FALSE},
-                        {"boolean", "closable", "paint", Boolean.FALSE},
-                        {"boolean", "maximizable", "paint", Boolean.FALSE},
-                        {"boolean", "iconifiable", "paint", Boolean.FALSE}
-                    },
-            "spinbox", "textfield",
-                    new Object[][] {
-                        {"integer", "minimum", null, new Integer(Integer.MIN_VALUE)},
-                        {"integer", "maximum", null, new Integer(Integer.MAX_VALUE)},
-                        {"integer", "step", null, integer1},
-                        {"integer", "value", null, integer0}
-                    }, // == text? deprecated
-            "progressbar", "component",
-                    new Object[][] {
-                        {"choice", "orientation", "validate", orientation},
-                        {"integer", "minimum", "paint", integer0}, // ...checkvalue
-                        {"integer", "maximum", "paint", new Integer(100)},
-                        {"integer", "value", "paint", integer0}
-                    },
-            // change stringpainted
-            "slider", "progressbar",
-                    new Object[][] {
-                        {"integer", "unit", null, new Integer(5)},
-                        {"integer", "block", null, new Integer(25)},
-                        {"method", "action"}
-                    },
-            // minor/majortickspacing
-            // inverted
-            // labelincrement labelstart
-            "splitpane", "component",
-                    new Object[][] {
-                        {"choice", "orientation", "validate", orientation},
-                        {"integer", "divider", "layout", integer_1}
-                    },
-            "list", "component",
-                    new Object[][] {
-                        {"choice", "selection", "paint", selections},
-                        {"method", "action"},
-                        {"method", "perform"},
-                        {"boolean", "line", "validate", Boolean.TRUE}
-                    },
-            "item", "choice", new Object[][] {{"boolean", "selected", null, Boolean.FALSE}},
-            "table", "list", new Object[][] {
-                        /*{ "choice", "selection",
-                        new String[] { "singlerow", "rowinterval", "multiplerow",
-                        	"cell", "cellinterval",
-                        	"singlecolumn", "columninterval", "multiplecolumn" } }*/
-                    },
-            "header", null, null,
-            // reordering allowed
-            // autoresize mode: off next (column boundries) subsequents last all columns
-            // column row selection
-            // selection row column cell
-            // editing row/column
-            "column", "choice",
-                    new Object[][] {
-                        {"integer", "width", null, new Integer(80)},
-                        {"choice", "sort", null, new String[] {"none", "ascent", "descent"}}
-                    },
-            "row", null, new Object[][] {{"boolean", "selected", null, Boolean.FALSE}},
-            "cell", "choice", null,
-            "tree", "list",
-                    new Object[][] {
-                        {"boolean", "angle", null, Boolean.FALSE},
-                        {"method", "expand"},
-                        {"method", "collapse"}
-                    },
-            "node", "choice",
-                    new Object[][] {
-                        {"boolean", "selected", null, Boolean.FALSE},
-                        {"boolean", "expanded", null, Boolean.TRUE}
-                    },
-            "separator", "component", null,
-            "menubar", "component", null,
-            "menu", "choice", new Object[][] {{"integer", "mnemonic", "paint", integer_1}},
-            "menuitem", "choice",
-                    new Object[][] {
-                        {"keystroke", "accelerator", null, null},
-                        {"method", "action"},
-                        {"integer", "mnemonic", "paint", integer_1}
-                    },
-            "checkboxmenuitem", "menuitem",
-                    new Object[][] {
-                        {"boolean", "selected", "paint", Boolean.FALSE}, // ...group
-                        {"string", "group", "paint", null}
-                    }, // ...group
-            "popupmenu", "component", new Object[][] {{"method", "menushown"}}, // Post menu: Shift+F10
-            "bean", "component", new Object[][] {{"bean", "bean", null, null}}
-        };
     }
 }
