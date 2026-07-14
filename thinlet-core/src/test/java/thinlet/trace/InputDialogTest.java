@@ -10,10 +10,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
- * Input regression net — dialog header drag + edge resize: no public bounds
- * accessor exists, so geometry is chain-walked and COPIED before each gesture (the
- * 2005 code mutates the stored Rectangle in place); the initial placement is
- * font-derived, so assertions are relative deltas and desktop clamps (D64).
+ * Input regression net — dialog header drag + edge resize: bounds are chain-walked
+ * and COPIED before each gesture (the 2005 code mutates the Rectangle in place);
+ * placement is font-derived, so assertions are relative deltas and clamps (D64).
  */
 @Tag("input")
 @ExtendWith(XvfbDisplayExtension.class)

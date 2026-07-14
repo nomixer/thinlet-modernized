@@ -12,10 +12,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import thinlet.Thinlet;
 
 /**
- * Input regression net — Ctrl+C/X/V clipboard in the text widgets: exact
- * {@code getString("text")}/caret getters (re-paint diff skipped). Copy writes both
- * Thinlet's private clipboard field and the system clipboard; paste falls back to
- * the field, so same-JVM round-trips are deterministic on Xvfb either way (D64).
+ * Input regression net — Ctrl+C/X/V clipboard: exact text/caret getters (re-paint
+ * diff skipped). Copy writes Thinlet's private clipboard field AND the system
+ * clipboard; paste falls back to the field — deterministic on Xvfb either way (D64).
  */
 @Tag("input")
 @ExtendWith(XvfbDisplayExtension.class)
