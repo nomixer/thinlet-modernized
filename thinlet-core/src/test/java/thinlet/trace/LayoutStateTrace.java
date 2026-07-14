@@ -8,15 +8,8 @@ import thinlet.Thinlet;
 
 /**
  * Walks the widget tree like {@link LayoutTrace} but records the sparse
- * scroll/layout-state keys, pinning the layoutScroll/layoutField outputs ahead
- * of the Cut 4 layout refactor (DECISIONS.md D61).
- *
- * <p>Unlike {@link LayoutTrace}, the walk also follows the {@code :combolist}
- * and {@code :popup} attachment edges: popups are inserted as siblings of the
- * parsed root on the private desktop content chain, so they are unreachable
- * through {@code :comp}/{@code :next} — only through their owner widget. The
- * visit order per widget is fixed (node, :combolist, :popup, then children) so
- * the sidecar document order is deterministic.
+ * scroll/layout-state keys (:port/:view/:widths/:offset) for the sidecar
+ * goldens (DECISIONS.md D61 — including the :combolist/:popup edge rationale).
  */
 final class LayoutStateTrace {
 
@@ -36,6 +29,8 @@ final class LayoutStateTrace {
         // A node is emitted if and only if the widget is laid out (bounds set)
         // AND carries at least one of the four state keys; children and popups
         // are recursed into either way (mirrors LayoutTrace's null-bounds rule).
+        // Popups hang off :combolist/:popup, never :comp/:next, so both edges
+        // are followed; the fixed visit order keeps the document deterministic.
         if (bounds != null) {
             Rectangle port = (Rectangle) LayoutTrace.attr(widget, ":port");
             Rectangle view = (Rectangle) LayoutTrace.attr(widget, ":view");

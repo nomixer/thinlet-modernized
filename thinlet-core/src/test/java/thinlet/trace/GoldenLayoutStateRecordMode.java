@@ -11,16 +11,10 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
- * Regenerates the layout-state sidecar goldens (DECISIONS.md D61). Disabled on a
- * normal build; run with {@code -Dtrace.record=true} INSIDE the CI container
- * image (D44), scoped with {@code -Dtest=...} — same invocation as
- * {@link GoldenInteractionRecordMode} (see its javadoc for the docker command).
- *
- * <p>The static side enumerates the committed {@code {calls, layout}} goldens
- * (not the raw corpus), keeping the sidecar set 1:1 with the existing net. A
- * fixture whose walk yields no state-carrying widget gets no sidecar; any stale
- * sidecar file for it is deleted so the bidirectional invariant asserted by
- * {@link GoldenLayoutStateTraceTest} survives re-recording.
+ * Regenerates the layout-state sidecar goldens (DECISIONS.md D61): run with
+ * {@code -Dtrace.record=true} INSIDE the CI container image, scoped via
+ * {@code -Dtest=...} — same invocation as {@link GoldenInteractionRecordMode}
+ * (see its javadoc for the docker command; D44).
  */
 @ExtendWith(XvfbDisplayExtension.class)
 @EnabledIfSystemProperty(named = "trace.record", matches = "true")
@@ -31,6 +25,8 @@ class GoldenLayoutStateRecordMode {
         List<String> failed = new ArrayList<>();
         int written = 0;
         int empty = 0;
+        // Enumerate the committed {calls, layout} goldens (not the raw corpus)
+        // so the sidecar set stays 1:1 with the existing net.
         for (File golden : GoldenTraceRecorder.goldenFiles()) {
             String resource = GoldenTraceRecorder.corpusResourceFor(golden);
             try {

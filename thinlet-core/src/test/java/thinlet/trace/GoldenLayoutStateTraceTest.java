@@ -15,12 +15,10 @@ import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
- * Guards the D61 layout-state sidecars: for every committed static golden and
- * every interaction scenario, re-renders and asserts the :port/:view/:widths/
- * :offset walk matches the sidecar under {@code trace/layout-state/} — in both
- * directions (a non-empty walk requires a sidecar; an empty walk forbids one).
- * Sidecars are (re)written only by {@link GoldenLayoutStateRecordMode} inside
- * the CI container image (D44).
+ * Guards the D61 layout-state sidecars: per static golden and per scenario,
+ * re-renders and asserts the state walk matches its sidecar bidirectionally
+ * (non-empty walk requires a sidecar; empty walk forbids one). Written only by
+ * {@link GoldenLayoutStateRecordMode} inside the CI container image (D44).
  */
 @ExtendWith(XvfbDisplayExtension.class)
 class GoldenLayoutStateTraceTest {
