@@ -2575,3 +2575,35 @@ live ExceptionDialog) is pinned there.
 "Tests are skipped", drafts `DraftsBootTest` green — the live app boots headless
 through the seam, ten nav nodes, real paint frame. (Cross-ref D22/D37/D43/D44/D53,
 PHASE-3-GOALS 3b — the Drafts app becomes the first living test bed.)
+
+## D66 — Documentation tense rule: live docs speak in today's tense; only this log keeps its date's (extends D57)
+
+**Date:** 2026-07-14. **Status:** accepted. **Phase:** 3 (documentation policy).
+
+**Context.** The post-D65 staleness sweep (PR #94) fixed live-doc claims across seven
+files, but left CLAUDE.md's "Background — Phase 2.x" paragraph carrying false
+present-tense claims ("the input surface is untested") on the reasoning that a
+Background header excused them. The maintainer challenged the skip; PR #95 fixed it.
+The same confusion recurs from the other side: dated D-entries that still read
+"deferred" look wrong to a reader expecting them to track the present. Neither rule
+was written down — D57 governs single-homing and comment content, not tense.
+
+**Decision — two rules, codified.**
+
+1. **Live docs** (CLAUDE.md, README, ROADMAP, the charter, `project-docs/`, code
+   comments): every present-tense sentence must be true as of the merge that touches
+   the file, regardless of section labels — "Background"/"historical" headers exempt
+   nothing. History is written in past tense (built/was/landed); standing claims cite
+   the newest governing D-entry.
+2. **`DECISIONS.md` alone keeps each entry's original tense.** Entries are dated
+   records — evidence of what was decided and observed when — and are never retensed
+   or rewritten; reality changes land as *new* entries citing what they supersede.
+   Corollary for readers: never take a D-entry as current state; the live docs carry
+   today's truth and point at the newest D-number.
+
+**Enforcement.** CLAUDE.md's documentation-policy section states the rule (every
+session reads it), and the D60 comment-pass checklist gains a prose-docs line so
+mixed Java+docs PRs get prompted pre-PR. Docs-only PRs remain judgment-guarded (the
+D60 hook gates on Java diffs only — extending it to markdown would gate every
+handoff-file touch, not worth the friction). (Cross-ref D57 policy, D60 gate,
+PRs #94/#95 the motivating pair.)

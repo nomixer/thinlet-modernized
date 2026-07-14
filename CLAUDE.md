@@ -12,7 +12,9 @@ Public artifacts, unsupported.
 ## Read these first (source of truth = the repo)
 
 - **`DECISIONS.md`** — append-only decision log (D1–D…). **The authority.** When
-  this file and any external/pasted doc disagree, the repo wins.
+  this file and any external/pasted doc disagree, the repo wins. Entries are dated
+  records — superseded by later entries, never rewritten — so never read one as
+  current state; the live docs carry today's truth and cite the newest D-number (D66).
 - **`KNOWN-QUIRKS.md`** — locked 2005 bugs/quirks (populated during Phase 1).
 - **`README.md`** — project posture, build instructions, attribution.
 - **`project-docs/ROADMAP.md`** — the phase plan (Phases 0–3, done vs. pending).
@@ -44,6 +46,10 @@ Public artifacts, unsupported.
   named test (cite it), or tagged `// UNVERIFIED:` hypotheses. Fact-density, not
   narrative; grep-stable names, never line numbers or cross-file location claims.
 - **New files:** license header + ≤3-line class doc + a `DECISIONS.md D<n>` pointer.
+- **Tense rule (D66):** live docs speak in today's tense — history in past tense,
+  present-tense claims true as-of-merge, and section labels ("Background") exempt
+  nothing. `DECISIONS.md` alone keeps each entry's original tense; changes supersede,
+  never rewrite.
 
 ## Current work — Phase 3a (God-class decomposition behind the net)
 
