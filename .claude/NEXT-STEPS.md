@@ -29,12 +29,12 @@
    **Lands before any Cut 4/5/6 seam commitments.**
 2. **Cut 4 (after fork mapping)** — layout → per-widget strategies; the D61
    net prerequisite is in place, seam commitments wait for the fork mapping.
-3. **Input characterization tests (D64, three slices)** — slice A landed
-   (spinbox/slider/tabbedpane/scrollbar-mouse, 29 tests, Q4–Q6); next:
-   slice B (menubar/context-menu + `metaClick`), then slice C
-   (focus-traversal/clipboard/dialog/tooltip-hide). Two quirk dispositions
-   await the maintainer (Q5 gate-spinning?, Q6 keep?; plus the
-   empty-tab focus-escape candidate).
+3. **Input characterization tests (D64, three slices)** — slices A+B landed
+   (A: spinbox/slider/tabbedpane/scrollbar-mouse, 29 tests, Q4–Q6;
+   B: menubar/context-menu + `metaClick`, 12 tests); next: slice C
+   (focus-traversal/clipboard/dialog/tooltip-hide). Maintainer dispositions
+   pending: Q5 gate-spinning?, Q6 keep?, empty-tab focus-escape candidate,
+   disabled-menuitem release-closes-silently candidate.
 4. **Live-`Drafts` playthrough** — needs the `thinlet-testkit` extraction +
    determinism allowlist (D37/D53). Separately scoped.
 5. **Optional vocabulary follow-ons** (D56 scope cut) — only if they earn their

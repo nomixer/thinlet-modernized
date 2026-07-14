@@ -217,6 +217,22 @@ final class InputDriver {
     }
 
     /**
+     * Secondary-button click at the widget centre — Thinlet's popup trigger is
+     * {@code MOUSE_PRESSED && isMetaDown()} (platform-independent by design, not
+     * isPopupTrigger). META_DOWN_MASK holds on JDK 8→21: the MouseEvent constructor
+     * maps the extended mask to the legacy Event.META_MASK bit isMetaDown() tests
+     * (D64). The release is inert — the trigger is press-only.
+     */
+    void metaClick(Object widget) {
+        Point p = center(widget);
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_MOVED, when++, 0, p.x, p.y, 0, false));
+        dispatch(new MouseEvent(
+                thinlet, MouseEvent.MOUSE_PRESSED, when++, InputEvent.META_DOWN_MASK, p.x, p.y, 1, false));
+        dispatch(new MouseEvent(
+                thinlet, MouseEvent.MOUSE_RELEASED, when++, InputEvent.META_DOWN_MASK, p.x, p.y, 1, false));
+    }
+
+    /**
      * Presses the primary button on the widget centre and holds it — MOUSE_PRESSED
      * with no release, after the usual priming MOUSE_MOVED — so {@code
      * mousepressed}/{@code pressedpart} stay set and a subsequent {@link #paint()}

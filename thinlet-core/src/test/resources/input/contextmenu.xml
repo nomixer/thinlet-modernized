@@ -1,0 +1,10 @@
+<panel columns="1" gap="4" top="4" left="4" right="4" bottom="4">
+	<list name="lst" weightx="1" weighty="1">
+		<popupmenu name="pm" menushown="record(this.name)">
+			<menuitem name="pmi1" text="First" action="record(this.name)" />
+			<menuitem name="pmi2" text="Second" action="record(this.name)" />
+		</popupmenu>
+		<item text="Row A" />
+		<item text="Row B" />
+	</list>
+</panel>
