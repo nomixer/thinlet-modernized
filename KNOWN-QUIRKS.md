@@ -140,6 +140,21 @@ Each entry, added as quirks are discovered during Phase 1+ test authoring:
   documents-current-behavior).
 - **Enhanced Thinlet disposition:** keep — flag for maintainer confirmation.
 
+### Q7 — dialog title glyphs (closable/maximizable/iconifiable) are paint-only
+- **What happens:** the `closable`/`maximizable`/`iconifiable` attributes draw the
+  familiar X/box/underscore glyphs in the dialog header, but no click wiring
+  exists for any of them: the hit-test maps the entire title strip to `"header"`,
+  so clicking the X does nothing and dragging on it moves the dialog.
+- **Why it's a quirk:** a drawn close button that silently ignores clicks is a
+  broken affordance; the 2005 code painted the glyphs but never implemented them.
+- **Where:** `Thinlet.java` — the glyphs are drawn in the shared
+  `paint(..., char type)` helper (`case 'c'/'m'/'i'`); `findComponent`'s dialog
+  branch yields only the edge parts and `"header"`, never a glyph part.
+- **Locked by:** `thinlet.trace.InputDialogTest#titleGlyphsHaveNoClickWiring`
+  (tagged documents-current-behavior).
+- **Enhanced Thinlet disposition:** fix — wire the glyphs (close/maximize/iconify)
+  or stop drawing them when they do nothing.
+
 ## Triaged for Enhanced Thinlet (not behavior-locked)
 
 These D13 candidate findings were investigated during Phase 1 but are *not* pinned

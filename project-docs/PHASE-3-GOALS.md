@@ -133,8 +133,8 @@ held-state captures); capture harness + first 10 goldens ✅ landed (D47), and t
 scenarios (scrollbar/spinbox arrows, tabs, menubar — D51/D53; tooltip — D62) are all in;
 `LayoutTrace` extension to record `:port/:view/:widths/:offset` (before Cut 4) —
 ✅ done (D61, layout-state sidecar goldens + coverage guard);
-input characterization tests for the unasserted widgets (before Cut 6) — i.e. **finishing
-Phase 2.y**.
+input characterization tests for the unasserted widgets (before Cut 6) —
+✅ done (D64, three slices; quirks Q4–Q7) — i.e. **Phase 2.y is finished**.
 
 ## Known blind spots to close (net coverage)
 
@@ -154,9 +154,12 @@ Phase 2.y**.
   expanding collapsed nodes (48 interaction goldens total). Deferred: the live-`Drafts`-app
   navigation playthrough (needs the `thinlet-testkit` extraction + a deterministic-page
   allowlist).
-- **The input surface is thin** and *source-derived, not trace-backed*; menus, spinner,
-  tooltip, slider, tabbedpane, dialog drag/resize, scrollbar-mouse, context-menu,
-  focus-traversal and clipboard are unasserted.
+- **The input-surface blind spot is closed (D64):** the formerly unasserted areas —
+  menus, spinner, tooltip-hide, slider, tabbedpane, dialog drag/resize,
+  scrollbar-mouse, context-menu, focus-traversal and clipboard — are
+  getter/recording-asserted by the `Input*Test` characterization suite (58 tests,
+  three slices), with quirks locked as Q4–Q7. The inventory doc stays
+  source-derived; the behavior net is now test-backed.
 - **The cross-JDK trace diff is informational, non-gating**; the hard gate is same-JVM golden +
   getter-based input assertions.
 
