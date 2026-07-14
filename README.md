@@ -66,9 +66,11 @@ thinlet-modernized/
 └── thinlet-drafts/    draft samples; depends on thinlet-core; NOT published
 ```
 
-`thinlet-core` is dependency-free at runtime. Only `thinlet-core` publishes;
-`thinlet-demos` and `thinlet-drafts` are reactor modules used for in-repo
-examples and the consumer-compat CI job.
+`thinlet-core` is dependency-free at runtime. Only `thinlet-core` publishes —
+the library jar plus a `tests`-classifier jar (the reusable test harness, see
+`DECISIONS.md` D65). `thinlet-demos` and `thinlet-drafts` are reactor modules
+for in-repo examples and the consumer-compat CI job; `thinlet-drafts` also
+hosts the live-app playthrough test suite, which consumes that test-jar.
 
 ## Building
 

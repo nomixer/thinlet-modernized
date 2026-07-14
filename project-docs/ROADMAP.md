@@ -72,7 +72,7 @@ behavior-identical until the source differentiates, so they wait for Phase 3
   because the harness records paint + layout only; its **trace-backed** extension
   is tracked as the Phase 2.x deliverable (below).
 
-## Phase 2.x — Input-capture harness (gate before Phase 3) ✅ (MVP landed; cross-JDK pending CI)
+## Phase 2.x — Input-capture harness (gate before Phase 3) ✅
 
 The Phase 1/2 golden net is **paint + layout only** — it never dispatches input, so
 ~26% of `Thinlet.java` (the `processEvent`/`handleMouseEvent`/`processKeyPress`/…
@@ -100,9 +100,10 @@ never "confirmed behavior-preserving" (**D36**).
   asserted via public getters + an ephemeral same-JVM re-paint `Trace` diff (no input
   goldens). 16 tests green on JDK 21; cross-JDK (8/11/17) determinism is on the `crossjdk`
   CI matrix.
-- **Gate:** met for same-JDK — Phase 3 input-touching refactors may proceed against this
-  net (cross-JDK confirmation pending CI). Two findings recorded in D37: the Thinlet
-  KEY_PRESSED-vs-KEY_TYPED dispatch split, and the `MouseWheelEvent` requirement.
+- **Gate:** met — Phase 3 input-touching refactors may proceed against this net; the
+  crossjdk 8/11/17 rows have run it green on every slice since. Two findings recorded
+  in D37: the Thinlet KEY_PRESSED-vs-KEY_TYPED dispatch split, and the
+  `MouseWheelEvent` requirement.
 - **Testkit extraction: landed as the `thinlet-core` test-jar (D65).** The standalone
   `thinlet-testkit` module D37 deferred (its `thinlet-core(test) → testkit →
   thinlet-core(main)` reactor cycle) never materializes: `thinlet-drafts`' live-app
@@ -110,7 +111,7 @@ never "confirmed behavior-preserving" (**D36**).
   Still deferred (per D36): graduating `INPUT-SURFACE.md` to fully trace-backed,
   scroll-offset item targeting, drag pseudo-events, and keyboard type-ahead.
 
-## Phase 2.y — Broaden the input net + font-scaling dimension ⏳ (splitpane slice landed)
+## Phase 2.y — Broaden the input net + font-scaling dimension ✅ (finished with D64/D65)
 
 The MVP (D37) is deliberately minimal; per D36 the net must cover a widget *before* a
 Phase 3 refactor touches it, so 2.y broadens coverage — and adds the simplest deterministic
@@ -147,10 +148,21 @@ Phase 3 refactor touches it, so 2.y broadens coverage — and adds the simplest 
   synthetic driver — validating the synthesized `FOCUS_GAINED` + the KEY_PRESSED/KEY_TYPED
   split; extended (D41) with a native click→caret clamp check. Base JDK-21 only (excluded
   from the cross-JDK matrix).
-- **Remaining slices:** table, tabbedpane, spinbox/slider, menus, dialog focus (+ nested
-  splitpanes).
+- ✅ **Cut-6-surface characterization landed** (D64, three slices): spinbox/slider/
+  tabbedpane/scrollbar-mouse, menubar/context-menu, focus-traversal/clipboard/dialog
+  drag-resize/tooltip-hide — 58 tests, quirks **Q4–Q7** locked, auto-repeat timers
+  neutralized structurally (clamp-adjacent positioning).
+- ✅ **Live-`Drafts` playthrough landed** (D65): the testkit consumed as the
+  `thinlet-core` test-jar; `DraftsPlaythroughTest` drives the real app over the
+  deterministic-page allowlist, **Q8** locked. The Drafts app is the first Phase 3b
+  living test bed.
 
-## Phase 3 — Internal refactors / Enhanced Thinlet ⬜ (blocked on Phase 2.x)
+## Phase 3 — Internal refactors / Enhanced Thinlet ⏳ (3a underway)
+
+Sub-phase 3a (modernise internals behind the net) is active — charter:
+`project-docs/PHASE-3-GOALS.md`; live state: `.claude/NEXT-STEPS.md`. Cuts 1–3 are
+done (D42–D59), Cut 2 fully closed (D63), the Cut 4/6 net prerequisites are in place
+(D61/D64), and Cut 4/5/6 seam commitments wait on the fork mapping. Later 3c items:
 
 - Remove SpotBugs exclusions as the code is cleaned, so the linters fail on
   regressions again (D13).

@@ -96,7 +96,9 @@ absorbed by the coordinate tolerance, not asserted directly.
   libraries are pinned** to the majors that run on the oldest test JDK — JUnit
   5.x / AssertJ 3.x (enforced by Dependabot `ignore` rules). `thinlet-core` stays
   **runtime-dependency-free** —
-  any test deps are test-scope only and never enter the published jar.
+  any test deps are test-scope only and never enter the published library jar (the
+  separately-attached `tests`-classifier jar is the reusable testkit, D65; its
+  consumers are test-scope only).
 - **Display (D22):** the harness runs on a controlled **Xvfb `:99`** (pinned
   fonts, no window manager) so chrome never perturbs pixel metrics; never the
   interactive `:1`. Surefire sets `DISPLAY=:99`.

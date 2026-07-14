@@ -119,7 +119,7 @@ Detailed rationale in D42/D43.
 | **3** | DTD → typed descriptors + accessor-façade cleanup | ✅ **done** (net #81; D58/D59) |
 | **4** | Layout → per-widget strategies (a hub; second) | pending |
 | **5** | `Object[]` model → typed `Widget` (late; highest blast radius) | pending |
-| **6** | Event/input/focus (last; thinnest net) | pending |
+| **6** | Event/input/focus (last; its net landed with D64) | pending |
 
 (The D43 "Cuts 2/3 overlappable" sequencing note is resolved: both closed; the Renderer
 dispatch needed zero re-keying — D58.)
