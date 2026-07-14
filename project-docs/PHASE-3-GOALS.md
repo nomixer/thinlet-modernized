@@ -131,7 +131,8 @@ design ✅ done (D45, `project-docs/INTERACTION-GOLDENS-DESIGN.md`: paint has **
 dependence** — the caret does not blink, contrary to D43's premise; hover/press are
 held-state captures); capture harness + first 10 goldens ✅ landed (D47) — remaining
 scenarios (scrollbar/spinbox arrows, tabs, menubar, tooltip) follow as 2.y fixtures land;
-`LayoutTrace` extension to record `:port/:view/:widths/:offset` (before Cut 4);
+`LayoutTrace` extension to record `:port/:view/:widths/:offset` (before Cut 4) —
+✅ done (D61, layout-state sidecar goldens + coverage guard);
 input characterization tests for the unasserted widgets (before Cut 6) — i.e. **finishing
 Phase 2.y**.
 
