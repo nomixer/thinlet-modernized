@@ -27,6 +27,9 @@ Java comment pass (DECISIONS.md D57/D60) — review the changed files, then atte
   3. Touched files carrying pre-D57 verbose javadoc (Renderer, IconTextSpec,
      Thinlet.is): trim opportunistically to <=3 lines + a D-pointer.
   4. New files: license header + <=3-line class doc + DECISIONS.md D-pointer.
+  5. Prose docs in the diff: present-tense claims true today, history in past
+     tense — section labels exempt nothing; only DECISIONS.md keeps its
+     entries' original tense (D66).
 Attest with: scripts/comment-pass.sh done
 EOF
 }
