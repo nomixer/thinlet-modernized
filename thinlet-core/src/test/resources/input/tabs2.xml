@@ -1,0 +1,9 @@
+<panel columns="1" gap="4" top="4" left="4" right="4" bottom="4">
+	<tabbedpane name="tp2" action="record(this.name)" focusgained="focusGained(this.name)" weightx="1" weighty="1">
+		<tab name="t1" text="First"><panel><textfield name="tf1" focusgained="focusGained(this.name)" /></panel></tab>
+		<tab name="t2" text="Off" enabled="false"><panel><label text="disabled" /></panel></tab>
+		<tab name="t3" text="Third"><panel><button name="b3" text="In tab" focusgained="focusGained(this.name)" /></panel></tab>
+		<tab name="t4" text="Empty"><panel><label text="no focusable" /></panel></tab>
+	</tabbedpane>
+	<button name="bout" text="Outside" focusgained="focusGained(this.name)" />
+</panel>

@@ -1,0 +1,4 @@
+<panel columns="1" gap="4" top="4" left="4" right="4" bottom="4">
+	<slider name="sh" value="40" action="record(this.name)" weightx="1" />
+	<slider name="sv" orientation="vertical" value="40" weighty="1" />
+</panel>

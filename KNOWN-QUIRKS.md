@@ -97,6 +97,49 @@ Each entry, added as quirks are discovered during Phase 1+ test authoring:
 - **Enhanced Thinlet disposition:** fix — log or throw a descriptive error on an
   unresolved/unloadable resource instead of returning `null`.
 
+### Q4 — spinbox `value` attribute is dead storage; the spin state lives in `text`
+- **What happens:** the DTD registers an integer `value` attribute on `spinbox`,
+  but spinning (arrows or Up/Down keys) reads and writes only the `text` string;
+  a parsed `value` is stored and never touched again.
+- **Why it's a quirk:** two same-named states, one dead — `getInteger(spinbox,
+  "value")` reads back whatever the XML set (or 0), never the live number. The
+  2005 source itself annotates the registration `// == text? deprecated`.
+- **Where:** `Thinlet.java` `processSpin` (reads/writes `"text"` only);
+  `DescriptorTable.java` spinbox `value` registration.
+- **Locked by:** `thinlet.trace.InputSpinBoxTest`
+  `#valueAttributeIsDeadStorage_theSpinStateLivesInText` (tagged
+  documents-current-behavior).
+- **Enhanced Thinlet disposition:** fix — reconcile (make `value` the live state)
+  or remove the dead attribute.
+
+### Q5 — spinbox `editable="false"` gates typed digits but not spinning
+- **What happens:** a non-editable spinbox rejects typed characters, yet the
+  mouse arrows and Up/Down keys still change the value freely.
+- **Why it's a quirk:** `editable` reads as "read-only" but only gates the
+  text-entry path (`processField`); neither spin path checks it.
+- **Where:** `Thinlet.java` — the spinbox key branch and mouse branch call
+  `processSpin` unconditionally; the `editable` gate lives inside `processField`.
+- **Locked by:** `thinlet.trace.InputSpinBoxTest`
+  `#nonEditableSpinboxStillSpinsViaArrowsAndKeys` (tagged
+  documents-current-behavior).
+- **Enhanced Thinlet disposition:** undecided — flag for the maintainer (either
+  gate spinning too, or rename/re-document the attribute).
+
+### Q6 — slider press teleports the knob to the pointer; no track-paging
+- **What happens:** pressing anywhere on a slider jumps the value proportionally
+  to the pointer position — there is no knob/track distinction and no
+  click-to-page-by-`block` semantics (the `block` attribute affects only
+  PageUp/PageDown).
+- **Why it's a quirk:** most toolkits page toward the click when the track is
+  pressed; Thinlet's whole widget is one jump-to-pointer hit region. Arguably a
+  feature; locked so a Cut 6 refactor cannot change it silently.
+- **Where:** `Thinlet.java` slider branch of `handleMouseEvent` (press and drag
+  share the proportional formula; `setReference` centers on the knob half-width).
+- **Locked by:** `thinlet.trace.InputSliderTest`
+  `#trackPressTeleportsTheKnob_noPageStepSemantics` (tagged
+  documents-current-behavior).
+- **Enhanced Thinlet disposition:** keep — flag for maintainer confirmation.
+
 ## Triaged for Enhanced Thinlet (not behavior-locked)
 
 These D13 candidate findings were investigated during Phase 1 but are *not* pinned

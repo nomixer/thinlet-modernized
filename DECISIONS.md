@@ -2447,3 +2447,64 @@ green — including `tooltip-shown` (the moved overlay) and the 48 D53 corpus-dr
 scenarios that exercise `paintReverse`'s clip-overlap recursion under open popups —
 plus crossjdk 8/11/17 green, zero golden diffs, japicmp unchanged. (Cross-ref
 D45/D48/D50/D55/D62.)
+
+## D64 — Input characterization net for the Cut 6 surface (three slices; getter-less state via handler recording + chain-walk)
+
+**Date:** 2026-07-14. **Status:** accepted. **Phase:** 3 (Cut 6 net prerequisite; test
+scope only — zero `src/main` change except one driver gesture in slice B).
+
+**Context.** PHASE-3-GOALS' last blind spot: "menus, spinner, tooltip, slider,
+tabbedpane, dialog drag/resize, scrollbar-mouse, context-menu, focus-traversal and
+clipboard are unasserted." Cut 6 (event/input/focus) is last in the sequence, but its
+net must exist before any of that code moves. Doctrine stays D37: public getters are
+the exact assertion, an ephemeral same-JVM re-paint diff (`compare(…, 0.0)`) only
+corroborates where the primary observable is not a public getter, no committed input
+goldens, new fixture files only.
+
+**Observability decisions (per area).**
+
+- *Public getters:* spinbox `getString("text")` (see Q4), slider/`getInteger("value")`,
+  tabbedpane `getSelectedIndex`, text/caret `getString`/`getInteger("start"/"end")`.
+- *Getter-less state* reads the same interned-literal `Object[]` model the trace
+  harness already reads — `InputDriver.property()` chain-walk for `:view`/`:port`/
+  `:vertical`/`:horizontal` (scrollbars), `"bounds"` (dialog geometry), menubar
+  `"selected"`/`":popup"`, `":tooltipbounds"`.
+- *Behavior with no state at all* (which item fired, where focus went) is observed by
+  **handler recording**: `RecordingHandler` (extends `InputHandler`) logs
+  `action`/`menushown` invocations and `focusgained`/`focuslost` (both DTD-registered
+  on every component) via Thinlet's `method(this.name)` String-argument binding — the
+  focus-owner has no public getter, so the recorded sequence *is* the focus assertion.
+
+**Timer posture.** Mouse presses on spin/scroll arrows and tracks arm the 375/300 ms
+auto-repeat. Tests neutralize it structurally, never by timing: **clamp-adjacent
+positioning** (start one step from the limit — the first `processSpin`/`processScroll`
+succeeds, every repeat clamps to a no-op → exact final values with zero flake window);
+keyboard paths (which never arm the timer) for mid-range arithmetic; knob drags
+(timer-free) for proportional moves. Track-paging in `scroll.xml` is exact for free:
+one page (the `:port` extent) exceeds the fixture's whole scroll range, so the click
+lands at the clamp and repeats no-op. The 750 ms tooltip timer is absorbed by the
+D62 bounded poll; timing *semantics* (e.g. no-reset-on-jiggle) are excluded as
+untestable deterministically.
+
+**Slicing.** A: spinbox/slider/tabbedpane/scrollbar-mouse (+`RecordingHandler`, this
+entry, Q4–Q6). B: menubar/context-menu (+the one driver addition, `metaClick` —
+`MOUSE_PRESSED` with `META_DOWN_MASK`; the MouseEvent constructor maps extended→legacy
+masks so `isMetaDown()` holds on JDK 8→21; Thinlet's popup trigger is deliberately
+`isMetaDown()`, not `isPopupTrigger()`). C: focus-traversal/clipboard/dialog/
+tooltip-hide. One PR each (D46 flow).
+
+**Slice A findings** (characterized, beyond the expected): a *mouse* tab-switch also
+fires the pane's `action` (after `setNextFocusable` walks focus into the new tab) —
+not just the keyboard switch; a synthesized `FOCUS_GAINED` lands initial focus on the
+tree's first focusable; the mouse wheel drives only the vertical bar (a no-op on a
+horizontal-only list — pinned); mouse-selecting a tab with no focusable content
+throws focus past the pane entirely (quirk candidate, pinned
+`documents-current-behavior`, maintainer call pending). Locked quirks: **Q4** (dead
+spinbox `value` attribute), **Q5** (`editable` doesn't gate spinning), **Q6** (slider
+jump-to-pointer, no track paging).
+
+**Validation (slice A).** 29 new tests green in the CI container (base row) and on
+the 8/11/17 rows; no FontMetrics-derived number is asserted anywhere (fonts only aim
+gestures — arrow columns via `width-2`, bar thickness = the `:vertical`/`:horizontal`
+rect's own thickness), so the crossjdk rows are safe by construction. (Cross-ref
+D36/D37/D40/D41/D45/D51/D61/D62.)
