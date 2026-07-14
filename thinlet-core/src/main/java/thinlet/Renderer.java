@@ -40,10 +40,8 @@ import java.awt.Rectangle;
  * paint-time state ({@code pressed}/{@code inside}/{@code focus}/{@code
  * enabled}) are all passed in. Package-private through 3a (D43): no public
  * surface until the later new-API phase. The dispatch (the classname chain)
- * lives here too ({@link #paint}); only the tooltip-coupled {@code desktop}
- * body remains in {@code Thinlet} behind the {@code Thinlet#paintDesktop}
- * callback (the one net-invisible paint path, D45), and {@code Thinlet.paint}
- * is now a shim delegating here.
+ * lives here too ({@link #paint}), and {@code Thinlet.paint} is now a shim
+ * delegating here.
  */
 final class Renderer {
 
@@ -52,9 +50,7 @@ final class Renderer {
     /**
      * The recursive per-component paint: visibility/bounds gate, clip-reject,
      * translate, then the 2005 classname dispatch chain, verbatim — each widget
-     * branch delegating to its extracted method. Only the tooltip-coupled
-     * {@code desktop} body remains in {@code Thinlet} (the one net-invisible
-     * paint path, D45) behind the {@link Thinlet#paintDesktop} callback.
+     * branch delegating to its extracted method.
      */
     static void paint(
             Thinlet t,
@@ -178,7 +174,7 @@ final class Renderer {
                     focus,
                     enabled);
         } else if (Thinlet.is(classname, "desktop")) {
-            t.paintDesktop(component, bounds, g, clipx, clipy, clipwidth, clipheight, enabled);
+            Renderer.desktop(t, component, bounds, g, clipx, clipy, clipwidth, clipheight, enabled);
         } else if (Thinlet.is(classname, "spinbox")) {
             Renderer.spinbox(
                     t, component, bounds, g, clipx, clipy, clipwidth, clipheight, pressed, inside, focus, enabled);
@@ -220,6 +216,54 @@ final class Renderer {
         g.translate(-bounds.x, -bounds.y);
         clipx += bounds.x;
         clipy += bounds.y;
+    }
+
+    /**
+     * The 2005 {@code desktop} paint branch, verbatim: background, the reverse
+     * (bottom-up) sibling pass, then the tooltip overlay ({@code t.tooltipowner} +
+     * {@code :tooltipbounds}) — pinned by the {@code tooltip-shown} golden (D62).
+     */
+    static void desktop(
+            Thinlet t,
+            Object component,
+            Rectangle bounds,
+            Graphics g,
+            int clipx,
+            int clipy,
+            int clipwidth,
+            int clipheight,
+            boolean enabled) {
+        t.paintRect(g, 0, 0, bounds.width, bounds.height, t.c_border, t.c_bg, false, false, false, false, true);
+        paintReverse(t, g, clipx, clipy, clipwidth, clipheight, Thinlet.get(component, ":comp"), enabled);
+        // g.setColor(Color.red); if (clip != null) g.drawRect(clipx, clipy, clipwidth, clipheight);
+        if ((t.tooltipowner != null) && (component == t.content)) {
+            Rectangle r = t.getRectangle(t.tooltipowner, ":tooltipbounds");
+            t.paintRect(g, r.x, r.y, r.width, r.height, t.c_border, t.c_bg, true, true, true, true, true);
+            String text = t.getString(t.tooltipowner, "tooltip", null);
+            g.setColor(t.c_text);
+            g.drawString(text, r.x + 2, r.y + g.getFontMetrics().getAscent() + 2); // +nullpointerexception
+        }
+    }
+
+    private static void paintReverse(
+            Thinlet t,
+            Graphics g,
+            int clipx,
+            int clipy,
+            int clipwidth,
+            int clipheight,
+            Object component,
+            boolean enabled) {
+        if (component != null) {
+            Rectangle bounds = t.getRectangle(component, "bounds");
+            if ((clipx < bounds.x)
+                    || (clipx + clipwidth > bounds.x + bounds.width)
+                    || (clipy < bounds.y)
+                    || (clipy + clipheight > bounds.y + bounds.height)) {
+                paintReverse(t, g, clipx, clipy, clipwidth, clipheight, Thinlet.get(component, ":next"), enabled);
+            }
+            paint(t, g, clipx, clipy, clipwidth, clipheight, component, enabled);
+        }
     }
 
     /** The 2005 {@code label} paint branch, verbatim. */

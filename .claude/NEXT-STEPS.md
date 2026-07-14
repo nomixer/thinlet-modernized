@@ -14,6 +14,9 @@
   (no horizontal-scroll scenario).
 - **Tooltip captured (D62)**: the last D45-deferred interaction state; every
   interaction state D45 enumerated is now guarded.
+- **Cut 2 fully closed (D63)**: `paintDesktop`/`paintReverse` moved to
+  `Renderer` behind the D62 golden — every 2005 paint branch body now lives
+  in `Renderer`; `Thinlet` keeps only the D50-gated shared paint helpers.
 - Net: 41 static + 51 interaction goldens + 58 layout-state sidecars + input
   suite + 25 contract pins (`DescriptorContractTest`); strict-intern tripwire
   live in every test JVM (D43). Base row: 268 tests.
@@ -26,9 +29,10 @@
    **Lands before any Cut 4/5/6 seam commitments.**
 2. **Cut 4 (after fork mapping)** — layout → per-widget strategies; the D61
    net prerequisite is in place, seam commitments wait for the fork mapping.
-3. **Extract `paintDesktop`/`paintReverse` into Renderer** — the Cut 2
-   close-out slice, unblocked by the D62 tooltip golden; hoist-don't-relocate
-   + widening discipline (D48).
+3. **Input characterization tests for the unasserted widgets** (before Cut 6;
+   PHASE-3-GOALS blind spots: menus, spinner, slider, tabbedpane, dialog
+   drag/resize, scrollbar-mouse, context-menu, focus-traversal, clipboard).
+   Not urgent — Cut 6 is last.
 4. **Live-`Drafts` playthrough** — needs the `thinlet-testkit` extraction +
    determinism allowlist (D37/D53). Separately scoped.
 5. **Optional vocabulary follow-ons** (D56 scope cut) — only if they earn their
