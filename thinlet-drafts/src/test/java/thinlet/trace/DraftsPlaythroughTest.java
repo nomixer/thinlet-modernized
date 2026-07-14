@@ -11,9 +11,9 @@ import thinlet.Thinlet;
 import thinlet.drafts.DraftsHost;
 
 /**
- * Drives the LIVE Drafts app (real handlers, not the CorpusHandler stubs) over
- * the D65 deterministic-page allowlist, asserting via public getters; hazard
- * pages are navigated to but never clicked into (DECISIONS.md D65).
+ * Drives the LIVE Drafts app (real handlers, not CorpusHandler stubs) over the
+ * deterministic-page allowlist, getter-asserted; hazard pages are navigated to
+ * but never clicked into (DECISIONS.md D65).
  */
 @Tag("input")
 @ExtendWith(XvfbDisplayExtension.class)
