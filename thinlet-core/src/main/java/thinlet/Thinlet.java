@@ -5911,8 +5911,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
     }
 
     // Invalidation-depth vocabulary (values come from the
-    // AttributeDescriptor.invalidate column; three literal call sites pass
-    // "validate"). The walk goes up the ancestor chain toward content:
+    // AttributeDescriptor.invalidate column, plus literal "validate" call
+    // sites). The walk goes up the ancestor chain toward content:
     // "paint" = repaint only — accumulate the absolute rect, repaint at the
     // root (stops early on a non-selected tab); "layout" = mark the direct
     // parent layout-dirty (the negative-width flag, resolved lazily by
