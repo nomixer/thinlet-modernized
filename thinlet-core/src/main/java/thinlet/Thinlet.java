@@ -42,11 +42,11 @@ public class Thinlet extends Container implements Runnable, Serializable {
     transient Color c_focus;
     transient Color c_select;
     transient Color c_ctrl = null;
-    // Font-height layout unit, assigned only in setFont (its javadoc lists the
-    // roles: scrollbar/spinbox/combobox button size, slider knob; also checkbox
-    // glyph, tree indent, dialog resize band). Name-collides with two unrelated
-    // things: the slider "block" attribute (page step) and getPreviousFocusable's
-    // block parameter (recursion boundary) — see D67.
+    // Font-height layout unit, assigned only in setFont (its javadoc: scrollbar/
+    // spinbox/combobox button width, slider size); D67 records the further roles
+    // (checkbox glyph, tree indent, dialog resize band). Name-collides with two
+    // unrelated things: the slider "block" attribute (page step) and
+    // getPreviousFocusable's block parameter (recursion boundary) — see D67.
     transient int block;
     private transient Image hgradient, vgradient;
 

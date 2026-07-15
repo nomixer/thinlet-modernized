@@ -2648,8 +2648,8 @@ deliverable split below).
   in `getSize` equal the widget's paint-time chrome (border+`IconTextSpec` padding),
   verified pair-by-pair; `mode` is three unrelated vocabularies sharing a name;
   `block` is three unrelated meanings; the event-name vocabulary is exactly the 11
-  `"method"`-typed descriptor rows; scroll arrows move a hardcoded 10 px unit while
-  track clicks page by the `:port` extent.
+  distinct names of the `"method"`-typed descriptor rows (18 rows — D58); scroll
+  arrows move a hardcoded 10 px unit while track clicks page by the `:port` extent.
 
 **Quirk candidates surfaced (dispositions the maintainer's, alongside Q5–Q8;
 behavior unchanged, none test-pinned yet):**
