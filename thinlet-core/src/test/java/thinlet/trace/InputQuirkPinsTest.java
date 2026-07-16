@@ -13,11 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import thinlet.Thinlet;
 
 /**
- * Pins for the D67/D68 quirk findings: the click-dead combobox icon glyph (Q9), the
- * ascending-sort-draws-a-downward-triangle header glyph (Q10), and the
- * {@code checkLocation} canary (the 2005 mousex-for-y call is unobservable today per
- * the D68 trace; the canary exercises that path and fails if it ever turns live).
- * See DECISIONS.md D68.
+ * Quirk pins Q9 (click-dead combobox icon) and Q10 (sort-glyph direction), plus the
+ * {@code checkLocation} mousex-for-y canary. DECISIONS.md D68.
  */
 @Tag("input")
 @ExtendWith(XvfbDisplayExtension.class)
