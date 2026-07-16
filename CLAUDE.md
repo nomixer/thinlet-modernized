@@ -14,7 +14,7 @@ Public artifacts, unsupported.
 - **`DECISIONS.md`** — append-only decision log (D1–D…). **The authority.** When
   this file and any external/pasted doc disagree, the repo wins. Entries are dated
   records — superseded by later entries, never rewritten — so never read one as
-  current state; the live docs carry today's truth and cite the newest D-number (D67).
+  current state; the live docs carry today's truth and cite the newest D-number (D68).
 - **`KNOWN-QUIRKS.md`** — locked 2005 bugs/quirks (populated during Phase 1).
 - **`README.md`** — project posture, build instructions, attribution.
 - **`project-docs/ROADMAP.md`** — the phase plan (Phases 0–3, done vs. pending).

@@ -1,4 +1,4 @@
-# Next steps — session handoff (2026-07-15)
+# Next steps — session handoff (2026-07-16)
 
 > State pointers + ordered work only; rationale lives in `DECISIONS.md`
 > (single-home rule + comment rules: **D57**). Charter:
@@ -32,8 +32,11 @@
   row: 326 (core) + 13 (drafts) tests.
 - **Vocabulary decode + constants research done (D67, 2026-07-15)**:
   `project-docs/VOCABULARY-INVENTORY.md` (11 vocabularies, collision table,
-  absorb-at-cut recommendations) + in-source annotations at the consumers;
-  three new quirk candidates queued for disposition (see item 3).
+  absorb-at-cut recommendations) + in-source annotations at the consumers.
+- **D67 candidates pinned (D68, 2026-07-16)**: Q9 (click-dead combobox icon) +
+  Q10 (ascent-sort down-arrow) locked by `InputQuirkPinsTest`; the
+  `checkLocation` mousex-for-y bug proven unobservable and triaged (not
+  behavior-locked), guarded by a canary. Base row: +4 tests.
 
 ## Next work, in order
 
@@ -43,13 +46,14 @@
    **Lands before any Cut 4/5/6 seam commitments.**
 2. **Cut 4 (after fork mapping)** — layout → per-widget strategies; the D61
    net prerequisite is in place, seam commitments wait for the fork mapping.
-3. **Maintainer quirk dispositions (from D64/D65/D67)** — Q5 gate-spinning?, Q6
-   keep jump-to-pointer?, Q7 wire-or-remove the dialog glyphs?, Q8 fix the
-   FolderBrowser root?; candidates: empty-tab focus-escape,
-   disabled-menuitem release-closes-silently, and the D67 trio
-   (`checkLocation` mousex-for-y, click-dead combobox icon, ascending-sort
-   down-arrow — the D67 ones unpinned so far). Behavior is pinned either way —
-   decisions feed Enhanced Thinlet (3c).
+3. **Maintainer quirk dispositions (from D64/D65/D67/D68)** — Q5
+   gate-spinning?, Q6 keep jump-to-pointer?, Q7 wire-or-remove the dialog
+   glyphs?, Q8 fix the FolderBrowser root?, Q9 wire-or-drop the combobox icon
+   part?, Q10 keep-or-flip the sort glyph?; candidates: empty-tab
+   focus-escape, disabled-menuitem release-closes-silently. The `checkLocation`
+   mousex-for-y bug is triaged unobservable (D68) — its fix is a free 3c
+   cleanup. Behavior is pinned either way — decisions feed Enhanced Thinlet
+   (3c).
 4. **Optional vocabulary follow-ons** (D56 scope cut) — only if they earn their
    keep against Cut 3+; the research/inventory is done (D67,
    `project-docs/VOCABULARY-INVENTORY.md`) — each conversion waits for the cut

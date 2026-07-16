@@ -173,11 +173,41 @@ Each entry, added as quirks are discovered during Phase 1+ test authoring:
 - **Enhanced Thinlet disposition:** fix — guard the `null` and root the tree at
   `File.listRoots()`/`user.home` instead of a hardcoded drive letter.
 
+### Q9 — the combobox icon glyph is click-dead
+- **What happens:** an editable combobox with an `icon` attribute hit-tests the
+  glyph's strip (`x <= 2 + iconWidth`) as its own `"icon"` part, and the mouse
+  handler's click branch excludes exactly that part: clicking the icon neither
+  opens the drop-down, nor moves the caret, nor fires anything — while the same
+  click one pixel to the right edits text, and the arrow strip opens the list.
+- **Why it's a quirk:** a hit-tested region with no behavior is a dead zone the
+  user can feel; the 2005 code names the part but never wires it.
+- **Where:** `Thinlet.java` — `findComponent`'s combobox branch yields `"icon"`;
+  `handleMouseEvent`'s combobox branch handles `part == null` (text) and
+  `!is(part, "icon")` (drop button), leaving `"icon"` to fall through.
+- **Locked by:** `thinlet.trace.InputQuirkPinsTest#clickingTheComboboxIconGlyphDoesNothing`
+  (tagged documents-current-behavior).
+- **Enhanced Thinlet disposition:** undecided — plausible fixes: treat the icon
+  as part of the text area, or drop the dedicated part token.
+
+### Q10 — ascending sort draws a downward triangle
+- **What happens:** a table column with `sort="ascent"` draws the south-pointing
+  (downward) header glyph, `sort="descent"` the north-pointing one.
+- **Why it's a quirk:** most toolkits draw ascending sort as an upward wedge;
+  2005 Thinlet's mapping is inverted relative to that convention (though
+  self-consistent — it can be read as "smallest at top").
+- **Where:** `Renderer.java` — the table-header branch's sort-glyph `arrow(...)`
+  call (`is(sort, "ascent") ? 'S' : 'N'`).
+- **Locked by:** `thinlet.trace.InputQuirkPinsTest#ascendingSortDrawsADownwardTriangleGlyph`
+  and `#descendingSortDrawsAnUpwardTriangleGlyph` (tagged documents-current-behavior).
+- **Enhanced Thinlet disposition:** undecided — flipping it is user-visible;
+  document-or-flip is a 3c call.
+
 ## Triaged for Enhanced Thinlet (not behavior-locked)
 
-These D13 candidate findings were investigated during Phase 1 but are *not* pinned
-by behavior tests this slice, with reasons. They remain SpotBugs suppressions
-(`config/spotbugs/exclude.xml`) for Enhanced Thinlet to address.
+Findings investigated but *not* pinned by behavior tests, with reasons — the
+first two are Phase-1 D13 candidates that remain SpotBugs suppressions
+(`config/spotbugs/exclude.xml`); later entries cite their own D-numbers. All are
+Enhanced Thinlet's to address.
 
 - **XML parser "unclosed stream" (`OBL_*`, `OS_OPEN_STREAM`).** Not reproducible
   as a leak: `parse(InputStream, char, Object)` closes the `Reader` (which closes
@@ -192,3 +222,14 @@ by behavior tests this slice, with reasons. They remain SpotBugs suppressions
   exercised on a normal JDK; combined with `thinlet-demos` having no test harness
   and `View` being a private inner class, it is documented here rather than
   test-locked. Disposition: fix — guard the `null`.
+- **`checkLocation` passes `mousex` for the y argument (D67/D68).** After a
+  layout change under a stationary cursor, hover state is re-synthesized via
+  `handleMouseEvent(mousex, mousex, …, MOUSE_ENTERED, …)` — y receives the x
+  coordinate. Traced as **currently unobservable** (D68): `findComponent` has
+  already recomputed `mouseinside`/`insidepart` from the correct coordinates,
+  no MOUSE_ENTERED consumer reads the raw x/y parameters, and nothing persists
+  the corrupted value — so there is no behavior to lock. Guarded instead by the
+  canary `thinlet.trace.InputQuirkPinsTest#closingTheDropDownUnderTheCursorCommitsAndStaysConsistent`,
+  which drives the path with differing x/y and fails if a future change makes
+  the dead parameter live. Disposition: fix the argument in Enhanced Thinlet
+  (provably invisible today).
