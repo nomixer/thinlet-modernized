@@ -141,20 +141,24 @@ Each entry, added as quirks are discovered during Phase 1+ test authoring:
   documents-current-behavior).
 - **Enhanced Thinlet disposition:** keep — flag for maintainer confirmation.
 
-### Q7 — dialog title glyphs (closable/maximizable/iconifiable) are paint-only
-- **What happens:** the `closable`/`maximizable`/`iconifiable` attributes draw the
-  familiar X/box/underscore glyphs in the dialog header, but no click wiring
-  exists for any of them: the hit-test maps the entire title strip to `"header"`,
-  so clicking the X does nothing and dragging on it moves the dialog.
-- **Why it's a quirk:** a drawn close button that silently ignores clicks is a
-  broken affordance; the 2005 code painted the glyphs but never implemented them.
-- **Where:** `Thinlet.java` — the glyphs are drawn in the shared
-  `paint(..., char type)` helper (`case 'c'/'m'/'i'`); `findComponent`'s dialog
-  branch yields only the edge parts and `"header"`, never a glyph part.
-- **Locked by:** `thinlet.trace.InputDialogTest#titleGlyphsHaveNoClickWiring`
-  (tagged documents-current-behavior).
-- **Enhanced Thinlet disposition:** fix — wire the glyphs (close/maximize/iconify)
-  or stop drawing them when they do nothing.
+### Q7 — dialog title glyphs were paint-only — **fixed in 0.2.x (D73)**
+- **What happened (≤0.1.x):** the `closable`/`maximizable`/`iconifiable`
+  attributes drew the familiar X/box/underscore glyphs in the dialog header, but
+  no click wiring existed for any of them: the hit-test mapped the entire title
+  strip to `"header"`, so clicking the X did nothing and dragging on it moved
+  the dialog.
+- **The fix (maintainer's pick):** the **close glyph is live** — its rect is a
+  `":close"` part; release over it removes the dialog (release anywhere else
+  cancels, and the glyph is no longer a drag handle). The **maximize/iconify
+  glyphs are no longer drawn** — they never had wiring; their attributes stay
+  parseable and inert until a real windowing story exists. The Drafts demo was
+  deliberately left untouched.
+- **Where:** `Renderer` dialog branch (glyph painting), `findComponent`'s dialog
+  branch (the `":close"` carve-out), `handleMouseEvent`'s dialog branch (the
+  release-to-close wiring).
+- **Locked by:**
+  `thinlet.trace.InputDialogTest#closeGlyphClosesTheDialogAndTheOtherGlyphsAreUndrawn`
+  (asserts the fixed contract; red-green checked both ways).
 
 ### Q8 — Drafts FolderBrowser NPE'd off-Windows (hardcoded `C:` root) — **fixed in 0.2.x (D72)**
 - **What happened (≤0.1.x):** the Folder browser page rooted its lazy filesystem

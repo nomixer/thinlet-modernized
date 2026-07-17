@@ -3160,8 +3160,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
 
     // Object part is dual-typed by design: an interned hit-token (the
     // processScroll vocabulary; dialog resize edges ":n" ":s" ":e" ":w" ":nw"
-    // ":ne" ":sw" ":se"; dialog "header"; desktop "modal"; combobox
-    // "down"/"icon") OR a child model node — an Object[] tab/menu/combolist
+    // ":ne" ":sw" ":se"; dialog "header" and ":close" (D73); desktop "modal";
+    // combobox "down"/"icon") OR a child model node — an Object[] tab/menu/combolist
     // item whose attributes are read directly. Ambiguous consumers type-test
     // with instanceof Object[]. findComponent assigns the live pair
     // mouseinside/insidepart; MOUSE_PRESSED latches mousepressed/pressedpart.
@@ -3463,7 +3463,14 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 repaint(component, classname, part);
             }
         } else if (is(classname, "dialog")) {
-            if (is(part, "header")) {
+            if (is(part, ":close")) {
+                // 0.2.x (D73): release over the glyph closes; releasing anywhere
+                // else cancels (the live insidepart re-check). Pinned:
+                // InputDialogTest.
+                if ((id == MouseEvent.MOUSE_RELEASED) && (mouseinside == component) && (insidepart == part)) {
+                    remove(component);
+                }
+            } else if (is(part, "header")) {
                 if (id == MouseEvent.MOUSE_PRESSED) {
                     Rectangle bounds = getRectangle(component, "bounds");
                     referencex = x - bounds.x;
@@ -3998,7 +4005,16 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 } else {
                     int titleheight = getInteger(component, ":titleheight", 0);
                     if (y < 4 + titleheight) {
-                        insidepart = "header";
+                        // 0.2.x (D73): the close glyph is a live ":close" part; its
+                        // rect mirrors the Renderer's controlx math. Pinned:
+                        // InputDialogTest.
+                        insidepart = ((getBoolean(component, "closable", false))
+                                        && (x >= bounds.width - titleheight - 1)
+                                        && (x < bounds.width - 3)
+                                        && (y >= 3)
+                                        && (y < titleheight + 1))
+                                ? ":close"
+                                : "header";
                     }
                 }
             }
