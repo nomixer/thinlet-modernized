@@ -2812,3 +2812,34 @@ confirms the D68 unobservability proof.
 **Validation.** Container base row + crossjdk 8/11/17 green, `git status` clean
 (zero golden diffs). KNOWN-QUIRKS triage entry updated to "fixed in 0.2.x (D70)".
 (Cross-ref D67 finding, D68 proof + canary, D69 protocol.)
+
+## D71 — Q1 fixed: unreadable parse sources throw descriptive IOException (the earmarked first enhancement)
+
+**Date:** 2026-07-17. **Status:** accepted. **Phase:** 3c (second fix of the D69 batch;
+first *observable* behavior change of the enhanced line).
+
+**Context.** Q1 — `parse(String)` on an unresolvable path and `parse(InputStream)` on
+a `null` stream threw `NullPointerException` (the 2005 code even carried a
+`/* thows nullpointerexception*/` comment at the swallow site). Disposition recorded
+in KNOWN-QUIRKS ("fix — throw a descriptive IOException"); PHASE-3-GOALS had
+earmarked Q1 as the first enhancement.
+
+**Decision.** Two guards in period style: `parse(String, Object)` throws
+`IOException("unreadable source: " + path)` when resolution yields no stream (this
+also covers the previously swallowed `URL.openStream()` failures — same quirk
+family, "valid URL but unreadable"); `parse(InputStream, Object)` throws
+`IOException("null input stream")` on a null argument. The swallow-site comment
+updated (it documented the NPE consequence that no longer exists). No signature
+changes — `parse` already declared `throws IOException` since 2005, so japicmp is
+indifferent by construction.
+
+**Protocol (D69) applied.** Pin flipped in the same PR:
+`ParserNullSourceQuirkTest` → `ParserUnreadableSourceTest`, the
+`documents-current-behavior` tag off, tests assert the new contract (exception type
++ message content), control test unchanged. **Red-green both ways**: the flipped
+tests against the unfixed source fail with the old NPE (2/3, control green);
+against the fixed source 3/3 green. Zero golden re-records (no paint surface).
+
+**Validation.** Container base + crossjdk rows green, zero golden diffs; ledger +
+PHASE-3-GOALS earmark line updated. (Cross-ref D69 protocol, D70 the invisible
+opener; Q1 in KNOWN-QUIRKS.)
