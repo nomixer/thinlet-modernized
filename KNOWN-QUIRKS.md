@@ -222,14 +222,15 @@ Enhanced Thinlet's to address.
   exercised on a normal JDK; combined with `thinlet-demos` having no test harness
   and `View` being a private inner class, it is documented here rather than
   test-locked. Disposition: fix — guard the `null`.
-- **`checkLocation` passes `mousex` for the y argument (D67/D68).** After a
-  layout change under a stationary cursor, hover state is re-synthesized via
-  `handleMouseEvent(mousex, mousex, …, MOUSE_ENTERED, …)` — y receives the x
-  coordinate. Traced as **currently unobservable** (D68): `findComponent` has
-  already recomputed `mouseinside`/`insidepart` from the correct coordinates,
-  no MOUSE_ENTERED consumer reads the raw x/y parameters, and nothing persists
-  the corrupted value — so there is no behavior to lock. Guarded instead by the
-  canary `thinlet.trace.InputQuirkPinsTest#closingTheDropDownUnderTheCursorCommitsAndStaysConsistent`,
-  which drives the path with differing x/y and fails if a future change makes
-  the dead parameter live. Disposition: fix the argument in Enhanced Thinlet
-  (provably invisible today).
+- **`checkLocation` passed `mousex` for the y argument (D67/D68) — fixed in
+  0.2.x (D70).** After a layout change under a stationary cursor, hover state
+  was re-synthesized via `handleMouseEvent(mousex, mousex, …, MOUSE_ENTERED,
+  …)` — y received the x coordinate. Traced as unobservable before fixing
+  (D68): `findComponent` had already recomputed `mouseinside`/`insidepart`
+  from the correct coordinates, no MOUSE_ENTERED consumer reads the raw x/y
+  parameters, and nothing persisted the corrupted value. The argument now
+  passes `mousey`; the full net was empirically indifferent (zero golden
+  diffs), confirming the D68 proof. Guarded by the canary
+  `thinlet.trace.InputQuirkPinsTest#closingTheDropDownUnderTheCursorCommitsAndStaysConsistent`,
+  which drives the path with differing x/y and fails if a change ever makes
+  the parameter live-and-wrong.
