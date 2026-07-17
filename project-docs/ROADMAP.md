@@ -157,16 +157,21 @@ Phase 3 refactor touches it, so 2.y broadens coverage — and adds the simplest 
   deterministic-page allowlist, **Q8** locked. The Drafts app is the first Phase 3b
   living test bed.
 
-## Phase 3 — Internal refactors / Enhanced Thinlet ⏳ (3a underway)
+## Phase 3 — Internal refactors / Enhanced Thinlet ⏳ (3a paused at Cut 3; 3c open, D69)
 
-Sub-phase 3a (modernise internals behind the net) is active — charter:
-`project-docs/PHASE-3-GOALS.md`; live state: `.claude/NEXT-STEPS.md`. Cuts 1–3 are
-done (D42–D59), Cut 2 fully closed (D63), the Cut 4/6 net prerequisites are in place
-(D61/D64), and Cut 4/5/6 seam commitments wait on the fork mapping. Later 3c items:
+Charter: `project-docs/PHASE-3-GOALS.md`; live state: `.claude/NEXT-STEPS.md`.
+Sub-phase 3a: Cuts 1–3 are done (D42–D59), Cut 2 fully closed (D63), the Cut 4/6
+net prerequisites are in place (D61/D64), and Cut 4/5/6 seam commitments wait on
+the fork mapping. Sub-phase 3c opened fork-independently on `main` (0.2.x, D69) —
+the change-control protocol governs every behavior change. Its backlog, fork-free
+items first:
 
 - Remove SpotBugs exclusions as the code is cleaned, so the linters fail on
   regressions again (D13).
 - Deliberately fix the locked quirks per their `KNOWN-QUIRKS` dispositions (e.g.
-  the parser null-source NPE; the `FileChooser` fallback null deref).
+  the parser null-source NPE; the `FileChooser` fallback null deref) — **the
+  active batch** (D69): `checkLocation` y-arg → Q1 → `FileChooser` → Q8 → Q7.
+- The public vocabulary (constants/enums for the DTD-facing sets —
+  `project-docs/VOCABULARY-INVENTORY.md`, the rows marked 3c).
 - HiDPI / alternative rendering backends, informed by the backend-portability
   docs.

@@ -100,13 +100,18 @@ itself changes for the first time. This supersedes the "toolchain not library" p
 - **Closing checklist (D50):** re-narrow any package-private member the decomposition
   widened but no longer uses, so the later subpackage split inherits no phantom surface.
 
-## Sub-phase structure
+## Sub-phase structure (status per D69: 3a and 3c run as parallel tracks)
 
-- **3a — Modernise internals** (current). Behavior + API locked. No user-visible change.
-- **3b — Stand the real apps up** on the clean base; they become living test beds that cover
-  far more surface than the 2005 corpus.
-- **3c — Re-implement the enhancements** cleanly (from the two forks); then (later) the full
-  idiomatic rewrite / new public API.
+- **3a — Modernise internals** (paused at Cut 3). Behavior + API locked *within this
+  track*; Cut 4/5/6 seam commitments stay gated on the fork mapping.
+- **3b — Stand the real apps up** on the clean base; the Drafts playthrough is the
+  first living test bed (D65); the rest arrives with the fork sources.
+- **3c — Enhanced Thinlet (open, D69)** on `main` (0.2.x): the fork-independent
+  backlog first — dispositioned quirk fixes, then the public vocabulary (D67) —
+  under the D69 change-control protocol (disposition → flip the pin → authorized
+  re-records only). The fork-sourced re-implementation and the (later) full
+  idiomatic rewrite / new public API wait for the sources; nothing is built on
+  expectations of the fork mapping's advice.
 
 ## The sequenced cuts (3a) — net-strength-driven
 

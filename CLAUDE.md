@@ -1,9 +1,11 @@
 # Thinlet (modernized) — Claude orientation
 
-Modernization fork of the 2002–2005 Thinlet GUI toolkit (Robert Bajzat).
-Goal: **modernize the toolchain, not the library** — preserve the 2005
-observable behavior exactly while making it build and run on modern JDKs.
-Public artifacts, unsupported.
+Fork of the 2002–2005 Thinlet GUI toolkit (Robert Bajzat), now carrying two
+lines (D69): **v0.1.x** — the frozen modernized-2005 line (2005 observable
+behavior preserved exactly; anchored by the published `v0.1.0` tag) — and
+**`main` (0.2.x, Enhanced Thinlet)**, where behavior changes deliberately,
+one recorded disposition at a time, behind the regression net that the
+modernization phases built. Public artifacts, unsupported.
 
 > Claude's orientation/reference files are tracked in `.claude/MANIFEST.md` and
 > are all safe to delete. Only this `CLAUDE.md` lives outside `.claude/`;
@@ -14,7 +16,7 @@ Public artifacts, unsupported.
 - **`DECISIONS.md`** — append-only decision log (D1–D…). **The authority.** When
   this file and any external/pasted doc disagree, the repo wins. Entries are dated
   records — superseded by later entries, never rewritten — so never read one as
-  current state; the live docs carry today's truth and cite the newest D-number (D68).
+  current state; the live docs carry today's truth and cite the newest D-number (D69).
 - **`KNOWN-QUIRKS.md`** — locked 2005 bugs/quirks (populated during Phase 1).
 - **`README.md`** — project posture, build instructions, attribution.
 - **`project-docs/ROADMAP.md`** — the phase plan (Phases 0–3, done vs. pending).
@@ -51,7 +53,16 @@ Public artifacts, unsupported.
   nothing. `DECISIONS.md` alone keeps each entry's original tense; changes supersede,
   never rewrite.
 
-## Current work — Phase 3a (God-class decomposition behind the net)
+## Current work — two tracks (D69)
+
+- **3c — Enhanced Thinlet (active):** deliberate behavior changes on `main`
+  (0.2.x) under the D69 change-control protocol — recorded disposition → flip
+  the pinned test to the new behavior in the same PR → golden re-records only
+  for affected scenarios, citing the authorizing D-entry (D44 container
+  mechanics unchanged). Fork-independent backlog only; nothing is built on
+  expectations of the fork mapping.
+- **3a — decomposition (paused at Cut 3):** Cut 4/5/6 seam commitments stay
+  gated on the fork mapping (arrival-triggered, sources still pending).
 
 > **Live handoff: `.claude/NEXT-STEPS.md`** — read it first for the current state
 > and the ordered next work. Authority: `DECISIONS.md`; charter:
@@ -107,8 +118,10 @@ absorbed by the coordinate tolerance, not asserted directly.
 - **Display (D22):** the harness runs on a controlled **Xvfb `:99`** (pinned
   fonts, no window manager) so chrome never perturbs pixel metrics; never the
   interactive `:1`. Surefire sets `DISPLAY=:99`.
-- **Verbatim 2005 artifacts:** `thinlet.dtd` is byte-identical (D8); the source
-  and XML corpus are preserved as imported (D9/D12). Don't reformat them.
+- **Verbatim 2005 artifacts:** `thinlet.dtd` is byte-identical (D8) and the XML
+  corpus is preserved as imported (D9/D12) — don't reformat them; changing either
+  is a 3c decision needing its own D-entry. Source changes on the enhanced line
+  go through the D69 protocol; never reformat 2005 code you aren't changing.
 
 ## Working agreements
 

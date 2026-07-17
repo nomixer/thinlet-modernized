@@ -15,9 +15,13 @@ observable behavior**.
 - **Public artifacts, unsupported.** Published to GitHub Packages, but with no
   expectation of users, contributors, or third-party adoption. Free; caveat
   emptor. No SLA, no commitment to triage outside issues.
-- **Modernize first, enhance later.** This project preserves 2005 Thinlet's
-  behavior and modernizes the toolchain around it. User-visible changes are out
-  of scope and deferred to a future "Enhanced Thinlet" effort.
+- **Modernized first, now enhancing.** The modernization phases preserved 2005
+  Thinlet's behavior exactly while rebuilding the toolchain and a dense
+  regression net around it; that frozen line lives on as **v0.1.x** (anchored by
+  the `v0.1.0` release). `main` (0.2.x) is **Enhanced Thinlet**: user-visible
+  changes land deliberately, one recorded disposition at a time, each flipping
+  its pinned behavior test — see `KNOWN-QUIRKS.md` (the ledger) and
+  `DECISIONS.md` D69 (the protocol).
 - **Quality over speed.** The elaborated toolchain (Spotless, Checkstyle,
   SpotBugs, japicmp, golden traces, Dev Containers) exists because we want a
   model project, not because of market pressure.

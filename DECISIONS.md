@@ -2723,3 +2723,68 @@ hit-testing. Existing suites did this incidentally (their trace-compares paint);
 **Validation.** Targeted class green ×3 in the CI container; full container rows in
 the PR run. (Cross-ref D44 container loop, D45 determinism, D51 no-op-press
 discipline n/a here, D64 characterization norm, D67 the source findings.)
+
+## D69 — Enhanced Thinlet (3c) opens in this repo, fork-independently; the enhanced line is 0.2.x
+
+**Date:** 2026-07-17. **Status:** accepted. **Phase:** 3c opens (governance; no behavior
+change in this slice).
+
+**Context.** The fork sources had not arrived by their expected window, and the
+maintainer directed: stop idling on them, move into Enhanced Thinlet now, and build
+**no expectations on what the fork mapping might advise**. The "where" question
+(this repo vs a new one) was settled from the record: every 3c mention in the repo
+treats it as a phase of this repo (the ROADMAP's Phase 3 heading includes "Enhanced
+Thinlet" and lists fork-independent 3c items); D42 already superseded the
+"toolchain not library" freeze for Phase 3; the one repo-split precedent
+(`thinlet-archive`) froze the past, not the future; and the regression net — the
+goldens, quirk pins, input suites, container CI, and cross-JDK matrix — is exactly
+the machinery that makes deliberate behavior change safe. A new repo would abandon
+or copy it. A new module (or repo) remains a later call, reserved for the full
+idiomatic-rewrite/new-API stage.
+
+**Decision — the line split.**
+
+- **v0.1.x is the frozen modernized-2005 line**, anchored by the published `v0.1.0`
+  tag (GitHub Packages, D28). A maintenance branch is cut from that tag only on
+  demand; no proactive branch.
+- **`main` becomes the enhanced line: 0.2.0-SNAPSHOT** (all four poms). japicmp
+  keeps gating binary breaks against the published v0.1.0 baseline (the apicheck
+  profile's pinned oldVersion — unchanged, and the version bump moves main further
+  from the "version equals baseline" no-op footgun).
+- The behavior-preservation contract ("preserve the 2005 observable behavior
+  exactly") is **scoped to the v0.1.x line**; on the enhanced line it is replaced
+  by the change-control protocol below. CLAUDE.md/README retensed accordingly
+  (D66).
+
+**Decision — the behavior-change protocol (the net gets spent, deliberately).**
+
+1. Every user-visible change starts from a **recorded disposition** — a
+   `KNOWN-QUIRKS.md` disposition field or a D-entry.
+2. The same PR **flips the pinned test** to assert the new behavior: the
+   `documents-current-behavior` tag comes off and the test keeps a sentence name
+   describing the new contract. A behavior change with no pin to flip first gets a
+   pin (D64 norm), then the flip.
+3. **Golden re-records are authorized per-change**: only the scenarios the change
+   affects, citing the authorizing D-entry in the commit; the D44 mechanics stay
+   (CI container only, `clean` before record, two runs byte-identical). This
+   amends D44/D52's "never re-record" for the enhanced line — the prohibition
+   still holds for *unexplained* diffs.
+4. The `KNOWN-QUIRKS.md` entry is updated in place to **"fixed in 0.2.x"** with
+   the fixing D-number — the file becomes the ledger of intentional behavior
+   changes as well as preserved quirks.
+5. **japicmp stays** (binary breaks gated); public API *additions* are now
+   deliberate 3c decisions, made sparingly — every published addition is de-facto
+   frozen the moment it ships (D43's logic, now applied intentionally).
+
+**Scope of the fork-independent 3c backlog** (order agreed with the maintainer):
+the already-dispositioned quirk-fix batch first (`checkLocation` y-arg → parser
+null-source Q1 → `FileChooser` guard → FolderBrowser root Q8 → dialog glyphs Q7),
+then the public vocabulary (D67 inventory rows marked 3c). **Unchanged and still
+gated on the fork sources:** the fork mapping itself, Cut 4/5/6 seam commitments,
+and the fork-sourced enhancement re-implementation. Undecided-disposition quirks
+(Q5/Q6/Q9/Q10, the D64 candidates) stay pinned and untouched.
+
+**Verification for this slice:** docs + version only — container rows green, zero
+golden diffs, japicmp green. (Cross-ref D4/D28/D29 release machinery, D42 charter
+supersession, D43 visibility logic, D44/D52 the amended re-record rule, D64 the
+pin-first norm, D66 tense, D67/D68 the research and pins this backlog consumes.)
