@@ -1,4 +1,4 @@
-# Next steps — session handoff (2026-07-16)
+# Next steps — session handoff (2026-07-17)
 
 > State pointers + ordered work only; rationale lives in `DECISIONS.md`
 > (single-home rule + comment rules: **D57**). Charter:
@@ -37,33 +37,39 @@
   Q10 (ascent-sort down-arrow) locked by `InputQuirkPinsTest`; the
   `checkLocation` mousex-for-y bug proven unobservable and triaged (not
   behavior-locked), guarded by a canary. Base row: +4 tests.
+- **3c opened (D69, 2026-07-17)**: `main` is the enhanced line
+  (0.2.0-SNAPSHOT); v0.1.x is the frozen modernized-2005 line (`v0.1.0` tag);
+  behavior changes go through the D69 protocol. Fork mapping unaffected,
+  arrival-triggered.
 
-## Next work, in order
+## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 
-1. **Fork mapping** — maintainer's fork sources expected ~2026-07-17/19; check
-   at session start (2026-07-14: not arrived). Fork files → subsystems;
-   boundaries vs Cut 2–6 seams; enhancement backlog; static-ability map.
-   **Lands before any Cut 4/5/6 seam commitments.**
-2. **Cut 4 (after fork mapping)** — layout → per-widget strategies; the D61
-   net prerequisite is in place, seam commitments wait for the fork mapping.
-3. **Maintainer quirk dispositions (from D64/D65/D67/D68)** — Q5
-   gate-spinning?, Q6 keep jump-to-pointer?, Q7 wire-or-remove the dialog
-   glyphs?, Q8 fix the FolderBrowser root?, Q9 wire-or-drop the combobox icon
-   part?, Q10 keep-or-flip the sort glyph?; candidates: empty-tab
-   focus-escape, disabled-menuitem release-closes-silently. The `checkLocation`
-   mousex-for-y bug is triaged unobservable (D68) — its fix is a free 3c
-   cleanup. Behavior is pinned either way — decisions feed Enhanced Thinlet
-   (3c).
-4. **Optional vocabulary follow-ons** (D56 scope cut) — only if they earn their
-   keep against Cut 3+; the research/inventory is done (D67,
-   `project-docs/VOCABULARY-INVENTORY.md`) — each conversion waits for the cut
-   named in its "absorb at" column.
+1. **Quirk-fix batch (3c, active)** — per the D69 protocol (disposition →
+   flip the pin in the same PR → authorized re-records only), smallest first:
+   `checkLocation` y-arg (D68: proven invisible; canary exists) → Q1 parser
+   null-source → `FileChooser` fallback guard → Q8 FolderBrowser root → Q7
+   dialog glyphs (biggest; possibly split close/maximize/iconify).
+2. **Public vocabulary (3c, after the batch)** — the D67 inventory rows
+   marked 3c (choice-value enums/constants, event names); DTD-anchored so
+   fork-proof.
+3. **Maintainer quirk dispositions, remaining** — Q5 gate-spinning?, Q6
+   jump-to-pointer?, Q9 wire-or-drop the combobox icon part?, Q10
+   keep-or-flip the sort glyph?; candidates: empty-tab focus-escape,
+   disabled-menuitem release-closes-silently. Behavior pinned either way.
+4. **Fork mapping (arrival-triggered; no expectations built on it)** — sources
+   still pending (2026-07-17: not arrived). When they land: fork files →
+   subsystems; boundaries vs Cut 2–6 seams; enhancement backlog; then Cut 4+
+   seam commitments unblock (3a resumes).
 
 ## Discipline (one-liners; the D-entries carry the why)
 
 - Goldens only in the CI container, `clean` before record, never re-record to
-  make a diff go away (D44/D52); never modify existing fixtures — new files
-  only.
+  make an *unexplained* diff go away (D44/D52); on the enhanced line a
+  re-record must cite the authorizing D-entry and cover only the affected
+  scenarios (D69). Never modify existing fixtures — new files only.
+- Behavior changes (3c): disposition first, flip the pin in the same PR, tag
+  off `documents-current-behavior`, KNOWN-QUIRKS entry → "fixed in 0.2.x"
+  (D69).
 - Golden signal strength: force categorical diffs (font point-**size**, not
   `bold`) (D52); auto-repeat parts need the no-op-press trick (D51).
 - Mechanical changes: scripted with boundary assertions + round-trip audit;
