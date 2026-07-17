@@ -1,4 +1,4 @@
-# Next steps — session handoff (2026-07-17)
+# Next steps — session handoff (2026-07-18)
 
 > State pointers + ordered work only; rationale lives in `DECISIONS.md`
 > (single-home rule + comment rules: **D57**). Charter:
@@ -28,8 +28,8 @@
   the Drafts app the first 3b living test bed; Q8 locked.
 - Net: 41 static + 51 interaction goldens + 58 layout-state sidecars + input
   suite + 25 contract pins (`DescriptorContractTest`) + the live playthrough;
-  strict-intern tripwire live in every test JVM (D43, both modules). Base
-  row: 326 (core) + 13 (drafts) tests.
+  strict-intern tripwire live in every test JVM (D43, both modules). The
+  current base-row count lives with the newest state bullet below.
 - **Vocabulary decode + constants research done (D67, 2026-07-15)**:
   `project-docs/VOCABULARY-INVENTORY.md` (11 vocabularies, collision table,
   absorb-at-cut recommendations) + in-source annotations at the consumers.
@@ -40,22 +40,24 @@
 - **3c opened (D69, 2026-07-17)**: `main` is the enhanced line
   (0.2.0-SNAPSHOT); v0.1.x is the frozen modernized-2005 line (`v0.1.0` tag);
   behavior changes go through the D69 protocol. Fork mapping unaffected,
-  arrival-triggered.
+  arrival-triggered. The D69 quirk-fix batch completed 2026-07-17 (D70–D73:
+  `checkLocation` y-arg, Q1 parser null-source, `FileChooser` guard + Q8 root
+  + SpotBugs null-deref exclusions off, Q7 close glyph live /
+  maximize+iconify undrawn) — zero golden re-records across the batch.
+- **Public vocabulary shipped (D74, 2026-07-18)**: 8 choice enums (each with
+  `KEY` + DTD tokens + `fromToken`) and the 11 `EventNames` constants —
+  pure API addition, new files only, welded to the definition table by
+  `PublicVocabularyContractTest` (+7 tests). Base row: 337 (core) + 13
+  (drafts) tests.
 
 ## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 
-1. **Public vocabulary (3c, next)** — the D67 inventory rows marked 3c
-   (choice-value enums/constants, event names); DTD-anchored so fork-proof.
-   The D69 quirk-fix batch is **complete** (D70–D73: `checkLocation` y-arg,
-   Q1 parser null-source, `FileChooser` guard + Q8 root + SpotBugs
-   null-deref exclusions off, Q7 close glyph live / maximize+iconify
-   undrawn) — zero golden re-records were needed across the whole batch.
-2. **Maintainer quirk dispositions, remaining** — Q5 gate-spinning?, Q6
+1. **Maintainer quirk dispositions, remaining** — Q5 gate-spinning?, Q6
    jump-to-pointer?, Q9 wire-or-drop the combobox icon part?, Q10
    keep-or-flip the sort glyph?; candidates: empty-tab focus-escape,
    disabled-menuitem release-closes-silently. Behavior pinned either way.
-3. **Fork mapping (arrival-triggered; no expectations built on it)** — sources
-   still pending (2026-07-17: not arrived). When they land: fork files →
+2. **Fork mapping (arrival-triggered; no expectations built on it)** — sources
+   still pending (2026-07-18: not arrived). When they land: fork files →
    subsystems; boundaries vs Cut 2–6 seams; enhancement backlog; then Cut 4+
    seam commitments unblock (3a resumes).
 
