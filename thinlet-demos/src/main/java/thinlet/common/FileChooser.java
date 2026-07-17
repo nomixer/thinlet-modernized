@@ -104,6 +104,9 @@ public class FileChooser {
 
         public File[] getFiles(File file) {
             String[] list = file.list();
+            if (list == null) { // non-directory or I/O error (triaged D13 finding; fixed 0.2.x, D72)
+                return new File[0];
+            }
             int dircount = 0;
             File[] files = new File[list.length];
             for (int i = 0; i < list.length; i++) {

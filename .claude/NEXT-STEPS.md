@@ -44,11 +44,12 @@
 
 ## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 
-1. **Quirk-fix batch (3c, active)** — per the D69 protocol (disposition →
-   flip the pin in the same PR → authorized re-records only), smallest first:
-   `checkLocation` y-arg (D68: proven invisible; canary exists) → Q1 parser
-   null-source → `FileChooser` fallback guard → Q8 FolderBrowser root → Q7
-   dialog glyphs (biggest; possibly split close/maximize/iconify).
+1. **Quirk-fix batch (3c, active)** — per the D69 protocol. Landed:
+   `checkLocation` y-arg (D70), Q1 parser null-source (D71), `FileChooser`
+   guard + Q8 FolderBrowser root + the null-deref SpotBugs exclusions off
+   (D72). Remaining: **Q7 dialog glyphs** (biggest; possibly split
+   close/maximize/iconify; needs authorized golden re-records — start after
+   the PR stack flattens).
 2. **Public vocabulary (3c, after the batch)** — the D67 inventory rows
    marked 3c (choice-value enums/constants, event names); DTD-anchored so
    fork-proof.

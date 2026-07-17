@@ -156,23 +156,20 @@ Each entry, added as quirks are discovered during Phase 1+ test authoring:
 - **Enhanced Thinlet disposition:** fix — wire the glyphs (close/maximize/iconify)
   or stop drawing them when they do nothing.
 
-### Q8 — Drafts FolderBrowser NPEs off-Windows, surfaced as a live ExceptionDialog
-- **What happens:** the Folder browser page roots its lazy filesystem tree at the
-  hardcoded path `C:`; expanding it calls `new File("C:/").list()`, which returns
-  `null` on any non-Windows system, and the unguarded `.length` dereference throws
-  `NullPointerException`. Thinlet's reflective invoke catches it and routes it to
-  `Drafts.handleException`, which pops a real ExceptionDialog over the app.
-- **Why it's a quirk:** a 2005 Windows-era assumption plus a missing null guard —
-  the page is unusable everywhere the modernization fork's CI runs, but it fails
-  *gracefully by accident* (the exception-dialog plumbing works as designed).
-- **Where:** `thinlet-drafts` `FolderBrowser.init` (the `"C:"` root) and
-  `FolderBrowser.expand` (the unguarded `File.list()`); the surfacing path is
-  `Thinlet.handleException` → `Drafts.handleException` → `ExceptionDialog`.
+### Q8 — Drafts FolderBrowser NPE'd off-Windows (hardcoded `C:` root) — **fixed in 0.2.x (D72)**
+- **What happened (≤0.1.x):** the Folder browser page rooted its lazy filesystem
+  tree at the hardcoded path `C:`; expanding it called `new File("C:/").list()`,
+  which returns `null` on any non-Windows system, and the unguarded `.length`
+  dereference threw `NullPointerException` — surfaced as a live ExceptionDialog
+  via `Drafts.handleException`.
+- **The fix:** the tree roots at `File.listRoots()` (falling back to
+  `user.home`), and `expand` treats a `null` listing as an empty directory.
+- **Where:** `thinlet-drafts` `FolderBrowser.init` / `FolderBrowser.expand`.
 - **Locked by:** `thinlet.trace.DraftsPlaythroughTest`
-  `#folderBrowserExpandPopsAnExceptionDialogOffWindows` (tagged
-  documents-current-behavior) — deterministic on the Linux CI container.
-- **Enhanced Thinlet disposition:** fix — guard the `null` and root the tree at
-  `File.listRoots()`/`user.home` instead of a hardcoded drive letter.
+  `#folderBrowserExpandsTheRealFilesystemRootGracefully` (asserts the fixed
+  contract; red-green checked both ways). SpotBugs additionally guards the
+  null-deref family — the `NP_NULL_PARAM_DEREF` /
+  `NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE` exclusions came off with D71/D72.
 
 ### Q9 — the combobox icon glyph is click-dead
 - **What happens:** an editable combobox with an `icon` attribute hit-tests the
@@ -216,13 +213,13 @@ Enhanced Thinlet's to address.
   finding is the exception-edge of the `Reader` being constructed just outside the
   `try` (~6601) — there is no behavioral quirk to lock; tightening the cleanup is
   an Enhanced Thinlet nicety.
-- **`FileChooser` fallback `View.getFiles` null deref.** `File.list()` can return
-  `null` (non-directory / I/O error) and is dereferenced unguarded
-  (`thinlet-demos` `FileChooser.java` ~106-108). It lives in the `View` *fallback*
-  inner class, used only when the Swing-backed `View2` fails to load, so it is not
-  exercised on a normal JDK; combined with `thinlet-demos` having no test harness
-  and `View` being a private inner class, it is documented here rather than
-  test-locked. Disposition: fix — guard the `null`.
+- **`FileChooser` fallback `View.getFiles` null deref — fixed in 0.2.x (D72).**
+  `File.list()` can return `null` (non-directory / I/O error) and was
+  dereferenced unguarded in the `View` *fallback* inner class (used only when
+  the Swing-backed `View2` fails to load). The guard now returns an empty
+  array. Not test-locked (`thinlet-demos` has no test harness and `View` is a
+  private inner class — recorded honestly in D72); guarded instead by SpotBugs,
+  whose null-deref exclusions came off with this fix.
 - **`checkLocation` passed `mousex` for the y argument (D67/D68) — fixed in
   0.2.x (D70).** After a layout change under a stationary cursor, hover state
   was re-synthesized via `handleMouseEvent(mousex, mousex, …, MOUSE_ENTERED,

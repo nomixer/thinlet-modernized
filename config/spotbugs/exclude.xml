@@ -60,11 +60,10 @@
       <!-- Constructor that may throw (FrameLauncher). -->
       <Bug pattern="CT_CONSTRUCTOR_THROW"/>
       <Bug pattern="RV_RETURN_VALUE_IGNORED"/>
-      <!-- Candidate genuine bugs — XML parser null-param + stream cleanup.
-           Accepted for the Phase-0 baseline; to be locked as KNOWN-QUIRKS
-           entries with tests in Phase 1. -->
-      <Bug pattern="NP_NULL_PARAM_DEREF"/>
-      <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+      <!-- Candidate genuine bugs — stream cleanup (triaged, KNOWN-QUIRKS).
+           The null-deref siblings (NP_NULL_PARAM_DEREF,
+           NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE) came OFF with the Q1 and
+           FileChooser fixes (D71/D72) — SpotBugs now guards those paths. -->
       <Bug pattern="OBL_UNSATISFIED_OBLIGATION"/>
       <Bug pattern="OBL_UNSATISFIED_OBLIGATION_EXCEPTION_EDGE"/>
       <!-- Demo-only idioms (AmazonExplorer, FileChooser). -->

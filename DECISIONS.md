@@ -2843,3 +2843,43 @@ against the fixed source 3/3 green. Zero golden re-records (no paint surface).
 **Validation.** Container base + crossjdk rows green, zero golden diffs; ledger +
 PHASE-3-GOALS earmark line updated. (Cross-ref D69 protocol, D70 the invisible
 opener; Q1 in KNOWN-QUIRKS.)
+
+## D72 — The null-deref family retired: FileChooser guard + Q8 FolderBrowser fix; SpotBugs exclusions off
+
+**Date:** 2026-07-17. **Status:** accepted. **Phase:** 3c (third+fourth fixes of the
+D69 batch, one PR — coupling rationale below).
+
+**Context.** Two dispositioned fixes remained in the null-deref family: the
+`thinlet-demos` `FileChooser` fallback's unguarded `File.list()` (triaged, "fix —
+guard the null") and Q8, the Drafts FolderBrowser's hardcoded `C:` root whose
+expansion NPE'd off-Windows ("fix — guard the null and root at
+`File.listRoots()`/`user.home`"). Removing the long-standing
+`NP_NULL_PARAM_DEREF`/`NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE` SpotBugs exclusions
+(a ROADMAP 3c item: "remove exclusions as the code is cleaned") surfaced **exactly
+one** remaining hit — Q8 itself — so the exclusion removal binds the two fixes into
+one atomic slice: they land together or the gate can't come off. That coupling is
+the recorded reason this PR carries two fixes despite the one-fix-per-PR default.
+
+**Decision.**
+
+- `FileChooser.View.getFiles`: `null` listing → empty array. **Not test-locked** —
+  recorded honestly: `thinlet-demos` pins `skipTests` (no harness) and `View` is a
+  private inner class; the compensating guard is static: SpotBugs now reports any
+  regression of this exact pattern.
+- `FolderBrowser.init`: roots from `File.listRoots()` (fallback `user.home` if
+  empty/null); `FolderBrowser.expand`: `null` listing → empty directory. Pin
+  flipped per D69: `#folderBrowserExpandPopsAnExceptionDialogOffWindows` →
+  `#folderBrowserExpandsTheRealFilesystemRootGracefully` (tag off; asserts the
+  platform root, no ExceptionDialog, placeholder replaced). **Red-green both
+  ways** (old code fails the new test at the root assert: `expected "/" but was
+  "C:"`). The folder page stays **off** the playthrough determinism allowlist —
+  its content is the live filesystem, environment-dependent by nature.
+- `config/spotbugs/exclude.xml`: the two null-deref patterns removed;
+  `BugInstance size 0` across all three modules confirms nothing else in the
+  reactor trips them (the D71 parse guards cleared the core hits).
+
+**Validation.** Container base + crossjdk rows green; zero golden re-records
+(FolderBrowser paints only through the live playthrough, which is getter-asserted;
+no goldens cover the folder page). Ledger updated (Q8 + the triage bullet →
+fixed in 0.2.x). (Cross-ref D13 the original findings, D65 the playthrough, D69
+protocol, D71 the parse guards this exclusion removal depended on.)
