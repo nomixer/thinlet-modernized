@@ -2788,3 +2788,27 @@ and the fork-sourced enhancement re-implementation. Undecided-disposition quirks
 golden diffs, japicmp green. (Cross-ref D4/D28/D29 release machinery, D42 charter
 supersession, D43 visibility logic, D44/D52 the amended re-record rule, D64 the
 pin-first norm, D66 tense, D67/D68 the research and pins this backlog consumes.)
+
+## D70 — First enhanced-line source change: the checkLocation y-argument fixed
+
+**Date:** 2026-07-17. **Status:** accepted. **Phase:** 3c (first fix of the D69 batch).
+
+**Context.** The gentlest possible opener for the D69 protocol: the 2005
+`checkLocation` re-synthesis call passed `mousex` for `handleMouseEvent`'s y
+parameter (found D67, verified by direct read; D68 proved it **unobservable** —
+correct component/part already recomputed, no MOUSE_ENTERED consumer reads the raw
+x/y, nothing persists the value). Disposition recorded in KNOWN-QUIRKS' triage
+section: fix in Enhanced Thinlet.
+
+**Decision.** The argument now passes `mousey`. Protocol notes: no pinned
+quirk-test existed to flip (the finding was triaged *not behavior-locked* — there
+was no behavior to lock); the D68 canary
+(`InputQuirkPinsTest#closingTheDropDownUnderTheCursorCommitsAndStaysConsistent`)
+already exercises the path with differing x/y and stays green across the change,
+as it must for a provably-invisible fix. **Zero golden re-records requested or
+needed** — and that is the empirical validation: the full net's indifference
+confirms the D68 unobservability proof.
+
+**Validation.** Container base row + crossjdk 8/11/17 green, `git status` clean
+(zero golden diffs). KNOWN-QUIRKS triage entry updated to "fixed in 0.2.x (D70)".
+(Cross-ref D67 finding, D68 proof + canary, D69 protocol.)

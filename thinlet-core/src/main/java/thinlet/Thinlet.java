@@ -2388,11 +2388,11 @@ public class Thinlet extends Container implements Runnable, Serializable {
     private void checkLocation(Object component) {
         if (mouseinside == component) { // parameter added by scolebourne
             findComponent(content, mousex, mousey);
-            // 2005: passes mousex for the y argument — kept verbatim. Proven
-            // unobservable (D68): no MOUSE_ENTERED consumer reads the raw x/y.
+            // 2005 passed mousex for the y argument; fixed in 0.2.x (D70) after
+            // D68 proved the argument unconsumed on every MOUSE_ENTERED path.
             // Canary: InputQuirkPinsTest
             // #closingTheDropDownUnderTheCursorCommitsAndStaysConsistent.
-            handleMouseEvent(mousex, mousex, 1, false, false, false, MouseEvent.MOUSE_ENTERED, mouseinside, insidepart);
+            handleMouseEvent(mousex, mousey, 1, false, false, false, MouseEvent.MOUSE_ENTERED, mouseinside, insidepart);
         }
     }
 
