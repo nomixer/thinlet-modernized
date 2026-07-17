@@ -44,20 +44,17 @@
 
 ## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 
-1. **Quirk-fix batch (3c, active)** — per the D69 protocol. Landed:
-   `checkLocation` y-arg (D70), Q1 parser null-source (D71), `FileChooser`
-   guard + Q8 FolderBrowser root + the null-deref SpotBugs exclusions off
-   (D72). Remaining: **Q7 dialog glyphs** (biggest; possibly split
-   close/maximize/iconify; needs authorized golden re-records — start after
-   the PR stack flattens).
-2. **Public vocabulary (3c, after the batch)** — the D67 inventory rows
-   marked 3c (choice-value enums/constants, event names); DTD-anchored so
-   fork-proof.
-3. **Maintainer quirk dispositions, remaining** — Q5 gate-spinning?, Q6
+1. **Public vocabulary (3c, next)** — the D67 inventory rows marked 3c
+   (choice-value enums/constants, event names); DTD-anchored so fork-proof.
+   The D69 quirk-fix batch is **complete** (D70–D73: `checkLocation` y-arg,
+   Q1 parser null-source, `FileChooser` guard + Q8 root + SpotBugs
+   null-deref exclusions off, Q7 close glyph live / maximize+iconify
+   undrawn) — zero golden re-records were needed across the whole batch.
+2. **Maintainer quirk dispositions, remaining** — Q5 gate-spinning?, Q6
    jump-to-pointer?, Q9 wire-or-drop the combobox icon part?, Q10
    keep-or-flip the sort glyph?; candidates: empty-tab focus-escape,
    disabled-menuitem release-closes-silently. Behavior pinned either way.
-4. **Fork mapping (arrival-triggered; no expectations built on it)** — sources
+3. **Fork mapping (arrival-triggered; no expectations built on it)** — sources
    still pending (2026-07-17: not arrived). When they land: fork files →
    subsystems; boundaries vs Cut 2–6 seams; enhancement backlog; then Cut 4+
    seam commitments unblock (3a resumes).
