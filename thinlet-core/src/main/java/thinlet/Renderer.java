@@ -1528,15 +1528,10 @@ final class Renderer {
                             .padding(1, 2, 1, 2));
             int controlx = bounds.width - titleheight - 1;
             if (t.getBoolean(component, "closable", false)) {
+                // 0.2.x (D73): the close glyph is live (":close" hit-test uses this
+                // same rect). The 2005 maximize/iconify glyphs are no longer drawn —
+                // they never had click wiring; their attributes stay parseable, inert.
                 t.paint(component, g, controlx, 3, titleheight - 2, titleheight - 2, 'c');
-                controlx -= titleheight;
-            }
-            if (t.getBoolean(component, "maximizable", false)) {
-                t.paint(component, g, controlx, 3, titleheight - 2, titleheight - 2, 'm');
-                controlx -= titleheight;
-            }
-            if (t.getBoolean(component, "iconifiable", false)) {
-                t.paint(component, g, controlx, 3, titleheight - 2, titleheight - 2, 'i');
             }
             t.paintRect(
                     g,

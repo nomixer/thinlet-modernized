@@ -88,25 +88,38 @@ class InputDialogTest {
                 .isEqualTo(b0);
     }
 
-    /** Locked 2005 quirk: the closable/maximizable/iconifiable glyphs are paint-only. See KNOWN-QUIRKS Q7. */
+    /** The fixed Q7 contract (0.2.x, D73): close is live; maximize/iconify glyphs are undrawn. */
     @Test
-    @Tag("documents-current-behavior")
-    void titleGlyphsHaveNoClickWiring() throws IOException {
+    void closeGlyphClosesTheDialogAndTheOtherGlyphsAreUndrawn() throws IOException {
         RecordingHandler h = new RecordingHandler();
         InputDriver d = InputDriver.load(FIXTURE, h);
         Object dlg = d.find("dlg");
         Rectangle b0 = boundsCopy(d, dlg);
-        d.clickAt(dlg, b0.width - 10, 8); // the "X" glyph area
-        assertThat(d.find("dlg"))
-                .as("clicking the close glyph does not close the dialog")
-                .isNotNull();
-        assertThat(boundsCopy(d, dlg)).as("nor move it").isEqualTo(b0);
-        assertThat(h.events).as("nor fire anything").isEmpty();
+        int titleheight = ((Integer) d.property(dlg, ":titleheight")).intValue();
 
+        // Press on the X but release away from it: a cancel, not a close — and the
+        // glyph is no longer part of the drag handle, so the dialog must not move.
+        d.dragInside(dlg, b0.width - 10, 8, b0.width - 10 - 3 * titleheight, 8);
+        assertThat(d.find("dlg"))
+                .as("release away from the glyph cancels the close")
+                .isNotNull();
+        assertThat(boundsCopy(d, dlg)).as("the glyph is not a drag handle").isEqualTo(b0);
+
+        // The undrawn maximize spot (one glyph-width left of close) is plain header
+        // again: dragging there moves the dialog.
         d.paint();
-        d.dragInside(dlg, b0.width - 10, 8, b0.width - 10 + 20, 8);
+        d.dragInside(dlg, b0.width - 10 - titleheight, 8, b0.width - 10 - titleheight + 20, 8);
         assertThat(boundsCopy(d, dlg).x)
-                .as("dragging on the glyph MOVES the dialog — the whole strip is one drag handle")
+                .as("the old maximize spot drags the dialog — nothing is drawn or wired there")
                 .isEqualTo(b0.x + 20);
+
+        // A clean click on the X closes (removes) the dialog.
+        d.paint();
+        Rectangle b1 = boundsCopy(d, dlg);
+        d.clickAt(dlg, b1.width - 10, 8);
+        assertThat(d.find("dlg"))
+                .as("clicking the close glyph closes the dialog")
+                .isNull();
+        assertThat(h.events).as("closing fires no bound handler — remove only").isEmpty();
     }
 }

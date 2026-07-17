@@ -2883,3 +2883,44 @@ the recorded reason this PR carries two fixes despite the one-fix-per-PR default
 no goldens cover the folder page). Ledger updated (Q8 + the triage bullet →
 fixed in 0.2.x). (Cross-ref D13 the original findings, D65 the playthrough, D69
 protocol, D71 the parse guards this exclusion removal depended on.)
+
+## D73 — Q7 fixed: the dialog close glyph is live; maximize/iconify glyphs undrawn (batch complete)
+
+**Date:** 2026-07-17. **Status:** accepted. **Phase:** 3c (final fix of the D69 batch).
+
+**Context.** Q7's recorded disposition was deliberately two-option ("wire the glyphs
+… or stop drawing them"). Shown the quirk live in the Drafts showcase, the
+maintainer chose the middle path: **wire close; undraw maximize/iconify; leave the
+Drafts demo untouched**.
+
+**Decision — the wiring.** The close glyph's rect (the Renderer's `controlx` math:
+`bounds.width - titleheight - 1, 3, titleheight - 2, titleheight - 2`) becomes a
+live `":close"` part in `findComponent`'s header carve-out. `handleMouseEvent`'s
+dialog branch closes (public `remove(component)`) on MOUSE_RELEASED **only when the
+live `insidepart` is still the glyph** — release anywhere else cancels, button-style;
+the glyph is no longer part of the header drag handle. No hover/press tint (the
+2005 glyphs had none; minimal surface). The maximize/iconify draws are removed —
+those glyphs never had wiring; the attributes stay parseable and inert, and their
+old screen area reverts to plain draggable header. No new callback API: closing is
+exactly `remove(dialog)`, what apps already do; a close-veto/notify binding is a
+future public-API decision, deliberately out of scope. The 2005 glyph-paint helper
+keeps its now-unreached 'm'/'i' cases (verbatim, unchanged code).
+
+**Protocol (D69) applied.** Pin flipped in the same PR:
+`InputDialogTest#titleGlyphsHaveNoClickWiring` →
+`#closeGlyphClosesTheDialogAndTheOtherGlyphsAreUndrawn` (tag off): cancel-drag
+does not close and does not move; the old maximize spot drags the dialog (the
+observable proof the glyph is undrawn); a clean click removes the dialog.
+**Red-green both ways** — against 2005 code the flip fails at "the glyph is not a
+drag handle" (the dialog moved by exactly the drag delta). **Zero golden
+re-records**: no committed golden scenario sets any of the three attributes (only
+the ephemeral-trace fixture `input/dialog.xml` does).
+
+**Vocabulary note.** `":close"` joins the dialog part tokens (the
+`handleMouseEvent` duality annotation and `VOCABULARY-INVENTORY.md` row 5 updated
+in this PR). **The D69 quirk-fix batch is complete** (D70–D73); next 3c item: the
+public vocabulary (D67).
+
+**Validation.** Container base + crossjdk rows green; `git status` clean.
+(Cross-ref D48/D63 the Renderer seam, D64 the original pin, D69 protocol, D67/Q7
+ledger.)
