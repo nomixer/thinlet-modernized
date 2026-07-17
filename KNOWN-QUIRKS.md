@@ -39,20 +39,21 @@ Each entry, added as quirks are discovered during Phase 1+ test authoring:
 
 ## Quirks
 
-### Q1 — `parse` throws `NullPointerException` on an unreadable source
-- **What happens:** `parse(String)` with a path that is neither a classpath
-  resource nor a valid URL, and `parse(InputStream)` with a `null` stream, throw
-  `NullPointerException` rather than a descriptive `IOException`.
-- **Why it's a quirk:** an unreadable source should report a clear I/O error; the
-  2005 code instead lets a `null` stream reach `new InputStreamReader(...)`. The
-  author was aware — `parse(String, Object)` carries the comment
-  `/* thows nullpointerexception*/` where the `MalformedURLException` is swallowed.
-- **Where:** `Thinlet.java` `parse(String, Object)` (~6451-6464; the `null`
-  stream is not guarded) → `parse(InputStream, char, Object)` (~6601,
-  `new InputStreamReader`).
-- **Locked by:** `thinlet.quirks.ParserNullSourceQuirkTest` (tagged
-  documents-current-behavior).
-- **Enhanced Thinlet disposition:** fix — throw a descriptive `IOException`.
+### Q1 — `parse` threw `NullPointerException` on an unreadable source — **fixed in 0.2.x (D71)**
+- **What happened (≤0.1.x):** `parse(String)` with a path that was neither a
+  classpath resource nor a valid URL, and `parse(InputStream)` with a `null`
+  stream, threw `NullPointerException` rather than a descriptive `IOException`.
+  The author was aware — `parse(String, Object)` carried the comment
+  `/* thows nullpointerexception*/` where the `MalformedURLException` was
+  swallowed.
+- **The fix:** both public paths now throw a descriptive `IOException`
+  (`"unreadable source: <path>"` / `"null input stream"`); a valid stream
+  parses unchanged.
+- **Where:** `Thinlet.java` `parse(String, Object)` (the unreadable-source
+  guard) and `parse(InputStream, Object)` (the null-stream guard).
+- **Locked by:** `thinlet.quirks.ParserUnreadableSourceTest` (asserts the fixed
+  contract; the old NPE-locking tests were flipped in the same PR, red-green
+  checked both ways).
 
 ### Q2 — `splitpane` divider is absolute pixels: non-proportional + destructive clamp on resize
 - **What happens:** the divider position is an absolute pixel value (`divider`

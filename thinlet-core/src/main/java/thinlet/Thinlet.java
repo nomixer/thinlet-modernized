@@ -4998,10 +4998,14 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 try {
                     inputstream = new URL(path).openStream();
                 } catch (MalformedURLException mfe) {
-                    /* thows nullpointerexception*/
+                    // falls through to the unreadable-source guard below (the 2005
+                    // swallow let null reach the parser — Q1, fixed in 0.2.x, D71)
                 }
             }
         } catch (Throwable e) {
+        }
+        if (inputstream == null) {
+            throw new IOException("unreadable source: " + path);
         }
         return parse(inputstream, handler);
     }
@@ -5026,6 +5030,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @throws java.io.IOException
      */
     public Object parse(InputStream inputstream, Object handler) throws IOException {
+        if (inputstream == null) {
+            throw new IOException("null input stream"); // Q1, fixed in 0.2.x (D71)
+        }
         return parse(inputstream, 'T', handler);
     }
 

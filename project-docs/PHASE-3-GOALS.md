@@ -44,7 +44,8 @@ itself changes for the first time. This supersedes the "toolchain not library" p
 
 - No user-visible change; no behavior change; **no golden re-record**.
 - **No quirk fixes.** Q1 (`parse()` NPE on unreadable source → `IOException`) and Q2
-  (splitpane divider) are deferred; Q1 is *earmarked as the first enhancement*, later.
+  (splitpane divider) were deferred out of 3a; Q1 was earmarked as the first
+  enhancement and landed as such (D71, 0.2.x).
 - **No new or changed public API.** A new API / full idiomatic rewrite is a later step (after
   apps run on the clean base).
 - No new features or enhancement functionality during the modernise phase.
