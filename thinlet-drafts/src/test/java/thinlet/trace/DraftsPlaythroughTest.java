@@ -4,6 +4,7 @@ package thinlet.trace;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.awt.Rectangle;
+import java.io.File;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -274,33 +275,34 @@ class DraftsPlaythroughTest {
         assertNoExceptionDialog();
     }
 
-    /** Locked 2005 quirk: FolderBrowser NPEs off-Windows, surfaced as a live ExceptionDialog. See KNOWN-QUIRKS Q8. */
+    /** The fixed Q8 contract (0.2.x, D72): the tree roots at the real filesystem and expands gracefully. */
     @Test
-    @Tag("documents-current-behavior")
-    void folderBrowserExpandPopsAnExceptionDialogOffWindows() {
+    void folderBrowserExpandsTheRealFilesystemRootGracefully() {
         boot();
         Object page = navigate("Folder browser", 0, 6);
-        Object cNode = host.getItem(page, 0);
-        assertThat(host.getString(cNode, "text")).isEqualTo("C:");
-        assertThat(host.getCount(cNode))
+        Object rootNode = host.getItem(page, 0);
+        assertThat(host.getString(rootNode, "text"))
+                .as("the tree roots at the platform's first filesystem root, not a hardcoded C:")
+                .isEqualTo(File.listRoots()[0].getPath());
+        assertThat(host.getCount(rootNode))
                 .as("the lazy 'loading...' placeholder child")
                 .isEqualTo(1);
 
         d.focusGained();
-        d.click(cNode);
-        d.arrowRight(); // keyboard expand fires FolderBrowser.expand -> File("C:/").list() == null -> NPE
+        d.click(rootNode);
+        d.arrowRight(); // keyboard expand fires FolderBrowser.expand — now graceful
 
         assertThat(host.getCount(host.getDesktop()))
-                .as("handleException surfaced the NPE as a real ExceptionDialog")
-                .isEqualTo(2);
-        Object dlg = host.getItem(host.getDesktop(), 0);
-        assertThat(Thinlet.getClass(dlg)).isEqualTo("dialog");
-        assertThat(host.getString(dlg, "text"))
-                .as("the dialog title is the throwable's class name")
-                .isEqualTo("java.lang.NullPointerException");
-        assertThat(host.getString(host.find(dlg, "stacktrace"), "text"))
-                .as("the stack trace names the 2005 frame")
-                .contains("thinlet.drafts.FolderBrowser.expand");
+                .as("no ExceptionDialog: the expansion succeeded")
+                .isEqualTo(1);
+        assertThat(host.getCount(rootNode))
+                .as("the real listing replaced the placeholder")
+                .isGreaterThanOrEqualTo(1);
+        for (int i = 0; i < host.getCount(rootNode); i++) {
+            assertThat(host.getString(host.getItem(rootNode, i), "text"))
+                    .as("the placeholder is gone")
+                    .isNotEqualTo("loading...");
+        }
     }
 
     @Test

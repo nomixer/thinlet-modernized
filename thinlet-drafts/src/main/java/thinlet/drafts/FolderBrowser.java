@@ -10,8 +10,15 @@ public class FolderBrowser {
     private Image openedicon, closedicon, fileicon;
 
     public void init(Thinlet thinlet, Object tree) {
-        // System.out.println(System.getProperty("user.home") + " " + File.separatorChar);
-        addNode(thinlet, tree, "C:", true);
+        // 0.2.x (D72): root at the real filesystem, not the 2005 hardcoded "C:".
+        File[] roots = File.listRoots();
+        if ((roots == null) || (roots.length == 0)) {
+            addNode(thinlet, tree, System.getProperty("user.home"), true);
+            return;
+        }
+        for (int i = 0; i < roots.length; i++) {
+            addNode(thinlet, tree, roots[i].getPath(), true);
+        }
     }
 
     public void expand(Thinlet thinlet, Object tree, Object node) {
@@ -28,6 +35,9 @@ public class FolderBrowser {
                 path = thinlet.getString(item, "text") + File.separatorChar + path;
             }
             String[] list = new File(path).list();
+            if (list == null) { // unreadable directory — treat as empty (Q8, fixed 0.2.x, D72)
+                list = new String[0];
+            }
 
             int dircount = 0;
             for (int i = 0; i < list.length; i++) { // separate directories and files
