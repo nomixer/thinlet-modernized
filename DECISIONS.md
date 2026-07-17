@@ -2948,8 +2948,17 @@ value-by-value before shaping (they agree on every enumeration, including button
   `SelectionMode` (`selection`), `ButtonType` (button `type`), `SortOrder` (column
   `sort`). Each carries its DTD attribute name as `KEY`, the per-constant DTD
   token, `token()`, and `fromToken(String)` throwing `IllegalArgumentException`
-  with the 2005 choice setter's exact message shape (`unknown <token> for <key>`).
-  Constant order mirrors the table's first-declared row per key (default first).
+  with the 2005 choice setter's exact message shape (`unknown <token> for <key>`);
+  `fromToken(null)` throws too — deliberately stricter than the wire setter,
+  where a null *value* resets to the row default. **Naming contract: each enum is
+  named for its DTD attribute identity, not its rendered meaning** — hence
+  `Alignment` (the `alignment` attribute: label-family/textfield content
+  alignment) deliberately sits beside `HorizontalAlignment` (`halign`: the
+  layout-cell alignment); the attribute name is the user's stable handle, and
+  `KEY` makes the pairing checkable. Constant order mirrors the table's
+  first-declared row per key — which puts *that row's* default first; no
+  `default()` is exposed, because defaults are per-widget-row (button re-declares
+  `alignment` with default `center`).
 - **The `KEY` constants are a deliberate 8-row slice of inventory row #2**
   (attribute keys, otherwise Cut 5 territory): a value vocabulary is unusable
   without its key, and these 8 keys are as DTD-frozen as the values. The other
@@ -2979,7 +2988,12 @@ with the correct actual values; a mutated event constant failed the set anchor.
 
 **Validation.** Container base row green (337 core + 13 drafts, +7 for this
 slice); zero golden interaction (no paint/layout/input change; nothing to
-re-record); japicmp additions-only against v0.1.0 (the apicheck CI job).
+re-record); japicmp additions-only against v0.1.0 (the apicheck CI job). An
+independent Opus pre-merge review (ship-with-nits) re-verified every token/KEY/
+constant against both the table and the DTD and confirmed pure-addition +
+`--release 8`; its flags — the naming contract, the null divergence, the
+default-first nuance recorded above, and a `fromToken` reject-path coverage gap
+(closed: the test now rejects on all 8 enums) — landed in the same PR.
 (Cross-ref D8 DTD freeze, D43 the de-facto-freeze logic, D57 doc/comment rules,
 D58 the internal-constants deferral kept in force, D67 the inventory, D69
 protocol.)

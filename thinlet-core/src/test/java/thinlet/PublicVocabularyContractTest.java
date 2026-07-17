@@ -12,6 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import thinlet.trace.XvfbDisplayExtension;
@@ -159,12 +160,19 @@ class PublicVocabularyContractTest {
 
     @Test
     void fromTokenRejectsUnknownTokensWithTheChoiceSetterMessageShape() {
-        assertThatThrownBy(() -> SelectionMode.fromToken("bogus"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("unknown bogus for selection");
-        assertThatThrownBy(() -> Alignment.fromToken(null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("unknown null for alignment");
+        assertRejects(() -> Alignment.fromToken("bogus"), "unknown bogus for alignment");
+        assertRejects(() -> HorizontalAlignment.fromToken("bogus"), "unknown bogus for halign");
+        assertRejects(() -> VerticalAlignment.fromToken("bogus"), "unknown bogus for valign");
+        assertRejects(() -> Orientation.fromToken("bogus"), "unknown bogus for orientation");
+        assertRejects(() -> TabPlacement.fromToken("bogus"), "unknown bogus for placement");
+        assertRejects(() -> SelectionMode.fromToken("bogus"), "unknown bogus for selection");
+        assertRejects(() -> ButtonType.fromToken("bogus"), "unknown bogus for type");
+        assertRejects(() -> SortOrder.fromToken("bogus"), "unknown bogus for sort");
+        assertRejects(() -> Alignment.fromToken(null), "unknown null for alignment");
+    }
+
+    private static void assertRejects(ThrowableAssert.ThrowingCallable call, String message) {
+        assertThatThrownBy(call).isInstanceOf(IllegalArgumentException.class).hasMessage(message);
     }
 
     // ----- the event vocabulary -----
