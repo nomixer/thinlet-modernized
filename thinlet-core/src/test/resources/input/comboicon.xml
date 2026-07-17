@@ -1,0 +1,7 @@
+<panel columns="1" gap="4" top="4" left="4" right="4" bottom="4">
+	<combobox name="cb" editable="true" text="Hello" icon="/icon/copy.gif" action="record(this.name)" weightx="1">
+		<choice text="Choice-A" />
+		<choice text="Choice-B" />
+		<choice text="Choice-C" />
+	</combobox>
+</panel>

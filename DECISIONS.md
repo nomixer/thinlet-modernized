@@ -2665,3 +2665,61 @@ behavior unchanged, none test-pinned yet):**
 vocabulary shapes wait for fork mapping + 3c (D43). (Cross-ref D27 doc layout, D43
 visibility, D56/D58 the deferrals this research feeds, D57 single-home + comment
 rules, D61/D64 the pins cited by the annotations.)
+
+## D68 — The D67 candidates pinned: Q9/Q10 locked, the checkLocation bug proven unobservable
+
+**Date:** 2026-07-16. **Status:** accepted. **Phase:** 3 (net strengthening; no product
+behavior).
+
+**Context.** D67 surfaced three quirk candidates without pins — against the D64 norm
+(behavior pinned first, dispositions after). The maintainer asked for the pinning
+tests. A rigorous observability trace, run before writing any test, changed one
+deliverable's shape.
+
+**The trace result (supersedes D67's "blast radius looks small").** The
+`checkLocation` mousex-for-y call is **currently unobservable**: (a) the preceding
+`findComponent(content, mousex, mousey)` recomputes `mouseinside`/`insidepart` from
+the *correct* coordinates, so the buggy call's component/part arguments are right;
+(b) every `MOUSE_ENTERED` consumer across `handleMouseEvent`'s classname dispatch
+(including `processField`, `processScroll`, `setInside`, and the tooltip path, which
+reads the untouched `mousex`/`mousey` fields) dispatches on component/part/id and
+never reads the raw x/y parameters; (c) nothing persists the corrupted value —
+`referencex`/`referencey` are PRESSED/DRAGGED-only. No scenario exists today where
+the swapped argument changes observable state. A behavioral quirk-pin is therefore
+impossible; fabricating one would pin nothing.
+
+**Decision — what landed.**
+
+- **`InputQuirkPinsTest`** (thinlet.trace; 4 tests, 3 new `input/` fixtures — new
+  files only): **Q9** combobox-icon-click-dead (with a caret discriminator proving
+  the click geometry lands — guarding against a vacuous pass) and **Q10**
+  ascent-draws-south / descent-draws-north (via the ephemeral-trace 4-scanline glyph
+  signature: widths 0/2/4/6, y-step −1 = south), both tagged
+  documents-current-behavior; plus the **canary**
+  `closingTheDropDownUnderTheCursorCommitsAndStaysConsistent` (untagged — it asserts
+  *correct* behavior), which drives `closeCombo` → `checkLocation` with differing
+  x/y and is positioned to fail if the dead y parameter ever turns live.
+- **`KNOWN-QUIRKS.md`**: Q9/Q10 entries; the checkLocation finding recorded in the
+  *Triaged (not behavior-locked)* section with the unobservability evidence —
+  disposition: fix in Enhanced Thinlet (provably invisible today).
+- The `checkLocation` in-source breadcrumb updated from "awaiting disposition, not
+  test-pinned" to the resolved status.
+
+**Red-green discipline.** All three pins were mutation-checked before commit: each
+inverted assertion failed with the correct actual value ('S'/1/null); the untouched
+test stayed green. Three consecutive container runs green (fresh surefire reports —
+an earlier bisect briefly chased a stale report; runs are only trusted with the
+report file deleted first).
+
+**Harness finding (worth knowing for future input tests).** A gesture that mutates
+model state (here: the caret write) defers re-layout via the 2005 negative-width
+dirty flag; until a paint resolves it (`layoutIfDirty`), `findComponent` hit-tests
+against the negative-width bounds and misses — subsequent synthetic mouse events go
+nowhere. Real apps repaint between gestures, so the trap is driver-specific: tests
+must interleave `d.paint()` after state-mutating gestures before relying on
+hit-testing. Existing suites did this incidentally (their trace-compares paint);
+`InputQuirkPinsTest` does it deliberately with a comment.
+
+**Validation.** Targeted class green ×3 in the CI container; full container rows in
+the PR run. (Cross-ref D44 container loop, D45 determinism, D51 no-op-press
+discipline n/a here, D64 characterization norm, D67 the source findings.)
