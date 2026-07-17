@@ -2924,3 +2924,62 @@ public vocabulary (D67).
 **Validation.** Container base + crossjdk rows green; `git status` clean.
 (Cross-ref D48/D63 the Renderer seam, D64 the original pin, D69 protocol, D67/Q7
 ledger.)
+
+## D74 — The 3c public vocabulary ships: choice enums + event-name constants (D67 rows #3/#9)
+
+**Date:** 2026-07-18. **Status:** accepted. **Phase:** 3c (public API addition; zero behavior
+change).
+
+**Context.** The second item of the D69 fork-independent backlog: publish the D67
+inventory rows marked 3c — the choice-value sets (row #3, "natural public enums")
+and the event names (row #9). Both are the *user's* vocabulary, frozen by the
+byte-identical DTD (D8), so the published tokens cannot be invalidated by whatever
+the fork mapping later advises — the shape D69 requires. This is the first
+published API addition of the enhanced line, made under D69's "sparingly, and
+de-facto frozen on ship" rule; the DTD and the descriptor table were cross-checked
+value-by-value before shaping (they agree on every enumeration, including button's
+`alignment` row re-ordering only to move the default to `center`).
+
+**Decision — the shape (all new files; zero edits to existing source).**
+
+- **Eight public enums** in package `thinlet`, one per choice attribute:
+  `Alignment` (`alignment`), `HorizontalAlignment` (`halign`), `VerticalAlignment`
+  (`valign`), `Orientation` (`orientation`), `TabPlacement` (`placement`),
+  `SelectionMode` (`selection`), `ButtonType` (button `type`), `SortOrder` (column
+  `sort`). Each carries its DTD attribute name as `KEY`, the per-constant DTD
+  token, `token()`, and `fromToken(String)` throwing `IllegalArgumentException`
+  with the 2005 choice setter's exact message shape (`unknown <token> for <key>`).
+  Constant order mirrors the table's first-declared row per key (default first).
+- **The `KEY` constants are a deliberate 8-row slice of inventory row #2**
+  (attribute keys, otherwise Cut 5 territory): a value vocabulary is unusable
+  without its key, and these 8 keys are as DTD-frozen as the values. The other
+  ~101 keys stay unpublished.
+- **`EventNames`**: a final holder with 11 String constants — the names of every
+  `"method"`-typed descriptor row (18 rows, 11 distinct — D58/D67).
+- **Deliberately excluded** (each a separate future decision, most Cut-5-shaped):
+  a shared token interface, typed `setChoice`/listener overloads, per-widget typed
+  accessors, `toString()` overrides. The D58/D67 objection to internal constants
+  ("scaffolding Cut 5 demolishes") does not apply here: a later typed API
+  *consumes* these value types rather than replacing them.
+- **Internal code untouched:** the interned-String `is()` contract and every
+  consumer stay as-is; the enums talk to the model only through the public
+  `setChoice`/`getChoice`/`setMethod` surface.
+
+**The anchor.** `PublicVocabularyContractTest` (untagged — deliberate new-API
+contract, not a documents-current-behavior pin) welds the vocabulary to the live
+table so drift on either side fails the build: set-equality of every choice row's
+allowed values against its enum *and* coverage in both directions (every choice
+row has an enum, every enum matches a row); declaration-order anchor;
+every-token round-trips through the real `setChoice`/`getChoice` on real widgets;
+`fromToken` bijection + rejection message; event-name set-equality against the
+method-typed rows (reflected from the class, so the test cannot drift from the
+published constants); a real `setMethod` bind via a constant. Mutation-checked
+before commit (D68 norm): a mutated choice token failed all three choice anchors
+with the correct actual values; a mutated event constant failed the set anchor.
+
+**Validation.** Container base row green (337 core + 13 drafts, +7 for this
+slice); zero golden interaction (no paint/layout/input change; nothing to
+re-record); japicmp additions-only against v0.1.0 (the apicheck CI job).
+(Cross-ref D8 DTD freeze, D43 the de-facto-freeze logic, D57 doc/comment rules,
+D58 the internal-constants deferral kept in force, D67 the inventory, D69
+protocol.)

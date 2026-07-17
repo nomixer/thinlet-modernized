@@ -19,7 +19,11 @@ Three purposes:
 3. A per-vocabulary recommendation for *which cut* should absorb it, argued
    from which cut rewrites that vocabulary's consumers anyway.
 
-## Why nothing is converted today (recorded reasoning)
+## Why the internal vocabularies are not converted (recorded reasoning)
+
+The two rows marked 3c are published (D74): the choice values as public enums,
+the event names as `EventNames` constants — both DTD-anchored, so fork-proof.
+The internal vocabularies stay interned Strings:
 
 - Every comparison already routes through the `is()` identity chokepoint with
   the strict-intern tripwire (D43), so named constants add no safety the net
@@ -27,11 +31,13 @@ Three purposes:
   kept the type tokens as interned Strings.
 - Cut 5's success criterion *deletes* most of these vocabularies (typed
   `Widget` replaces the `Object[]` model and the interned-`String` `==`
-  contract, `project-docs/PHASE-3-GOALS.md`); constants introduced now are
-  scaffolding that cut demolishes, paying the D52-style mechanical-audit cost
-  twice.
-- Anything `public` in a v0.1.x release is de-facto frozen API (D43), and the
-  right public names should follow fork mapping + Cut 5 shapes — 3c work.
+  contract, `project-docs/PHASE-3-GOALS.md`); internal constants introduced now
+  are scaffolding that cut demolishes, paying the D52-style mechanical-audit
+  cost twice. (The published value enums are not that scaffolding: a later
+  typed API consumes them — D74.)
+- Anything `public` is de-facto frozen API the moment it ships (D43, applied
+  deliberately by D69), so public names beyond the DTD-frozen 3c rows wait for
+  fork mapping + Cut 5 shapes.
 
 ## The vocabularies
 
@@ -39,13 +45,13 @@ Three purposes:
 |---|---|---|---|---|
 | 1 | Widget classnames | 35 descriptor names (33 concrete tags + abstract `component`/`choice`); ≥281 `is(…, "<classname>")` sites | **Cut 5** | Become *types* (the typed `Widget` hierarchy), not String constants — constants would be scaffolding Cut 5 demolishes. A 3c compatibility layer keeping string `create` can expose a public constants holder mirroring the concrete tags. |
 | 2 | Attribute keys | 109 `AttributeDescriptor` rows | **Cut 5** | Typed per-widget accessors; string keys survive only in the compatibility layer. |
-| 3 | Choice values | 8 sets: `alignment` (3), `halign`/`valign` (4 each), `orientation` (2), `placement` (5), `selection` (3), button `type` (4), column `sort` (3) | **3c** | Natural public enums. Until then they stay DTD strings — they are the *user's* vocabulary, frozen by the byte-identical DTD (D8) regardless. |
+| 3 | Choice values | 8 sets: `alignment` (3), `halign`/`valign` (4 each), `orientation` (2), `placement` (5), `selection` (3), button `type` (4), column `sort` (3) | **3c — shipped (D74)** | Published as the public enums `Alignment`/`HorizontalAlignment`/`VerticalAlignment`/`Orientation`/`TabPlacement`/`SelectionMode`/`ButtonType`/`SortOrder`, each carrying its `KEY` + DTD tokens; table-anchored by `PublicVocabularyContractTest`. The DTD strings remain the wire format — they are the *user's* vocabulary, frozen by the byte-identical DTD (D8). |
 | 4 | Scroll/spin/combo/desktop part tokens | 14 tokens (`up down left right uptrack downtrack lefttrack righttrack hknob vknob corner icon text` + desktop's `modal`) | **Cut 6** | Internal-only; hit-testing (`findScroll`/`findComponent`) owns them — event/input territory, not Cut 5. Internal enum when the mouse-state fields are typed. |
 | 5 | Dialog part tokens | 10 (`"header"`, `":close"` (D73) + compass `":n" ":s" ":e" ":w" ":nw" ":ne" ":sw" ":se"`) | **Cut 6** | Same owner as #4. The `:` prefix here marks part tokens, *not* model keys — any typing pass must not merge them with #8. |
 | 6 | `update` invalidation modes | 4 (`validate paint layout parent`); sourced from the `AttributeDescriptor.invalidate` column (34/25/7/5 rows), 3 literal call sites | **Cut 4/5** | Intent-named methods (or an enum) on whatever owns invalidation after the layout cut; the `invalidate` column then becomes typed with it. |
 | 7 | Attribute-type tokens | 12 (`string integer boolean choice icon method component property font color keystroke bean`) | **Cut 5** | The D58-deferred enum; it rewrites three verbatim `is()` ladders, so it lands only when those ladders are being rewritten anyway. |
 | 8 | Reserved `:`-model keys | ~20 live keys (census above `createImpl`) | **Cut 5** | Disappear into typed `Widget` fields (`:comp`/`:next` → child list; `:port`/`:view`/`:widths`/`:offset` → a layout-state object; `:bind` → listener map; `:lead`/`:anchor` → selection state). |
-| 9 | Event names | 11 distinct (`init focusgained focuslost action insert remove caret perform expand collapse menushown` — the names of the 18 `"method"`-typed table rows, D58; `init` bypasses `invoke`) | **3c** | Public-facing (DTD method attributes) — public constants candidate alongside a typed listener API. |
+| 9 | Event names | 11 distinct (`init focusgained focuslost action insert remove caret perform expand collapse menushown` — the names of the 18 `"method"`-typed table rows, D58; `init` bypasses `invoke`) | **3c — shipped (D74)** | Published as the `EventNames` constants, set-anchored to the method-typed rows by `PublicVocabularyContractTest`. A typed listener API remains a separate future decision. |
 | 10 | Method-binding argument-target tags | 3 (`thinlet constant item` + component refs) | **Cut 6** | Internal to the `getMethod`/`invoke` binding interpreter. |
 | 11 | Paint-state char mode | 12 chars (glossed in `IconTextSpec`) | **Cut 5+** | D56 already recorded the deferral: an enum rewrites the verbatim `switch` bodies; revisit when those bodies are rewritten. |
 
