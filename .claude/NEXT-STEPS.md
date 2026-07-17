@@ -44,11 +44,13 @@
   `checkLocation` y-arg, Q1 parser null-source, `FileChooser` guard + Q8 root
   + SpotBugs null-deref exclusions off, Q7 close glyph live /
   maximize+iconify undrawn) — zero golden re-records across the batch.
-- **Public vocabulary shipped (D74, 2026-07-18)**: 8 choice enums (each with
-  `KEY` + DTD tokens + `fromToken`) and the 11 `EventNames` constants —
-  pure API addition, new files only, welded to the definition table by
-  `PublicVocabularyContractTest` (+7 tests). Base row: 337 (core) + 13
-  (drafts) tests.
+- **Public vocabulary shipped (D74, 2026-07-18, PR #105 merged)**: 8 choice
+  enums (each with `KEY` + DTD tokens + `fromToken`) and the 11 `EventNames`
+  constants — pure API addition, new files only, welded to the definition
+  table by `PublicVocabularyContractTest` (+7 tests). Opus-reviewed
+  (ship-with-nits, applied); maintainer signed off the `Alignment` naming and
+  auto-merge in-session (recorded in D74). japicmp additions-only vs v0.1.0;
+  post-merge `main` run green. Base row: 337 (core) + 13 (drafts) tests.
 
 ## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 
