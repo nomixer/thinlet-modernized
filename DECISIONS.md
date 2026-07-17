@@ -2607,3 +2607,61 @@ mixed Java+docs PRs get prompted pre-PR. Docs-only PRs remain judgment-guarded (
 D60 hook gates on Java diffs only — extending it to markdown would gate every
 handoff-file touch, not worth the friction). (Cross-ref D57 policy, D60 gate,
 PRs #94/#95 the motivating pair.)
+
+## D67 — Vocabulary decode + constants research done ahead of the parked decision (fork-mapping lull work)
+
+**Date:** 2026-07-15. **Status:** accepted. **Phase:** 3 (research/documentation; no product
+behavior).
+
+**Context.** Fork mapping (the queue head) stayed blocked on the fork sources
+(expected ~2026-07-17/19), and the maintainer asked two things of the lull: revisit
+the constants-for-strings idea, and deep-dive the cryptic 2005 method parameter
+names/values — best-effort judgments acceptable, reasoning tracked. The constants
+*implementation* stays parked (D56/D58 deferrals; D43 visibility discipline makes
+public vocabulary 3c work), but per the maintainer's direction the *research* was done
+now and committed, so the Cut 4/5/6 typing decisions and the 3c public-vocabulary
+decisions become a table lookup instead of a re-survey.
+
+**Method.** Two independent read-only decode passes over `Thinlet.java` /
+`Renderer.java` / `DescriptorTable.java` (part-token+geometry; boolean-groups+
+accessors), cross-checked against the 2005 website (`docs/*.html`), the descriptor
+table, and the existing pins; every claim confidence-tagged (checkable /
+test-pinned / justified guess). Site counts by scripted simple-argument match over
+`is(…, "literal")` — recorded as lower bounds with the method stated. Full narrative
+decode delivered to the maintainer as a session report (uncommitted, per the
+deliverable split below).
+
+**Decision — what landed where (single-home, D57).**
+
+- **In-source annotations** (comment-only commit, zero code change): part-token
+  vocabulary above `processScroll` (pinned: `InputScrollBarTest`,
+  `InputSpinBoxTest`); invalidation-depth vocabulary above `update`; the
+  `part` token/node duality above `handleMouseEvent`; the `block` three-way name
+  collision at the field; the reserved-`:`-key extension above `createImpl`
+  (`:widths`/`:offset` pinned by `GoldenLayoutStateTraceTest`; `:anchor` by
+  `InputListTest.shiftArrowExtendsMultiSelection`); `paintRect` edge-flag
+  semantics; a quirk-candidate breadcrumb at `checkLocation`.
+- **`project-docs/VOCABULARY-INVENTORY.md`** (new): the 11-vocabulary inventory with
+  sizes/site-count floors, the same-word collision table, per-vocabulary
+  absorb-at-cut recommendations with reasoning, and the count methodology.
+- **Notable decode results** (details in the doc/annotations): `dx`/`dy` magic pairs
+  in `getSize` equal the widget's paint-time chrome (border+`IconTextSpec` padding),
+  verified pair-by-pair; `mode` is three unrelated vocabularies sharing a name;
+  `block` is three unrelated meanings; the event-name vocabulary is exactly the 11
+  distinct names of the `"method"`-typed descriptor rows (18 rows — D58); scroll
+  arrows move a hardcoded 10 px unit while track clicks page by the `:port` extent.
+
+**Quirk candidates surfaced (dispositions the maintainer's, alongside Q5–Q8;
+behavior unchanged, none test-pinned yet):**
+
+1. `checkLocation` passes `mousex` for `handleMouseEvent`'s y argument when
+   re-synthesizing hover state after a layout change (verified by direct read).
+2. The combobox icon glyph hit-tests as `"icon"` but the click branch excludes it —
+   clicking the icon is a no-op.
+3. The table sort glyph draws `"ascent"` as a downward triangle.
+
+**Non-goals, restated:** no constants, no enums, no renames now — the inventory's
+"absorb at" column is design input, each decision lands with its cut; public
+vocabulary shapes wait for fork mapping + 3c (D43). (Cross-ref D27 doc layout, D43
+visibility, D56/D58 the deferrals this research feeds, D57 single-home + comment
+rules, D61/D64 the pins cited by the annotations.)

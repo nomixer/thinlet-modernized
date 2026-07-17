@@ -42,6 +42,11 @@ public class Thinlet extends Container implements Runnable, Serializable {
     transient Color c_focus;
     transient Color c_select;
     transient Color c_ctrl = null;
+    // Font-height layout unit, assigned only in setFont (its javadoc: scrollbar/
+    // spinbox/combobox button width, slider size); D67 records the further roles
+    // (checkbox glyph, tree indent, dialog resize band). Name-collides with two
+    // unrelated things: the slider "block" attribute (page step) and
+    // getPreviousFocusable's block parameter (recursion boundary) — see D67.
     transient int block;
     private transient Image hgradient, vgradient;
 
@@ -1654,6 +1659,10 @@ public class Thinlet extends Container implements Runnable, Serializable {
     }
 
     // package-private for Renderer (D48 seam; japicmp-invisible)
+    // top/left/bottom/right = draw that 1 px border edge AND inset the interior
+    // fill by 1 px on that edge; a false flag neither draws nor insets, letting
+    // adjoining rects share an edge without double-drawing a seam. horizontal =
+    // the gradient tiling axis used by fill() when bg == c_ctrl.
     void paintRect(
             Graphics g,
             int x,
@@ -2379,6 +2388,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
     private void checkLocation(Object component) {
         if (mouseinside == component) { // parameter added by scolebourne
             findComponent(content, mousex, mousey);
+            // 2005: passes mousex for the y argument — kept verbatim; quirk
+            // candidate awaiting disposition (D67), not test-pinned.
             handleMouseEvent(mousex, mousex, 1, false, false, false, MouseEvent.MOUSE_ENTERED, mouseinside, insidepart);
         }
     }
@@ -3145,6 +3156,13 @@ public class Thinlet extends Container implements Runnable, Serializable {
         }
     }
 
+    // Object part is dual-typed by design: an interned hit-token (the
+    // processScroll vocabulary; dialog resize edges ":n" ":s" ":e" ":w" ":nw"
+    // ":ne" ":sw" ":se"; dialog "header"; desktop "modal"; combobox
+    // "down"/"icon") OR a child model node — an Object[] tab/menu/combolist
+    // item whose attributes are read directly. Ambiguous consumers type-test
+    // with instanceof Object[]. findComponent assigns the live pair
+    // mouseinside/insidepart; MOUSE_PRESSED latches mousepressed/pressedpart.
     /**
      * @param x mouse x position relative to thinlet component
      * @param y mouse y position relative to the main desktop
@@ -3704,6 +3722,16 @@ public class Thinlet extends Container implements Runnable, Serializable {
         return chars.length;
     }
 
+    // Scrollbar part-token vocabulary (interned; assigned by findScroll, which
+    // reads a bar as [button][track|knob|track][button] with block-sized
+    // buttons): "left"/"up" and "right"/"down" = arrow buttons, ±10 px unit
+    // scroll; "lefttrack"/"uptrack"/"righttrack"/"downtrack" = track segments,
+    // ±one :port page; "hknob"/"vknob" = thumbs, proportional drag anchored on
+    // referencex/referencey; "corner" = the dead square between bars (no-op).
+    // Auto-repeat: MOUSE_PRESSED arms setTimer(300L) and run() re-fires
+    // processScroll(mousepressed, pressedpart). processSpin below reuses
+    // "up"/"down" for the spinbox step buttons (375 ms repeat).
+    // Pinned: InputScrollBarTest, InputSpinBoxTest (D64).
     private boolean processScroll(int x, int y, int id, Object component, Object part) {
         if ((is(part, "up")) || (is(part, "down")) || (is(part, "left")) || (is(part, "right"))) {
             if ((id == MouseEvent.MOUSE_ENTERED)
@@ -4392,6 +4420,12 @@ public class Thinlet extends Container implements Runnable, Serializable {
     // (tree links), ":bind" (putProperty Hashtable), and part/state keys such as
     // ":port"/":view"/":combolist"/":popup"/":lead"; "bounds" holds a Rectangle.
     // Pinned: DescriptorContractTest (canonical-key identity, storage semantics).
+    // Further reserved keys: ":widths"/":offset" (layout state; pinned:
+    // GoldenLayoutStateTraceTest, D61), ":anchor" (shift-range selection anchor;
+    // pinned: InputListTest.shiftArrowExtendsMultiSelection), ":horizontal"/
+    // ":vertical" (scrollbar Rectangles), ":tooltipbounds", ":titleheight".
+    // The dialog resize hit-tokens ":n"/":s"/":e"/":w"/":nw"/":ne"/":sw"/":se"
+    // reuse the ":" namespace as part tokens (insidepart values), not model keys.
     private static Object createImpl(String classname) {
         return new Object[] {":class", classname, null};
     }
@@ -5876,6 +5910,15 @@ public class Thinlet extends Container implements Runnable, Serializable {
         }
     }
 
+    // Invalidation-depth vocabulary (values come from the
+    // AttributeDescriptor.invalidate column, plus literal "validate" call
+    // sites). The walk goes up the ancestor chain toward content:
+    // "paint" = repaint only — accumulate the absolute rect, repaint at the
+    // root (stops early on a non-selected tab); "layout" = mark the direct
+    // parent layout-dirty (the negative-width flag, resolved lazily by
+    // layoutIfDirty) and continue as "paint"; "validate" = mark the nearest
+    // list/table/tree/dialog ancestor or child-of-content instead; "parent" =
+    // hop to the parent first, then behave as "validate".
     private void update(Object component, String mode) {
         if (is(mode, "parent")) {
             component = getParent(component);
