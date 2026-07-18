@@ -47,8 +47,8 @@
     <version.spotless.plugin>3.8.0</version.spotless.plugin>
     <version.palantir.format>2.50.0</version.palantir.format>
     <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
-    <version.checkstyle.tool>13.7.0</version.checkstyle.tool>
-    <version.spotbugs.plugin>4.10.2.0</version.spotbugs.plugin>
+    <version.checkstyle.tool>13.8.0</version.checkstyle.tool>
+    <version.spotbugs.plugin>4.10.3.0</version.spotbugs.plugin>
     <version.japicmp.plugin>0.26.1</version.japicmp.plugin>
 
     <!-- japicmp is INACTIVE during Phase 0; activated from v0.1.0 (Phase 1). -->
