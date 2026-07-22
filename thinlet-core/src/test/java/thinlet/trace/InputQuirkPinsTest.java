@@ -77,6 +77,20 @@ class InputQuirkPinsTest {
                 .isEqualTo('N');
     }
 
+    /**
+     * 0.2.x behavior (D75): 2005 drew the north glyph here — same as {@code "descent"} —
+     * because the painter only skipped a {@code null} sort. The fixture is
+     * {@code sortasc.xml} with the one attribute changed, so the sibling tests above are
+     * the positive control: the same table shape does paint a glyph.
+     */
+    @Test
+    void explicitSortNoneDrawsNoGlyphAtAll() throws IOException {
+        InputDriver d = InputDriver.load("/input/sortnone.xml", new InputHandler());
+        assertThat(findSortGlyph(d.paint()))
+                .as("sort=\"none\" paints no sort glyph")
+                .isNull();
+    }
+
     @Test
     void closingTheDropDownUnderTheCursorCommitsAndStaysConsistent() throws IOException {
         RecordingHandler h = new RecordingHandler();
@@ -112,6 +126,12 @@ class InputQuirkPinsTest {
      * descending is the south/down glyph ('S'), ascending the north/up glyph ('N').
      */
     private static char sortGlyphDirection(Trace trace) {
+        Character dir = findSortGlyph(trace);
+        return (dir != null) ? dir.charValue() : fail("no 4-scanline arrow glyph found in the trace");
+    }
+
+    /** The glyph's direction, or {@code null} when the trace paints no such glyph at all. */
+    private static Character findSortGlyph(Trace trace) {
         List<TraceCall> calls = trace.calls;
         for (int i = 0; i + 3 < calls.size(); i++) {
             Character dir = glyphAt(calls, i);
@@ -119,7 +139,7 @@ class InputQuirkPinsTest {
                 return dir;
             }
         }
-        return fail("no 4-scanline arrow glyph found in the trace");
+        return null;
     }
 
     private static Character glyphAt(List<TraceCall> calls, int start) {

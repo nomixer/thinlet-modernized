@@ -791,7 +791,11 @@ final class Renderer {
                                         .padding(1, 1, 0, 0));
 
                         Object sort = Thinlet.get(column, "sort"); // "none", "ascent", "descent"
-                        if (sort != null) {
+                        // 0.2.x (D75): "none" paints nothing, matching both the unset
+                        // attribute (null here) and getChoice's "none" default. 2005
+                        // drew the 'N' glyph for it — indistinguishable from "descent".
+                        // The 'S'-for-ascent mapping below stays 2005 (KNOWN-QUIRKS Q10).
+                        if ((sort != null) && !Thinlet.is(sort, "none")) {
                             arrow(
                                     g,
                                     x - view.x + width - t.block,
