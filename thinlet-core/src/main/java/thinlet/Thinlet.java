@@ -3316,7 +3316,18 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     setInteger(component, "selected", current, 0);
                     // Object tabcontent = getItem(component, current);
                     // setFocus((tabcontent != null) ? tabcontent : component);
-                    setNextFocusable(component, false);
+                    // 0.2.x (D77): the walk lands on the new tab's first focusable, but
+                    // with nothing focusable inside it 2005 walked on past the pane —
+                    // a click inside the widget moved focus outside it (KNOWN-QUIRKS
+                    // Q12). Ask first: no focusable inside means keep focus on the pane,
+                    // where the keyboard switch already leaves it. Asking beforehand
+                    // rather than restoring afterwards keeps the escaped widget from
+                    // seeing a focus-gained it would have to un-see.
+                    if (hasFocusableInside(getItem(component, current))) {
+                        setNextFocusable(component, false);
+                    } else {
+                        setFocus(component);
+                    }
                     checkOffset(component);
                     repaint(component);
                     invoke(component, part, "action");
@@ -3452,12 +3463,19 @@ public class Thinlet extends Container implements Runnable, Serializable {
             } else if ((id == MouseEvent.MOUSE_RELEASED)
                     && ((part != null) || ((insidepart != null) && (is(classname, "popupmenu"))))) {
                 if ((insidepart == null) || (!is(getClass(insidepart), "menu"))) {
-                    if ((insidepart != null) && getBoolean(insidepart, "enabled", true)) {
+                    // 0.2.x (D77): a disabled item swallows the release — nothing fires
+                    // and the popup stays open, so the user can retarget. 2005 gated only
+                    // the invoke and tore the menu down regardless (KNOWN-QUIRKS Q13);
+                    // keyboard navigation already skips disabled items. A release over no
+                    // item at all still dismisses, as it always did.
+                    if (insidepart == null) {
+                        closeup();
+                    } else if (getBoolean(insidepart, "enabled", true)) {
                         if (is(getClass(insidepart), "checkboxmenuitem")) {
                             changeCheck(insidepart, false);
                         } else invoke(insidepart, null, "action");
+                        closeup();
                     }
-                    closeup();
                 }
             } else if (((id == MouseEvent.MOUSE_EXITED) || (id == DRAG_EXITED))
                     && (part != null)
@@ -4401,6 +4419,22 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 comp = parent;
             }
             return true;
+        }
+        return false;
+    }
+
+    /**
+     * Whether the subtree below {@code parent} holds anything focusable — the question
+     * {@link #setNextFocusable} answers only by walking out of it (D77). Mirrors that
+     * walk's test, so it agrees on tab visibility: {@code isFocusable} rejects widgets
+     * in an unselected tab, so call this after {@code "selected"} is written.
+     * Pinned: InputTabbedPaneTest.
+     */
+    private boolean hasFocusableInside(Object parent) {
+        for (Object comp = get(parent, ":comp"); comp != null; comp = get(comp, ":next")) {
+            if (isFocusable(comp, false) || hasFocusableInside(comp)) {
+                return true;
+            }
         }
         return false;
     }

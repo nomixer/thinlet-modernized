@@ -3109,3 +3109,50 @@ uncharacterized: pin each first". That was wrong — both were pinned in D64. Th
 handoff now names the missing piece accurately: the dispositions, nothing else.
 (Cross-ref D64 the characterization suite that pinned them, D69 the protocol a
 disposition would follow, D75 the batch that settled the others.)
+
+## D77 — Q12/Q13 fixed: focus stays in the pane, a disabled menu item swallows the release
+
+**Date:** 2026-07-22. **Status:** accepted. **Phase:** 3c (behavior changes on the
+enhanced line, under the D69 protocol).
+
+**Context.** D76 catalogued the last two D64 candidates and left their dispositions
+open; both were given the same day. With these, every quirk carrying an open
+disposition is settled — the fork-independent quirk backlog D69 opened is empty.
+
+**Decision — both fixed.**
+
+- **Q12 → fix, narrowly.** The tabbedpane press branch now asks whether the newly
+  selected tab holds anything focusable before it walks: if not, focus stays on
+  the pane, matching the keyboard switch. Tabs with focusable content keep the
+  2005 walk into their first focusable.
+- **Q13 → fix.** A disabled item swallows the release: nothing fires and the popup
+  stays open for a retarget. The `closeup()` now sits under the same `enabled`
+  check that already gated the invoke. A release over no item still dismisses.
+
+**Two implementation choices worth recording, because the obvious versions are
+worse.**
+
+1. **Ask, don't restore (Q12).** The tempting fix is to let the 2005 walk run and
+   then pull focus back if it escaped. That is observably different: the widget
+   outside the pane receives a focus-gained (and an app's `focusgained` callback
+   fires) before focus returns. Pre-checking with a new `hasFocusableInside`
+   helper avoids emitting an event the fix would then have to retract. The helper
+   deliberately mirrors `isFocusable` — including its "not in an unselected tab"
+   rule — and is therefore called *after* `"selected"` is written; calling it
+   earlier would silently invert its answer.
+2. **The author's commented-out line was not used (Q12).** Two lines above the
+   walk sit `// Object tabcontent = getItem(component, current); // setFocus(...)`.
+   Landing them would also change *non-empty* tabs — focus would go to the tab
+   container instead of its first focusable — moving pins that have nothing to do
+   with this quirk. The sketch is evidence about intent, not a patch to apply.
+
+**Golden impact: none.** Both are input-path only; no paint or layout change, so
+nothing to re-record. The pins flip in the same PR (D69) and drop their
+`documents-current-behavior` tags. The Q13 pin was extended past the flip: after
+the swallowed release it retargets the enabled sibling and asserts that fires and
+closes, so "the menu stays open" is pinned as *usable*, not merely un-torn-down.
+
+**Validation.** Container base row green and all three cross-JDK rows (8/11/17)
+green, including the `Drafts` live playthrough, which drives real menus and tabs.
+(Cross-ref D64 the suite that pinned both, D69 the protocol, D75/D76 the rest of
+the batch.)

@@ -68,17 +68,28 @@ class InputMenuBarTest {
         assertThat(h.events).as("no action fires either way").isEmpty();
     }
 
-    /** Quirk candidate raised in the PR: a release over a disabled item closes silently. */
+    /**
+     * 0.2.x behavior (D77): a disabled item swallows the release and the menu stays open,
+     * so the user can retarget. 2005 fired nothing but tore the popup down anyway, which
+     * read as "the menu accepted the click and did nothing" (KNOWN-QUIRKS Q13).
+     */
     @Test
-    @Tag("documents-current-behavior")
-    void releaseOverADisabledItemClosesTheMenuWithoutFiring() throws IOException {
+    void releaseOverADisabledItemFiresNothingAndLeavesTheMenuOpen() throws IOException {
         RecordingHandler h = new RecordingHandler();
         InputDriver d = InputDriver.load(FIXTURE, h);
         Object mb = d.find("mb");
         d.click(d.find("m1"));
         clickPopupItem(d, mb, d.find("mi2"));
         assertThat(h.events).as("the disabled item's action never fires").isEmpty();
-        assertThat(d.property(mb, ":popup")).as("but the menu still closes").isNull();
+        assertThat(d.property(mb, ":popup"))
+                .as("and the menu stays open for a retarget")
+                .isNotNull();
+        // The retarget lands: the enabled sibling still fires and closes as it always did.
+        clickPopupItem(d, mb, d.find("mi1"));
+        assertThat(h.events).as("the enabled item fires").containsExactly("mi1");
+        assertThat(d.property(mb, ":popup"))
+                .as("and that release closes the menu")
+                .isNull();
     }
 
     @Test

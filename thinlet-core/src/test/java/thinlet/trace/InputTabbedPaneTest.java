@@ -112,17 +112,20 @@ class InputTabbedPaneTest {
                 .containsExactly("gained:tp2", "tp2");
     }
 
-    /** Quirk candidate raised in the PR: selecting a tab with no focusable content throws focus PAST the pane. */
+    /**
+     * 0.2.x behavior (D77): focus stays on the pane. 2005 walked past the empty tab to
+     * the next focusable *outside* the pane — a click inside the widget moved focus out
+     * of it, and the outside widget saw a focus-gained (KNOWN-QUIRKS Q12).
+     */
     @Test
-    @Tag("documents-current-behavior")
-    void mouseSelectingATabWithNoFocusableContentThrowsFocusOutOfThePane() throws IOException {
+    void mouseSelectingATabWithNoFocusableContentKeepsFocusOnThePane() throws IOException {
         RecordingHandler h = new RecordingHandler();
         InputDriver d = InputDriver.load(FIXTURE2, h);
         d.focusGained();
         d.click(d.find("t4"));
         assertThat(h.events)
-                .as("focus walks past the empty tab to the next focusable outside the pane")
-                .containsExactly("gained:tp2", "gained:bout", "tp2");
+                .as("no focus escapes the pane: only the initial gain and the switch action")
+                .containsExactly("gained:tp2", "tp2");
     }
 
     @Test
