@@ -231,39 +231,41 @@ Either way:
 - **Locked by:** `thinlet.trace.InputQuirkPinsTest#explicitSortNoneDrawsNoGlyphAtAll`
   (proven against the 2005 `'N'` glyph first, then flipped in the same PR).
 
-### Q12 — mouse-selecting a tab with no focusable content throws focus out of the pane
-- **What happens:** clicking a tab header whose content holds no focusable widget
-  walks focus *past* the tabbedpane entirely, to the next focusable after it —
-  the user clicks inside a widget and focus lands outside it. A keyboard tab
-  switch, by contrast, keeps focus on the pane.
-- **Why it's a quirk:** focus escapes the widget the user just interacted with,
-  and the two switch gestures disagree. The 2005 author left the alternative
-  commented out directly above the call — `setFocus(tabcontent != null ?
-  tabcontent : component)` — so the escape looks like an unfinished edit rather
-  than a considered choice.
-- **Where:** `Thinlet.java` — `handleMouseEvent`'s tabbedpane press branch calls
-  `setNextFocusable(component, false)` on a tab change.
+### Q12 — mouse-selecting a tab with no focusable content threw focus out of the pane — **fixed in 0.2.x (D77)**
+- **What happened (≤0.1.x):** clicking a tab header whose content held no
+  focusable widget walked focus *past* the tabbedpane entirely, to the next
+  focusable after it — the user clicked inside a widget and focus landed outside
+  it, with the outside widget seeing a focus-gained. A keyboard tab switch, by
+  contrast, kept focus on the pane. The 2005 author left an alternative commented
+  out directly above the call (`setFocus(tabcontent != null ? tabcontent :
+  component)`), so the escape read as an unfinished edit.
+- **The fix:** the pane asks before it walks. With nothing focusable inside the
+  newly selected tab, focus stays on the pane — where the keyboard switch already
+  leaves it. Tabs *with* focusable content are untouched: the walk still lands on
+  the first focusable inside them. Asking beforehand rather than restoring
+  afterwards keeps the escaped widget from seeing a focus-gained it would have to
+  un-see. The author's commented-out line was deliberately **not** used: it also
+  changes non-empty tabs (focus would land on the tab container rather than its
+  first focusable), a wider change than the quirk warrants.
+- **Where:** `Thinlet.java` — `handleMouseEvent`'s tabbedpane press branch, and
+  the `hasFocusableInside` helper beside `isFocusable`.
 - **Locked by:** `thinlet.trace.InputTabbedPaneTest`
-  `#mouseSelectingATabWithNoFocusableContentThrowsFocusOutOfThePane` (tagged
-  documents-current-behavior; D64 slice A).
-- **Enhanced Thinlet disposition:** undecided — flag for the maintainer (keep, or
-  land the commented-out intent so focus stays on the pane).
+  `#mouseSelectingATabWithNoFocusableContentKeepsFocusOnThePane`.
 
-### Q13 — a release over a disabled menu item closes the menu silently
-- **What happens:** pressing a menu title and releasing over a *disabled* item
-  fires nothing — correct — but still tears the popup down, so the gesture reads
-  as "the menu accepted my click and did nothing".
-- **Why it's a quirk:** most toolkits let a disabled item swallow the release and
-  leave the menu open, so the user can retarget. The `enabled` check gates only
-  the invoke; the `closeup()` beneath it is unconditional for any non-`menu` item.
-  Keyboard navigation already skips disabled items, so the two paths disagree.
+### Q13 — a release over a disabled menu item closed the menu silently — **fixed in 0.2.x (D77)**
+- **What happened (≤0.1.x):** pressing a menu title and releasing over a
+  *disabled* item fired nothing — correct — but still tore the popup down, so the
+  gesture read as "the menu accepted my click and did nothing". The `enabled`
+  check gated only the invoke; the `closeup()` beneath it was unconditional for
+  any non-`menu` item, while keyboard navigation already skipped disabled items.
+- **The fix:** a disabled item swallows the release: nothing fires and the popup
+  stays open so the user can retarget. A release over no item at all still
+  dismisses the menu, as it always did.
 - **Where:** `Thinlet.java` — `handleMouseEvent`'s `:popup`/`popupmenu` release
   branch.
 - **Locked by:** `thinlet.trace.InputMenuBarTest`
-  `#releaseOverADisabledItemClosesTheMenuWithoutFiring` (tagged
-  documents-current-behavior; D64 slice B).
-- **Enhanced Thinlet disposition:** undecided — flag for the maintainer (keep, or
-  make a disabled item swallow the release and leave the menu open).
+  `#releaseOverADisabledItemFiresNothingAndLeavesTheMenuOpen` (which then
+  retargets the enabled sibling, so the open menu is proven still usable).
 
 ## Triaged for Enhanced Thinlet (not behavior-locked)
 

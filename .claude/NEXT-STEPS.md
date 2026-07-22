@@ -58,15 +58,19 @@
   batch: an explicit `sort="none"` had drawn the `"descent"` glyph. Zero golden
   re-records. Three `documents-current-behavior` tags off, two new pins. Base
   row: 339 (core) + 13 (drafts) tests.
+- **Q12/Q13 catalogued then fixed (D76/D77, 2026-07-22)**: the last two D64
+  candidates were pinned-but-uncatalogued; D76 wrote them up, D77 fixed both —
+  a tab with no focusable content keeps focus on the pane (the pane asks before
+  it walks, via the new `hasFocusableInside`), and a disabled menu item swallows
+  the release with the popup left open. Zero golden re-records; two more
+  `documents-current-behavior` tags off. **The quirk backlog is now empty.**
 
 ## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 
-1. **Maintainer dispositions for Q12/Q13** — the last two D64 candidates, now
-   catalogued: Q12 empty-tab focus-escape (keep, or land the 2005 author's
-   commented-out `setFocus(tabcontent)` intent?) and Q13 disabled-menuitem
-   release-closes-silently (keep, or swallow the release and leave the menu
-   open?). Both are already pinned `documents-current-behavior`, so only the
-   call is missing; D75 is the worked example of the flip.
+1. **The quirk backlog is empty** — no quirk carries an open disposition. New 3c
+   work therefore starts from fresh characterization (find a behavior, pin it,
+   take a disposition) rather than from a queue. Q2/Q3/Q4/Q6/Q10 remain
+   deliberately kept, still pinned and tagged.
 2. **Fork mapping (arrival-triggered; no expectations built on it)** — sources
    still pending (2026-07-18: not arrived). When they land: fork files →
    subsystems; boundaries vs Cut 2–6 seams; enhancement backlog; then Cut 4+
