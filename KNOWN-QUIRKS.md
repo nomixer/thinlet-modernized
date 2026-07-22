@@ -1,40 +1,46 @@
 # Known Quirks
 
 This file catalogs behaviors of the 2005 Thinlet codebase that the maintainer
-believes are *wrong, surprising, or buggy* — but which this project
-**deliberately preserves**.
+believes are *wrong, surprising, or buggy*. Each is pinned by a test, so it can
+only change deliberately.
 
-## Why quirks are locked in, not fixed
+## Why quirks are pinned
 
-This is the **modernization** project. Its contract is: *preserve 2005
-Thinlet's observable behavior and modernize the toolchain around it.* Anything
-that changes user-visible behavior — including fixing a genuine bug — is out of
-scope here and belongs to the future **Enhanced Thinlet** effort.
+The pin means different things on the two lines (D69):
 
-Consequently:
+- **v0.1.x — the frozen modernized-2005 line.** Its contract is *preserve 2005
+  Thinlet's observable behavior and modernize the toolchain around it*, so every
+  quirk here is preserved exactly.
+- **`main` (0.2.x, Enhanced Thinlet).** Entries are picked off deliberately, one
+  recorded disposition at a time: the D-entry decides, the pin flips to the new
+  behavior in the same PR, and the entry below is retitled **fixed in 0.2.x**
+  with the authorizing D-number. Entries with a *keep* disposition stay pinned
+  and tagged — the behavior they document is still current.
 
-- **Tests describe current behavior, bugs included.** A failing test means the
-  production code drifted from 2005 behavior, *not* that Thinlet was "right"
-  before.
-- Each quirk below is pinned by at least one test tagged
-  `@Tag("documents-current-behavior")`. The test asserts *what Thinlet does
-  today*, so the quirk cannot silently change.
-- `mvn test -Dgroups='!documents-current-behavior'` runs only the
-  "definitely correct" subset, excluding quirk-locking tests.
-- Enhanced Thinlet picks entries off this list deliberately, one at a time,
-  with the behavior change made explicit.
+Either way:
+
+- **Pinning tests describe current behavior, bugs included.** A failing pin means
+  the code drifted, *not* that Thinlet was "right" before.
+- Unfixed quirks are pinned by at least one test tagged
+  `@Tag("documents-current-behavior")`; `mvn test
+  -Dgroups='!documents-current-behavior'` runs the subset that excludes them.
+  A fixed entry's test loses that tag — it now asserts a chosen contract.
 
 ## Entry format
 
-Each entry, added as quirks are discovered during Phase 1+ test authoring:
-
 ```
-### Q<n> — <short title>
+### Q<n> — <short title>                       (unfixed)
 - **What happens:** observable behavior.
 - **Why it's a quirk:** expected vs. actual.
 - **Where:** Thinlet.java location(s).
 - **Locked by:** test class/method name (tagged documents-current-behavior).
-- **Enhanced Thinlet disposition:** keep / fix / undecided.
+- **Enhanced Thinlet disposition:** keep / fix / undecided (cite the D-entry once decided).
+
+### Q<n> — <short title> — **fixed in 0.2.x (D<n>)**
+- **What happened (≤0.1.x):** the old behavior, and why it was wrong.
+- **The fix:** the new contract.
+- **Where:** location(s).
+- **Locked by:** test asserting the fixed contract.
 ```
 
 ## Quirks
@@ -113,18 +119,19 @@ Each entry, added as quirks are discovered during Phase 1+ test authoring:
 - **Enhanced Thinlet disposition:** fix — reconcile (make `value` the live state)
   or remove the dead attribute.
 
-### Q5 — spinbox `editable="false"` gates typed digits but not spinning
-- **What happens:** a non-editable spinbox rejects typed characters, yet the
-  mouse arrows and Up/Down keys still change the value freely.
-- **Why it's a quirk:** `editable` reads as "read-only" but only gates the
-  text-entry path (`processField`); neither spin path checks it.
-- **Where:** `Thinlet.java` — the spinbox key branch and mouse branch call
-  `processSpin` unconditionally; the `editable` gate lives inside `processField`.
+### Q5 — spinbox `editable="false"` gated typed digits but not spinning — **fixed in 0.2.x (D75)**
+- **What happened (≤0.1.x):** a non-editable spinbox rejected typed characters,
+  yet the mouse arrows and Up/Down keys still changed the value freely.
+  `editable` read as "read-only" but gated only the text-entry path
+  (`processField`); neither spin path checked it.
+- **The fix:** `editable="false"` is read-only on every value path. The gate
+  sits in `processSpin`, the single choke point for all three callers — the
+  Up/Down key branch, the arrow-block press, and the auto-repeat timer; the
+  false return also stops a press from arming the 375 ms repeat.
+- **Where:** `Thinlet.java` `processSpin`.
 - **Locked by:** `thinlet.trace.InputSpinBoxTest`
-  `#nonEditableSpinboxStillSpinsViaArrowsAndKeys` (tagged
-  documents-current-behavior).
-- **Enhanced Thinlet disposition:** undecided — flag for the maintainer (either
-  gate spinning too, or rename/re-document the attribute).
+  `#nonEditableSpinboxRejectsSpinningAsWellAsTyping` (asserts the fixed
+  contract; each no-op is paired with the same gesture on an editable sibling).
 
 ### Q6 — slider press teleports the knob to the pointer; no track-paging
 - **What happens:** pressing anywhere on a slider jumps the value proportionally
@@ -139,7 +146,8 @@ Each entry, added as quirks are discovered during Phase 1+ test authoring:
 - **Locked by:** `thinlet.trace.InputSliderTest`
   `#trackPressTeleportsTheKnob_noPageStepSemantics` (tagged
   documents-current-behavior).
-- **Enhanced Thinlet disposition:** keep — flag for maintainer confirmation.
+- **Enhanced Thinlet disposition (D75):** keep. Confirmed as a feature, not a
+  defect; the pin stays as the guard against silent drift in a later refactor.
 
 ### Q7 — dialog title glyphs were paint-only — **fixed in 0.2.x (D73)**
 - **What happened (≤0.1.x):** the `closable`/`maximizable`/`iconifiable`
@@ -175,21 +183,24 @@ Each entry, added as quirks are discovered during Phase 1+ test authoring:
   null-deref family — the `NP_NULL_PARAM_DEREF` /
   `NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE` exclusions came off with D71/D72.
 
-### Q9 — the combobox icon glyph is click-dead
-- **What happens:** an editable combobox with an `icon` attribute hit-tests the
-  glyph's strip (`x <= 2 + iconWidth`) as its own `"icon"` part, and the mouse
-  handler's click branch excludes exactly that part: clicking the icon neither
-  opens the drop-down, nor moves the caret, nor fires anything — while the same
-  click one pixel to the right edits text, and the arrow strip opens the list.
-- **Why it's a quirk:** a hit-tested region with no behavior is a dead zone the
-  user can feel; the 2005 code names the part but never wires it.
-- **Where:** `Thinlet.java` — `findComponent`'s combobox branch yields `"icon"`;
-  `handleMouseEvent`'s combobox branch handles `part == null` (text) and
-  `!is(part, "icon")` (drop button), leaving `"icon"` to fall through.
-- **Locked by:** `thinlet.trace.InputQuirkPinsTest#clickingTheComboboxIconGlyphDoesNothing`
-  (tagged documents-current-behavior).
-- **Enhanced Thinlet disposition:** undecided — plausible fixes: treat the icon
-  as part of the text area, or drop the dedicated part token.
+### Q9 — the combobox icon glyph was click-dead — **fixed in 0.2.x (D75)**
+- **What happened (≤0.1.x):** an editable combobox with an `icon` attribute
+  hit-tested the glyph's strip (`x <= 2 + iconWidth`) as its own `"icon"` part,
+  and the mouse handler's click branch excluded exactly that part: clicking the
+  icon neither opened the drop-down, nor moved the caret, nor fired anything —
+  while the same click one pixel to the right edited text. A hit-tested region
+  with no behavior is a dead zone the user can feel.
+- **The fix:** the icon strip is part of the text area. The text branch accepts
+  the `"icon"` part, so the strip takes the caret (parking at the start, since
+  the click lands left of the text origin), the text cursor, and the icon-width
+  caret offset the branch already computed. The part token is kept, so the
+  drop-button branch is untouched. Editable comboboxes only — `findComponent`
+  reports `"down"` for the whole widget when `editable="false"`.
+- **Where:** `Thinlet.java` — `handleMouseEvent`'s combobox branch.
+- **Locked by:** `thinlet.trace.InputQuirkPinsTest`
+  `#clickingTheComboboxIconGlyphPlacesTheCaretLikeTheTextArea` and
+  `#hoveringTheComboboxIconGlyphShowsTheTextCursor` (the fold is pinned as
+  total, not click-only).
 
 ### Q10 — ascending sort draws a downward triangle
 - **What happens:** a table column with `sort="ascent"` draws the south-pointing
@@ -201,8 +212,58 @@ Each entry, added as quirks are discovered during Phase 1+ test authoring:
   call (`is(sort, "ascent") ? 'S' : 'N'`).
 - **Locked by:** `thinlet.trace.InputQuirkPinsTest#ascendingSortDrawsADownwardTriangleGlyph`
   and `#descendingSortDrawsAnUpwardTriangleGlyph` (tagged documents-current-behavior).
-- **Enhanced Thinlet disposition:** undecided — flipping it is user-visible;
-  document-or-flip is a 3c call.
+- **Enhanced Thinlet disposition (D75):** keep. The glyph is pure decoration —
+  Thinlet never sorts data, so nothing reads the direction — and flipping it is
+  asymmetric: naive apps improve, but any app that compensated for the inversion
+  (writing `descent` to get the arrow it wanted) silently becomes wrong the
+  other way, and we cannot detect which exist. Documented rather than flipped.
+
+### Q11 — an explicit `sort="none"` drew the descending glyph — **fixed in 0.2.x (D75)**
+- **What happened (≤0.1.x):** the header painter skipped the sort glyph only
+  when the attribute was unset (`null`), and `setChoice` stores `"none"`
+  verbatim — it substitutes the row default only for a `null` *value*. So
+  `sort="none"` painted the same north triangle as `sort="descent"`, while an
+  unset `sort` painted nothing and `getChoice(column, "sort")` reported
+  `"none"` for both.
+- **The fix:** `"none"` paints no glyph, so the paint agrees with the accessor
+  and with the unset attribute.
+- **Where:** `Renderer.java` — the table-header branch's sort-glyph guard.
+- **Locked by:** `thinlet.trace.InputQuirkPinsTest#explicitSortNoneDrawsNoGlyphAtAll`
+  (proven against the 2005 `'N'` glyph first, then flipped in the same PR).
+
+### Q12 — mouse-selecting a tab with no focusable content throws focus out of the pane
+- **What happens:** clicking a tab header whose content holds no focusable widget
+  walks focus *past* the tabbedpane entirely, to the next focusable after it —
+  the user clicks inside a widget and focus lands outside it. A keyboard tab
+  switch, by contrast, keeps focus on the pane.
+- **Why it's a quirk:** focus escapes the widget the user just interacted with,
+  and the two switch gestures disagree. The 2005 author left the alternative
+  commented out directly above the call — `setFocus(tabcontent != null ?
+  tabcontent : component)` — so the escape looks like an unfinished edit rather
+  than a considered choice.
+- **Where:** `Thinlet.java` — `handleMouseEvent`'s tabbedpane press branch calls
+  `setNextFocusable(component, false)` on a tab change.
+- **Locked by:** `thinlet.trace.InputTabbedPaneTest`
+  `#mouseSelectingATabWithNoFocusableContentThrowsFocusOutOfThePane` (tagged
+  documents-current-behavior; D64 slice A).
+- **Enhanced Thinlet disposition:** undecided — flag for the maintainer (keep, or
+  land the commented-out intent so focus stays on the pane).
+
+### Q13 — a release over a disabled menu item closes the menu silently
+- **What happens:** pressing a menu title and releasing over a *disabled* item
+  fires nothing — correct — but still tears the popup down, so the gesture reads
+  as "the menu accepted my click and did nothing".
+- **Why it's a quirk:** most toolkits let a disabled item swallow the release and
+  leave the menu open, so the user can retarget. The `enabled` check gates only
+  the invoke; the `closeup()` beneath it is unconditional for any non-`menu` item.
+  Keyboard navigation already skips disabled items, so the two paths disagree.
+- **Where:** `Thinlet.java` — `handleMouseEvent`'s `:popup`/`popupmenu` release
+  branch.
+- **Locked by:** `thinlet.trace.InputMenuBarTest`
+  `#releaseOverADisabledItemClosesTheMenuWithoutFiring` (tagged
+  documents-current-behavior; D64 slice B).
+- **Enhanced Thinlet disposition:** undecided — flag for the maintainer (keep, or
+  make a disabled item swallow the release and leave the menu open).
 
 ## Triaged for Enhanced Thinlet (not behavior-locked)
 
