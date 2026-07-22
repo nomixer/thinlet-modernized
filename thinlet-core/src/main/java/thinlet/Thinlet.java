@@ -3852,6 +3852,13 @@ public class Thinlet extends Container implements Runnable, Serializable {
     }
 
     private boolean processSpin(Object component, Object part) {
+        // 0.2.x (D75): editable="false" is read-only for every value path, not just
+        // typed digits. Gating here covers all three callers — the Up/Down key branch,
+        // the arrow-block press, and the auto-repeat timer; returning false also keeps
+        // the press from arming that timer. 2005 gated only processField (KNOWN-QUIRKS Q5).
+        if (!getBoolean(component, "editable", true)) {
+            return false;
+        }
         String text = getString(component, "text", "");
         try {
             int itext = Integer.parseInt(text);

@@ -134,10 +134,14 @@ class InputSpinBoxTest {
                 .isEqualTo(42);
     }
 
-    /** Locked 2005 quirk: {@code editable="false"} gates typed digits only. See KNOWN-QUIRKS Q5. */
+    /**
+     * 0.2.x behavior (D75): {@code editable="false"} is read-only on every value path.
+     * 2005 gated typed digits only, so the arrows and Up/Down still spun (KNOWN-QUIRKS Q5).
+     * Each no-op assertion is paired with the same gesture on an editable sibling, so a
+     * gesture that silently missed the widget cannot pass this test vacuously.
+     */
     @Test
-    @Tag("documents-current-behavior")
-    void nonEditableSpinboxStillSpinsViaArrowsAndKeys() throws IOException {
+    void nonEditableSpinboxRejectsSpinningAsWellAsTyping() throws IOException {
         InputDriver d = InputDriver.load(FIXTURE, new RecordingHandler());
         Thinlet t = d.thinlet();
         Object sp = d.find("spro");
@@ -148,11 +152,25 @@ class InputSpinBoxTest {
                 .as("typed digits are gated by editable=false")
                 .isEqualTo("10");
         d.arrowUp();
-        assertThat(t.getString(sp, "text")).as("the Up key still spins").isEqualTo("11");
+        assertThat(t.getString(sp, "text")).as("the Up key no longer spins").isEqualTo("10");
         d.paint(); // flush any pending re-layout before pixel-aiming the arrow
         clickUpArrow(d, sp);
         assertThat(t.getString(sp, "text"))
-                .as("the mouse arrow still spins too")
-                .isEqualTo("12");
+                .as("the mouse arrow no longer spins either")
+                .isEqualTo("10");
+
+        // Controls: the identical gestures on editable spinboxes still move the value.
+        Object keyControl = d.find("spmid");
+        d.click(keyControl);
+        d.arrowUp();
+        assertThat(t.getString(keyControl, "text"))
+                .as("the Up key gesture itself works: 50 + step 7")
+                .isEqualTo("57");
+        Object mouseControl = d.find("spup"); // clamp-adjacent: auto-repeat steps are no-ops
+        d.paint();
+        clickUpArrow(d, mouseControl);
+        assertThat(t.getString(mouseControl, "text"))
+                .as("the arrow-block click geometry itself works: 99 -> 100")
+                .isEqualTo("100");
     }
 }
