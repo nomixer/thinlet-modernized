@@ -1,4 +1,4 @@
-# Next steps — session handoff (2026-07-18)
+# Next steps — session handoff (2026-07-22)
 
 > State pointers + ordered work only; rationale lives in `DECISIONS.md`
 > (single-home rule + comment rules: **D57**). Charter:
@@ -33,7 +33,7 @@
 - **Vocabulary decode + constants research done (D67, 2026-07-15)**:
   `project-docs/VOCABULARY-INVENTORY.md` (11 vocabularies, collision table,
   absorb-at-cut recommendations) + in-source annotations at the consumers.
-- **D67 candidates pinned (D68, 2026-07-16)**: Q9 (click-dead combobox icon) +
+- **D67 candidates pinned (D68, 2026-07-16)**: Q9 (then-click-dead combobox icon) +
   Q10 (ascent-sort down-arrow) locked by `InputQuirkPinsTest`; the
   `checkLocation` mousex-for-y bug proven unobservable and triaged (not
   behavior-locked), guarded by a canary. Base row: +4 tests.
@@ -51,13 +51,20 @@
   (ship-with-nits, applied); maintainer signed off the `Alignment` naming and
   auto-merge in-session (recorded in D74). japicmp additions-only vs v0.1.0;
   post-merge `main` run green. Base row: 337 (core) + 13 (drafts) tests.
+- **Quirk dispositions settled (D75, 2026-07-22)**: Q5 fixed (`editable="false"`
+  gates spinning too, gate in `processSpin`), Q9 fixed (combobox icon strip folds
+  into the text area, part token kept), Q6 kept (slider jump-to-pointer), Q10 kept
+  (inverted sort glyph — documented, not flipped). Q11 added and fixed in the same
+  batch: an explicit `sort="none"` had drawn the `"descent"` glyph. Zero golden
+  re-records. Three `documents-current-behavior` tags off, two new pins. Base
+  row: 339 (core) + 13 (drafts) tests.
 
 ## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 
-1. **Maintainer quirk dispositions, remaining** — Q5 gate-spinning?, Q6
-   jump-to-pointer?, Q9 wire-or-drop the combobox icon part?, Q10
-   keep-or-flip the sort glyph?; candidates: empty-tab focus-escape,
-   disabled-menuitem release-closes-silently. Behavior pinned either way.
+1. **Remaining quirk candidates** — empty-tab focus-escape and
+   disabled-menuitem release-closes-silently are still uncharacterized: pin
+   each first, then take a disposition (D75 is the worked example — the
+   `sort="none"` row was proven against 2005 before it was changed).
 2. **Fork mapping (arrival-triggered; no expectations built on it)** — sources
    still pending (2026-07-18: not arrived). When they land: fork files →
    subsystems; boundaries vs Cut 2–6 seams; enhancement backlog; then Cut 4+

@@ -14,8 +14,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import thinlet.Thinlet;
 
 /**
- * Quirk pins Q9 (click-dead combobox icon) and Q10 (sort-glyph direction), plus the
- * {@code checkLocation} mousex-for-y canary. DECISIONS.md D68.
+ * Quirk pins Q9 (combobox icon strip) and Q10/Q11 (sort-glyph direction and the
+ * silent "none"), plus the {@code checkLocation} mousex-for-y canary. Q9 and Q11
+ * assert their 0.2.x contracts; Q10 stays a 2005 pin. DECISIONS.md D68, D75.
  */
 @Tag("input")
 @ExtendWith(XvfbDisplayExtension.class)

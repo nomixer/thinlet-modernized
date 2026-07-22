@@ -2997,3 +2997,78 @@ default-first nuance recorded above, and a `fromToken` reject-path coverage gap
 (Cross-ref D8 DTD freeze, D43 the de-facto-freeze logic, D57 doc/comment rules,
 D58 the internal-constants deferral kept in force, D67 the inventory, D69
 protocol.)
+
+## D75 — The remaining quirk dispositions: Q5/Q9 fixed, Q6/Q10 kept, `sort="none"` made silent
+
+**Date:** 2026-07-22. **Status:** accepted. **Phase:** 3c (behavior changes on the
+enhanced line, under the D69 protocol).
+
+**Context.** The head of the D69 backlog was the set of quirks whose dispositions
+were the maintainer's to give: Q5 (spinbox `editable` gates typing only), Q6
+(slider jump-to-pointer), Q9 (click-dead combobox icon), Q10 (ascending sort draws
+a downward triangle). All four were pinned by `documents-current-behavior` tests,
+so either answer was cheap; what was missing was the decision, not the code. The
+dispositions were given in session on 2026-07-22 and are recorded verbatim in
+effect below.
+
+**Decision — the four dispositions.**
+
+- **Q5 → fix.** `editable="false"` now means read-only on every value path, not
+  just typed digits. The gate sits in `processSpin`, which is the single choke
+  point for all three callers (the Up/Down key branch, the arrow-block press, and
+  the auto-repeat timer); returning false there also keeps a press from arming the
+  375 ms repeat. 2005 gated only `processField`.
+- **Q6 → keep.** Slider press stays jump-to-pointer with no knob/track distinction
+  and no click-to-page. Confirmed as a feature, not a defect; the pin stays as the
+  guard against silent drift in a later Cut 6 refactor. No code change.
+- **Q9 → fix, by folding the icon strip into the text area.** The combobox text
+  branch now accepts the `"icon"` part instead of excluding it, so the strip takes
+  the caret, the text cursor, and the icon-width caret offset the branch already
+  computed. The part token is deliberately **kept**: deleting it in `findComponent`
+  would also reroute the drop-button hover repaint, a strictly larger blast radius
+  for no model gain. Editable comboboxes only — `findComponent` reports `"down"`
+  for the whole widget when `editable="false"`, which already opened the list.
+- **Q10 → keep, and document why.** `sort="ascent"` keeps painting the
+  south-pointing glyph. The mapping diverges from the prevailing convention
+  (Windows Explorer, Swing's row sorter, most web tables paint ascending as an up
+  wedge) but is self-consistent — it reads as "values increase downward" — and the
+  glyph is pure decoration: `"sort"` is referenced nowhere outside `Renderer`'s
+  header branch, because Thinlet never sorts data. The cost of flipping is
+  asymmetric and undetectable by us: naive apps improve, but any app that
+  *compensated* for the inversion (writing `descent` to get the arrow it wanted)
+  silently becomes wrong in the other direction. Convention is not worth that.
+
+**A fifth change, found while deciding Q10 — `sort="none"` paints nothing.** The
+painter skipped the glyph only on a `null` sort, and `setChoice` stores `"none"`
+verbatim (it substitutes the row default only for a `null` *value*), so an
+explicit `sort="none"` drew the same north triangle as `"descent"` — an unset
+attribute and an explicit "none" disagreed, while `getChoice(column, "sort")`
+already reported `"none"` for both. The maintainer's call: "none" means no arrow.
+The painter now skips it, making the paint agree with the accessor. Chosen
+*because* Q10 was kept: with `ascent` still south, flipping Q10 instead would have
+collided `none` with `ascent` rather than with `descent` — the collision moves, it
+does not go away. Locked as **Q11**.
+
+**Evidence, and the order it was gathered.** The `sort="none"` behavior was a
+source-read when it was reported, so it was proven before it was changed: the new
+pin first asserted the 2005 `'N'` glyph and passed in the CI container, and only
+then flipped to the 0.2.x no-glyph assertion — the D69 flip-in-the-same-PR rule
+applied to a quirk that had no pin to begin with.
+
+**Golden impact: none, across all five changes.** Q5 and Q9 are input-path only.
+The `sort="none"` fix touches paint, but the attribute value appears in no corpus,
+`thinlet-drafts`, `thinlet-demos`, or `docs` file — the one corpus use of `sort=`
+(`corpus/drafts/widgets.xml`) is `ascent`/`descent`, both unchanged. Q6 and Q10 are
+disposition-only. No re-record was performed or needed, matching the D70–D73 batch.
+
+**Pins.** Three `documents-current-behavior` tags come off as their tests flip to
+the new behavior (`InputSpinBoxTest#nonEditableSpinboxRejectsSpinningAsWellAsTyping`,
+`InputQuirkPinsTest#clickingTheComboboxIconGlyphPlacesTheCaretLikeTheTextArea`, and
+the new `#explicitSortNoneDrawsNoGlyphAtAll`); two new untagged pins were added —
+`#hoveringTheComboboxIconGlyphShowsTheTextCursor`, so the Q9 fold is pinned as
+total rather than click-only, and the sort-none pin above. The Q5 test pairs every
+no-op assertion with the identical gesture on an editable sibling, so a gesture
+that silently missed the widget cannot pass it vacuously. Q6's and Q10's pins are
+unchanged and keep their tags: the behavior they document is still current.
+(Cross-ref D64 the characterization suite that locked Q4–Q7, D68 Q9/Q10, D69 the
+change-control protocol, D70–D73 the previous batch.)
