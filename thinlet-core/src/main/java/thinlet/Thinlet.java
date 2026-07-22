@@ -3211,13 +3211,18 @@ public class Thinlet extends Container implements Runnable, Serializable {
             }
         } else if (is(classname, "combobox")) {
             boolean editable = getBoolean(component, "editable", true);
-            if (editable && (part == null)) { // textfield area
+            // 0.2.x (D75): the icon strip is part of the text area. findComponent still
+            // yields the "icon" part, but it no longer strands the event: 2005 routed
+            // only part == null here and excluded "icon" below, leaving a hit-tested
+            // region with no behavior at all (KNOWN-QUIRKS Q9). Folding it in also gives
+            // the strip the text caret and the text cursor, like the pixels beside it.
+            if (editable && ((part == null) || is(part, "icon"))) { // textfield area
                 Image icon = null;
                 int left = ((id == MouseEvent.MOUSE_PRESSED) && ((icon = getIcon(component, "icon", null)) != null))
                         ? icon.getWidth(this)
                         : 0;
                 processField(x, y, clickcount, id, component, false, false, left, popuptrigger);
-            } else if (!is(part, "icon")) { // part = "down"
+            } else { // part = "down"
                 if (((id == MouseEvent.MOUSE_ENTERED) || (id == MouseEvent.MOUSE_EXITED)) && (mousepressed == null)) {
                     if (editable) {
                         repaint(component, "combobox", part);

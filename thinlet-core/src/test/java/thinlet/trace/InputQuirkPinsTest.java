@@ -4,6 +4,7 @@ package thinlet.trace;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.awt.Cursor;
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.List;
@@ -22,9 +23,13 @@ class InputQuirkPinsTest {
 
     private static final String COMBO_FIXTURE = "/input/comboicon.xml";
 
+    /**
+     * 0.2.x behavior (D75): the icon strip acts as text. 2005 hit-tested it as its own
+     * "icon" part and then excluded that part from every click branch, so the glyph was
+     * a dead zone one pixel from live text (KNOWN-QUIRKS Q9).
+     */
     @Test
-    @Tag("documents-current-behavior")
-    void clickingTheComboboxIconGlyphDoesNothing() throws IOException {
+    void clickingTheComboboxIconGlyphPlacesTheCaretLikeTheTextArea() throws IOException {
         RecordingHandler h = new RecordingHandler();
         InputDriver d = InputDriver.load(COMBO_FIXTURE, h);
         Thinlet t = d.thinlet();
@@ -33,8 +38,7 @@ class InputQuirkPinsTest {
         // Discriminator baseline: a click in the text area places the caret at the
         // clicked offset (proves the geometry below actually lands on the widget).
         d.clickAt(cb, 60, cy);
-        int caretAfterTextClick = t.getInteger(cb, "start");
-        assertThat(caretAfterTextClick)
+        assertThat(t.getInteger(cb, "start"))
                 .as("the text-area click landed: caret parks past the end of \"Hello\"")
                 .isEqualTo(5);
         // The caret write defers a re-layout via the 2005 negative-width dirty
@@ -42,21 +46,34 @@ class InputQuirkPinsTest {
         // so paint here as a real app would between gestures.
         d.paint();
         // The editable combobox hit-tests x <= 2 + iconWidth as the "icon" part
-        // (/icon/copy.gif is 16 px wide, so x=10 lands squarely on the glyph),
-        // and handleMouseEvent's click branch excludes "icon" — a dead zone.
+        // (/icon/copy.gif is 16 px wide, so x=10 lands squarely on the glyph).
         d.clickAt(cb, 10, cy);
-        assertThat(d.property(cb, ":combolist"))
-                .as("clicking the icon glyph does not open the drop-down")
-                .isNull();
         assertThat(t.getInteger(cb, "start"))
-                .as("clicking the icon glyph does not move the caret either")
-                .isEqualTo(caretAfterTextClick);
-        assertThat(h.events).as("clicking the icon glyph fires nothing").isEmpty();
-        // Contrast: the block-wide right strip is the live drop button.
+                .as("the click lands left of the text origin, so the caret parks at the start")
+                .isEqualTo(0);
+        assertThat(d.property(cb, ":combolist"))
+                .as("the icon is text, not the drop button: no drop-down")
+                .isNull();
+        assertThat(h.events).as("a caret move fires no action").isEmpty();
+        // Contrast: the block-wide right strip is the live drop button. The icon click
+        // now writes the caret, so it dirties the layout exactly as the text click did —
+        // paint again before aiming the next gesture.
+        d.paint();
         d.clickAt(cb, d.size(cb).width - 4, cy);
         assertThat(d.property(cb, ":combolist"))
                 .as("the arrow strip does open the drop-down")
                 .isNotNull();
+    }
+
+    /** The fold is total, not click-only: the strip takes the text cursor too (D75). */
+    @Test
+    void hoveringTheComboboxIconGlyphShowsTheTextCursor() throws IOException {
+        InputDriver d = InputDriver.load(COMBO_FIXTURE, new RecordingHandler());
+        Object cb = d.find("cb");
+        d.hoverAt(cb, 10, d.size(cb).height / 2);
+        assertThat(d.thinlet().getCursor().getType())
+                .as("hovering the icon glyph shows the text cursor, as the text beside it does")
+                .isEqualTo(Cursor.TEXT_CURSOR);
     }
 
     @Test
