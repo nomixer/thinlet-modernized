@@ -3072,3 +3072,40 @@ that silently missed the widget cannot pass it vacuously. Q6's and Q10's pins ar
 unchanged and keep their tags: the behavior they document is still current.
 (Cross-ref D64 the characterization suite that locked Q4–Q7, D68 Q9/Q10, D69 the
 change-control protocol, D70–D73 the previous batch.)
+
+## D76 — Q12/Q13 catalogued: the last two D64 candidates enter KNOWN-QUIRKS, dispositions open
+
+**Date:** 2026-07-22. **Status:** accepted. **Phase:** 3c (documentation; zero behavior
+change).
+
+**Context.** D75 settled every quirk with an open disposition *except* the two
+candidates D64 surfaced in passing: mouse-selecting an empty tab throwing focus out
+of the pane (slice A) and a release over a disabled menu item closing the menu
+silently (slice B). Both were pinned `documents-current-behavior` when they were
+found, but neither was ever written into `KNOWN-QUIRKS.md` — so the catalog, which
+is meant to be the list of pinned 2005 behaviors, was missing two of them, and the
+handoff wrongly described them as needing pins first.
+
+**Decision.** Catalogue both as **Q12** and **Q13**, disposition *undecided*,
+each citing its existing pin. No behavior change and no new test: the pins already
+assert what the code does, so this is purely the catalog catching up with the net.
+
+**Two mechanism details worth pinning in prose**, both read from source while
+writing the entries:
+
+- **Q12.** The escape comes from `setNextFocusable(component, false)` in the
+  tabbedpane press branch — and the 2005 author left the alternative commented out
+  on the two lines directly above it (`setFocus(tabcontent != null ? tabcontent :
+  component)`). The quirk looks like an unfinished edit, not a considered choice,
+  which is evidence for a *fix* disposition — but the call is still the
+  maintainer's. Mouse and keyboard switches disagree today: the keyboard path
+  keeps focus on the pane.
+- **Q13.** The `enabled` check gates only the `invoke`; the `closeup()` beneath it
+  is unconditional for any non-`menu` item. Keyboard navigation already skips
+  disabled items, so here too the two input paths disagree.
+
+**Correction.** The D75 handoff bullet claimed these two were "still
+uncharacterized: pin each first". That was wrong — both were pinned in D64. The
+handoff now names the missing piece accurately: the dispositions, nothing else.
+(Cross-ref D64 the characterization suite that pinned them, D69 the protocol a
+disposition would follow, D75 the batch that settled the others.)

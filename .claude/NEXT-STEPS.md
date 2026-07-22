@@ -61,10 +61,12 @@
 
 ## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 
-1. **Remaining quirk candidates** — empty-tab focus-escape and
-   disabled-menuitem release-closes-silently are still uncharacterized: pin
-   each first, then take a disposition (D75 is the worked example — the
-   `sort="none"` row was proven against 2005 before it was changed).
+1. **Maintainer dispositions for Q12/Q13** — the last two D64 candidates, now
+   catalogued: Q12 empty-tab focus-escape (keep, or land the 2005 author's
+   commented-out `setFocus(tabcontent)` intent?) and Q13 disabled-menuitem
+   release-closes-silently (keep, or swallow the release and leave the menu
+   open?). Both are already pinned `documents-current-behavior`, so only the
+   call is missing; D75 is the worked example of the flip.
 2. **Fork mapping (arrival-triggered; no expectations built on it)** — sources
    still pending (2026-07-18: not arrived). When they land: fork files →
    subsystems; boundaries vs Cut 2–6 seams; enhancement backlog; then Cut 4+

@@ -231,6 +231,40 @@ Either way:
 - **Locked by:** `thinlet.trace.InputQuirkPinsTest#explicitSortNoneDrawsNoGlyphAtAll`
   (proven against the 2005 `'N'` glyph first, then flipped in the same PR).
 
+### Q12 — mouse-selecting a tab with no focusable content throws focus out of the pane
+- **What happens:** clicking a tab header whose content holds no focusable widget
+  walks focus *past* the tabbedpane entirely, to the next focusable after it —
+  the user clicks inside a widget and focus lands outside it. A keyboard tab
+  switch, by contrast, keeps focus on the pane.
+- **Why it's a quirk:** focus escapes the widget the user just interacted with,
+  and the two switch gestures disagree. The 2005 author left the alternative
+  commented out directly above the call — `setFocus(tabcontent != null ?
+  tabcontent : component)` — so the escape looks like an unfinished edit rather
+  than a considered choice.
+- **Where:** `Thinlet.java` — `handleMouseEvent`'s tabbedpane press branch calls
+  `setNextFocusable(component, false)` on a tab change.
+- **Locked by:** `thinlet.trace.InputTabbedPaneTest`
+  `#mouseSelectingATabWithNoFocusableContentThrowsFocusOutOfThePane` (tagged
+  documents-current-behavior; D64 slice A).
+- **Enhanced Thinlet disposition:** undecided — flag for the maintainer (keep, or
+  land the commented-out intent so focus stays on the pane).
+
+### Q13 — a release over a disabled menu item closes the menu silently
+- **What happens:** pressing a menu title and releasing over a *disabled* item
+  fires nothing — correct — but still tears the popup down, so the gesture reads
+  as "the menu accepted my click and did nothing".
+- **Why it's a quirk:** most toolkits let a disabled item swallow the release and
+  leave the menu open, so the user can retarget. The `enabled` check gates only
+  the invoke; the `closeup()` beneath it is unconditional for any non-`menu` item.
+  Keyboard navigation already skips disabled items, so the two paths disagree.
+- **Where:** `Thinlet.java` — `handleMouseEvent`'s `:popup`/`popupmenu` release
+  branch.
+- **Locked by:** `thinlet.trace.InputMenuBarTest`
+  `#releaseOverADisabledItemClosesTheMenuWithoutFiring` (tagged
+  documents-current-behavior; D64 slice B).
+- **Enhanced Thinlet disposition:** undecided — flag for the maintainer (keep, or
+  make a disabled item swallow the release and leave the menu open).
+
 ## Triaged for Enhanced Thinlet (not behavior-locked)
 
 Findings investigated but *not* pinned by behavior tests, with reasons — the
