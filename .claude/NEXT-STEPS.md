@@ -64,13 +64,26 @@
   it walks, via the new `hasFocusableInside`), and a disabled menu item swallows
   the release with the popup left open. Zero golden re-records; two more
   `documents-current-behavior` tags off. **The quirk backlog is now empty.**
+- **Table behavior recorded (D78, 2026-07-23)**: `InputTableTest` (14 tests) +
+  `input/table2.xml` close the last major input-net gap — selection by mouse and
+  keyboard, shift/control paths, `interval` vs `multiple`, `perform`, and the
+  header. Found Q14 (the column header is inert — an empty `if` body where
+  hit-testing belongs) and that a double-click fires `action` once, not twice.
+  Recording only, zero behavior change. Base row: 353 (core) + 13 (drafts).
 
 ## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 
-1. **The quirk backlog is empty** — no quirk carries an open disposition. New 3c
-   work therefore starts from fresh characterization (find a behavior, pin it,
-   take a disposition) rather than from a queue. Q2/Q3/Q4/Q6/Q10 remain
-   deliberately kept, still pinned and tagged.
+1. **Q14 (inert table column header) — parked, not open** — the only quirk
+   without a settled disposition, held deliberately until the fork sources land,
+   because wiring a header click adds *new* public behavior the maintainer's own
+   fork may already define (D78).
+2. **No other open dispositions.** Further 3c work starts from fresh recording
+   (drive a widget, assert what it does today, then decide) rather than a queue.
+   Q2/Q3/Q4/Q6/Q10 remain deliberately kept, still pinned and tagged.
+3. **Deferred harness cleanup (D78):** `InputDriver.origin` ignores the `:port`
+   inset and `:view` scroll, so it mis-aims items inside a scrolled/headered
+   widget; `InputTableTest.clickRow` works around it locally. Generalizing the
+   fix touches shared geometry under every input suite — its own slice.
 2. **Fork mapping (arrival-triggered; no expectations built on it)** — sources
    still pending (2026-07-18: not arrived). When they land: fork files →
    subsystems; boundaries vs Cut 2–6 seams; enhancement backlog; then Cut 4+

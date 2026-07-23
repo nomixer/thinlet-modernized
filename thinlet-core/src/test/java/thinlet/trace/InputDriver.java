@@ -245,6 +245,37 @@ final class InputDriver {
     }
 
     /**
+     * {@link #clickAt(Object, int, int)} with modifier keys held — Shift extends a
+     * selection from the lead, Control toggles a row ({@code select}; D78). Thinlet reads
+     * {@code isShiftDown}/{@code isControlDown} off the press, and a real toolkit holds
+     * the modifier down for the whole gesture, so it rides every event here too.
+     */
+    void clickAtWithModifiers(Object widget, int xOffset, int yOffset, int modifiers) {
+        Point o = origin(widget);
+        int px = o.x + xOffset;
+        int py = o.y + yOffset;
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_MOVED, when++, modifiers, px, py, 0, false));
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_PRESSED, when++, modifiers, px, py, 1, false));
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_RELEASED, when++, modifiers, px, py, 1, false));
+    }
+
+    /**
+     * Double-click at ({@code xOffset},{@code yOffset}) — press/release, then a second
+     * press/release carrying clickCount 2, which is the count Thinlet tests for
+     * {@code perform}.
+     */
+    void doubleClickAt(Object widget, int xOffset, int yOffset) {
+        Point o = origin(widget);
+        int px = o.x + xOffset;
+        int py = o.y + yOffset;
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_MOVED, when++, 0, px, py, 0, false));
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_PRESSED, when++, 0, px, py, 1, false));
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_RELEASED, when++, 0, px, py, 1, false));
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_PRESSED, when++, 0, px, py, 2, false));
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_RELEASED, when++, 0, px, py, 2, false));
+    }
+
+    /**
      * Secondary-button click at the widget centre — Thinlet's popup trigger is
      * {@code MOUSE_PRESSED && isMetaDown()} (platform-independent by design, not
      * isPopupTrigger). META_DOWN_MASK holds on JDK 8→21: the MouseEvent constructor
