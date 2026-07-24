@@ -3156,3 +3156,69 @@ closes, so "the menu stays open" is pinned as *usable*, not merely un-torn-down.
 green, including the `Drafts` live playthrough, which drives real menus and tabs.
 (Cross-ref D64 the suite that pinned both, D69 the protocol, D75/D76 the rest of
 the batch.)
+
+## D78 — The table's behavior is recorded: a 14-test input suite, and Q14 (the inert column header)
+
+**Date:** 2026-07-23. **Status:** accepted. **Phase:** 3c (test net; zero behavior
+change).
+
+**Context.** Every other major interactive widget carried a suite recording what it
+does when clicked and typed at — list, tree, combobox, spinbox, slider, menus,
+tabs, dialogs, text editing, scrollbars, tooltips. The **table** had none:
+`input/table.xml` existed only as a paint-snapshot scenario
+(`InteractionScenarios` `table-selected-lead-focus`), which compares drawing
+commands and asserts nothing about behavior. That left the widget most exposed to
+the remaining layout/hit-testing cuts with no regression net, and left an obvious
+unfinished code path unexamined.
+
+**Decision.** Add `InputTableTest` — 14 black-box tests over the public getters,
+no stored snapshots — plus the fixture `input/table2.xml` (multiple / interval /
+headerless / empty tables). `input/table.xml` is untouched, as a snapshot anchor.
+Recording only; no behavior changed in this slice.
+
+**What it records.** Mouse selection and its repaint; `selection="single"`
+replacing rather than accumulating; arrow/Home/End keyboard movement; shift-click
+extending from the lead; control-click toggling a disjoint row in `multiple`;
+`interval` extending with shift but **collapsing to the clicked row** on
+control-click (only `multiple` reaches the toggle branch of `select`); shift+arrow
+extending from a lead the *mouse* set; the strip below the last row and an empty
+table both absorbing clicks silently; a headerless table reserving only its 1 px
+border above the rows.
+
+**Two findings.**
+
+1. **Q14 — the column header is inert.** No click reaches a column: the header
+   swallows it (selection untouched, nothing fires). `findComponent`'s table
+   branch is `if (!findScroll(component, x, y)) {}` — an empty body precisely
+   where column hit-testing belongs, which reads as unfinished rather than
+   decided. The user-visible consequence is that the `sort` glyph (D75 Q10/Q11)
+   is app-driven only; no gesture can change it. Catalogued undecided and
+   **deliberately parked**: wiring it adds new public behavior (which event, what
+   an app binds to), and the maintainer's fork may already answer it.
+2. **Double-click fires `action` once, then `perform`** — not twice. The second
+   press re-selects an already-selected row, and `selectItem` fires nothing when
+   the selection does not change. Recorded because the naive expectation
+   (action, action, perform) is wrong.
+
+**A harness limitation found the honest way — by being bitten by it.** The first
+run "showed" that clicking row *n* selects row *n−1*. That was not Thinlet:
+`InputDriver.origin` sums the `"bounds"` chain only, ignoring the `:port` top
+inset and `:view` scroll, so every row of a table with a header is aimed one
+header-height too high. Exact for a list (no header, no offset), wrong for a
+table. The suite therefore aims rows through a local `clickRow` helper that adds
+`:port` and subtracts `:view`, keeping the artifact out of the assertions rather
+than recording it as behavior. **Generalizing the fix into `origin` itself was
+deliberately not done here:** it is shared geometry under every input suite, and
+changing it belongs in its own slice with its own re-verification, not inside a
+recording-only PR.
+
+**Testkit additions** (test-scope only, never in the published jar):
+`InputDriver.clickAtWithModifiers` and `doubleClickAt` — Shift/Control ride every
+event of the gesture, as a real toolkit delivers them.
+
+**Validation.** Container base row green (353 core + 13 drafts) and the 8/11/17
+rows green. The headline Q14 assertion was mutation-checked before commit (D68
+norm): inverted, it failed with the correct actual value. No paint or layout
+change, so nothing to re-record. (Cross-ref D64 the characterization suites this
+extends, D69 the protocol any later fix would follow, D75/D77 the quirk batches,
+D68 the mutation-check norm.)

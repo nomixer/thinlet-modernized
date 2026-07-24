@@ -1,0 +1,31 @@
+<panel columns="1" gap="4" top="4" left="4" right="4" bottom="4">
+	<table name="multi" selection="multiple" action="record(this.name)" perform="record('perform')" weightx="1" weighty="1">
+		<header>
+			<column text="Name" width="120" />
+			<column text="Value" width="80" />
+		</header>
+		<row><cell text="Alpha" /><cell text="1" /></row>
+		<row><cell text="Beta" /><cell text="2" /></row>
+		<row><cell text="Gamma" /><cell text="3" /></row>
+		<row><cell text="Delta" /><cell text="4" /></row>
+	</table>
+	<table name="interval" selection="interval" weightx="1" weighty="1">
+		<header>
+			<column text="Name" width="120" />
+		</header>
+		<row><cell text="One" /></row>
+		<row><cell text="Two" /></row>
+		<row><cell text="Three" /></row>
+		<row><cell text="Four" /></row>
+	</table>
+	<table name="bare" selection="single" weightx="1" weighty="1">
+		<row><cell text="Solo-A" /></row>
+		<row><cell text="Solo-B" /></row>
+		<row><cell text="Solo-C" /></row>
+	</table>
+	<table name="empty" selection="single" weightx="1" weighty="1">
+		<header>
+			<column text="Name" width="120" />
+		</header>
+	</table>
+</panel>

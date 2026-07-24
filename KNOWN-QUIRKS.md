@@ -267,6 +267,27 @@ Either way:
   `#releaseOverADisabledItemFiresNothingAndLeavesTheMenuOpen` (which then
   retargets the enabled sibling, so the open menu is proven still usable).
 
+### Q14 — the table's column header is inert: no click ever reaches it
+- **What happens:** clicking a column header does nothing at all — no selection
+  change, no event, no repaint. The click is swallowed rather than falling
+  through to the first row, so nothing *wrong* happens; the header is simply not
+  interactive. Its user-visible consequence is that a `sort` glyph can only ever
+  be set by the application: no user gesture can drive it.
+- **Why it's a quirk:** the code says this was unfinished rather than decided.
+  `findComponent`'s table branch reads `if (!findScroll(component, x, y)) {}` —
+  an empty body exactly where column hit-testing would go, while the sibling
+  `list`/`tree` branches have nothing left to do there. A table that paints a
+  sort indicator no user can click is a half-built affordance.
+- **Where:** `Thinlet.java` — `findComponent`'s table branch (the empty `if`).
+- **Locked by:** `thinlet.trace.InputTableTest`
+  `#clickingTheColumnHeaderDoesNothingAtAll` and
+  `#clickingTheHeaderOfASortedColumnLeavesTheSortUnchanged` (both tagged
+  documents-current-behavior; D78).
+- **Enhanced Thinlet disposition:** undecided, and deliberately parked — making
+  headers clickable adds *new* public behavior (which event fires, what an app
+  binds to), and the maintainer's own fork may already answer it. Revisit when
+  the fork sources land; keep either way until then.
+
 ## Triaged for Enhanced Thinlet (not behavior-locked)
 
 Findings investigated but *not* pinned by behavior tests, with reasons — the
