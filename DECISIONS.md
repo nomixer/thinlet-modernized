@@ -3222,3 +3222,51 @@ norm): inverted, it failed with the correct actual value. No paint or layout
 change, so nothing to re-record. (Cross-ref D64 the characterization suites this
 extends, D69 the protocol any later fix would follow, D75/D77 the quirk batches,
 D68 the mutation-check norm.)
+
+## D79 — local-ci single-test filter shipped; the `InputDriver.origin` fix specified and deferred
+
+**Date:** 2026-07-24. **Status:** accepted. **Phase:** 3c (tooling + a recorded
+plan; zero library behavior change).
+
+**Context.** Two loose ends surfaced while recording the table suite (D78). This
+entry ships the small one and specifies the larger one so the next session can
+execute it without re-deriving the analysis.
+
+**Shipped — `local-ci.sh -t <pattern>`.** The faithful-local-CI script
+(`.devcontainer/ci/local-ci.sh`, D44) ran only the whole net; iterating on one
+suite meant hand-writing the `docker run … -Dtest=…` line every time (this session
+did it ~10 times). It now takes an optional `-t <pattern>` that swaps the goal
+from `verify` to `test` and forwards `-Dtest` — composing with the JDK-row
+argument (`local-ci.sh 8 -t InputTableTest`). The effective Maven command is
+echoed before it runs, per the self-evident-tooling norm. One gotcha found and
+fixed while validating: the filter needs `-Dsurefire.failIfNoSpecifiedTests=false`
+(not the older `failIfNoTests`) so a filter naming only a `thinlet-core` class
+does not fail the `thinlet-drafts` module that matches none of it. The no-argument
+full-`verify` path — the pre-push gate — is byte-for-byte unchanged.
+
+**Specified and deferred — the `origin` scroll/header offset.** `InputDriver.origin`
+sums the `"bounds"` chain up the parent chain, but a scrolling container positions
+its children by its `:port` inset minus its `:view` scroll — the exact transform
+`findComponent` applies as it recurses into children (`Thinlet.java` ~4054). So a
+click on a child inside a headered or scrolled container is aimed short by that
+offset. D78 was bitten by it: a table row appeared to select the row above,
+because the header band (~one row tall) shifts every row's screen position.
+
+- **The fix** is to mirror the transform in the walk: for each node, after adding
+  its own `bounds`, add its *parent's* `(:port − :view)` when the parent has a
+  `:port`. That makes `d.click(row)` land true and lets `InputTableTest.clickRow`
+  (the local workaround) be deleted; `center`/`size` inherit the correction for
+  free since they build on `origin`.
+- **Why it is its own slice, not folded into D78.** `origin` underlies all 18
+  input suites, so the full net is the verification gate for changing it — that
+  belongs in a focused PR, not a recording-only one. The blast radius is real and
+  cuts both ways: most suites aim at widget *centres* and were tolerant of the old
+  ~1 px border error (they should stay green untouched), **but** any suite that
+  already compensates for scroll by hand would then double-correct and break.
+  `InputScrollTest`, `InputSplitPaneTest`, and `InputTreeTest` are the named
+  suspects to audit first — named as suspects, not cleared. The slice: fix
+  `origin`, delete `clickRow`, add a centre-based `clickWithModifiers`, run the
+  base row + 8/11/17, and fix-or-explain any suite that moves.
+
+(Cross-ref D44 the local-CI harness, D78 where `origin` was found wanting, D64/D65
+the input net that gates the deferred fix.)
