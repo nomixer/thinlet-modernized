@@ -71,9 +71,15 @@
   hit-testing belongs) and that a double-click fires `action` once, not twice.
   Recording only, zero behavior change. Base row: 353 (core) + 13 (drafts).
 - **local-ci single-test filter (D79, 2026-07-24)**: `.devcontainer/ci/local-ci.sh
-  -t <pattern>` runs one suite on the `test` goal (composes with the JDK-row arg);
-  the `InputDriver.origin` scroll/header fix is specified in D79 and queued as the
-  next step. Tooling only; no library change.
+  -t <pattern>` runs one suite on the `test` goal (composes with the JDK-row arg).
+  Tooling only; no library change.
+- **`InputDriver.origin` made scroll/header-aware (D80, 2026-07-31)**: `origin`
+  now adds each parent's `:port − :view` offset, so `d.click(child)` lands true
+  inside a headered/scrolled container; `InputTableTest.clickRow` deleted. No
+  live-suite moved (list/tree tolerant; splitpane/scroll unaffected); one
+  interaction golden (`table-selected-lead-focus`) re-recorded because its click
+  now lands on the intended row 1 instead of mis-aiming to row 0. Test harness
+  only; no library change.
 
 ## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 
@@ -84,14 +90,7 @@
 2. **No other open dispositions.** Further 3c work starts from fresh recording
    (drive a widget, assert what it does today, then decide) rather than a queue.
    Q2/Q3/Q4/Q6/Q10 remain deliberately kept, still pinned and tagged.
-3. **Fix `InputDriver.origin`'s scroll/header offset (specified in D79)** — the
-   ready-to-execute slice: mirror the `:port − :view` transform in the walk so
-   `d.click(row)` lands true, delete `InputTableTest.clickRow`, add a centre-based
-   `clickWithModifiers`, then run the base row + 8/11/17. Risk is named in D79 —
-   suites that already hand-compensate for scroll (audit `InputScrollTest`,
-   `InputSplitPaneTest`, `InputTreeTest` first) would double-correct; the full
-   input net is the gate.
-4. **Fork mapping (arrival-triggered; no expectations built on it)** — sources
+3. **Fork mapping (arrival-triggered; no expectations built on it)** — sources
    still pending (2026-07-18: not arrived). When they land: fork files →
    subsystems; boundaries vs Cut 2–6 seams; enhancement backlog; then Cut 4+
    seam commitments unblock (3a resumes).

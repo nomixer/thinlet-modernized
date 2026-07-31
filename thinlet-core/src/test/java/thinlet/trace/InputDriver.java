@@ -245,34 +245,29 @@ final class InputDriver {
     }
 
     /**
-     * {@link #clickAt(Object, int, int)} with modifier keys held — Shift extends a
+     * Primary click at the widget centre with modifier keys held — Shift extends a
      * selection from the lead, Control toggles a row ({@code select}; D78). Thinlet reads
      * {@code isShiftDown}/{@code isControlDown} off the press, and a real toolkit holds
      * the modifier down for the whole gesture, so it rides every event here too.
      */
-    void clickAtWithModifiers(Object widget, int xOffset, int yOffset, int modifiers) {
-        Point o = origin(widget);
-        int px = o.x + xOffset;
-        int py = o.y + yOffset;
-        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_MOVED, when++, modifiers, px, py, 0, false));
-        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_PRESSED, when++, modifiers, px, py, 1, false));
-        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_RELEASED, when++, modifiers, px, py, 1, false));
+    void clickWithModifiers(Object widget, int modifiers) {
+        Point p = center(widget);
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_MOVED, when++, modifiers, p.x, p.y, 0, false));
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_PRESSED, when++, modifiers, p.x, p.y, 1, false));
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_RELEASED, when++, modifiers, p.x, p.y, 1, false));
     }
 
     /**
-     * Double-click at ({@code xOffset},{@code yOffset}) — press/release, then a second
-     * press/release carrying clickCount 2, which is the count Thinlet tests for
-     * {@code perform}.
+     * Double-click at the widget centre — press/release, then a second press/release
+     * carrying clickCount 2, the count Thinlet tests for {@code perform}.
      */
-    void doubleClickAt(Object widget, int xOffset, int yOffset) {
-        Point o = origin(widget);
-        int px = o.x + xOffset;
-        int py = o.y + yOffset;
-        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_MOVED, when++, 0, px, py, 0, false));
-        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_PRESSED, when++, 0, px, py, 1, false));
-        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_RELEASED, when++, 0, px, py, 1, false));
-        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_PRESSED, when++, 0, px, py, 2, false));
-        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_RELEASED, when++, 0, px, py, 2, false));
+    void doubleClick(Object widget) {
+        Point p = center(widget);
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_MOVED, when++, 0, p.x, p.y, 0, false));
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_PRESSED, when++, 0, p.x, p.y, 1, false));
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_RELEASED, when++, 0, p.x, p.y, 1, false));
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_PRESSED, when++, 0, p.x, p.y, 2, false));
+        dispatch(new MouseEvent(thinlet, MouseEvent.MOUSE_RELEASED, when++, 0, p.x, p.y, 2, false));
     }
 
     /**
@@ -502,7 +497,14 @@ final class InputDriver {
         return new Point(o.x + tb.width / 2, o.y + tb.height / 2);
     }
 
-    /** Absolute top-left of a widget, summed from the Object[] "bounds" chain. */
+    /**
+     * Absolute top-left of a widget. Sums the {@code "bounds"} chain, and at each step
+     * adds the parent's content offset ({@code :port} inset minus {@code :view} scroll)
+     * when the parent scrolls — the same transform {@code findComponent} applies as it
+     * recurses into children (Thinlet.java, {@code x += view.x - port.x}). Without it a
+     * click on a child inside a headered/scrolled container is aimed short by that offset
+     * (D80; the D78 table-row-selects-the-row-above symptom).
+     */
     private Point origin(Object widget) {
         int x = 0;
         int y = 0;
@@ -511,6 +513,13 @@ final class InputDriver {
             if (b != null) {
                 x += b.x;
                 y += b.y;
+            }
+            Object parent = thinlet.getParent(w);
+            Rectangle port = (parent == null) ? null : (Rectangle) property(parent, ":port");
+            if (port != null) {
+                Rectangle view = (Rectangle) property(parent, ":view");
+                x += port.x - ((view == null) ? 0 : view.x);
+                y += port.y - ((view == null) ? 0 : view.y);
             }
         }
         return new Point(x, y);
