@@ -3270,3 +3270,56 @@ because the header band (~one row tall) shifts every row's screen position.
 
 (Cross-ref D44 the local-CI harness, D78 where `origin` was found wanting, D64/D65
 the input net that gates the deferred fix.)
+
+## D80 — `InputDriver.origin` made scroll/header-aware; the table row-click workaround removed
+
+**Date:** 2026-07-31. **Status:** accepted. **Phase:** 3c (test harness; zero library
+change). Closes the item D79 specified and deferred.
+
+**Decision.** `origin` now adds each parent's content offset (`:port` inset minus
+`:view` scroll) as it walks the `"bounds"` chain — the same transform
+`findComponent` applies descending into a scrolling container's children. A click
+on a child *inside* a headered/scrolled container therefore lands true, so
+`d.click(row)` works and `InputTableTest`'s local `clickRow` helper (the D78
+workaround) is deleted. `center`/`size` build on `origin` and inherit the fix.
+
+**Blast radius, confirmed empirically — narrower than D79's worst case.** The fix
+changes `origin(widget)` only when an ancestor carries a `:port`, so it touches
+only child-object clicks inside a scrolling container. The full input net is
+green, base row + 8/11/17:
+
+- The D79 suspects are unaffected. `InputSplitPaneTest` — splitpane positions its
+  children with no `:port`, so `origin` is unchanged. `InputScrollTest` —
+  wheel-scrolls and asserts on `:view.y`; never clicks a scrolled child by
+  coordinate.
+- The genuinely-affected clicks — `InputListTest` (list items) and `InputTreeTest`
+  (tree nodes) — stayed green: both containers reserve only a ~1 px border
+  `:port` and aim at item centres, so the old under-aim already landed within the
+  row and the exact aim still does. No suite moved; nothing to fix-or-explain.
+- Popup/combolist item clicks address the item as an *offset on the container*,
+  whose own `origin` is unchanged (its parent is the desktop, no `:port`), so they
+  are untouched.
+
+**Testkit deltas** (test-scope only): `InputDriver` gains centre-based
+`clickWithModifiers`/`doubleClick`; the offset-based `clickAtWithModifiers`/
+`doubleClickAt` added in D78 solely for `clickRow` are removed (they were used
+only there), leaving no dead helpers.
+
+**One golden re-recorded — the fix corrected a mis-aimed scenario.** The
+interaction golden `table-selected-lead-focus` drove `d.click(getItem(tbl, 1))`,
+but under the old `origin` that click landed one header-height high on **row 0**,
+so the committed golden encoded row 0's selection/focus while the scenario's code
+asked for row 1. With the fix the click lands on row 1, so the render trace moved
+the selection+focus band from y=0 to y=18 (one row down) — the paint of "row 1
+selected", not any renderer change. Re-recorded in the CI container, `clean`
+first, all 51 interaction goldens regenerated with **only** this one changing
+(D44/D69 discipline); the diff was inspected and is exactly the row-0→row-1 shift.
+The layout-state golden for the same scenario did **not** move — selection changes
+where the highlight paints, not the row geometry.
+
+**Validation.** Full input net green including the re-recorded golden;
+`clickSelectsTheRowUnderThePointer` was mutation-checked (D68 norm) — inverted, it
+failed with `but was: 1`, proving the click lands on the addressed row rather than
+the fix masking a mis-aim. Base row + 8/11/17 green; no library behavior change.
+(Cross-ref D78 the symptom, D79 the deferral this closes, D44/D69 the golden
+re-record protocol, D68 the mutation-check norm.)
