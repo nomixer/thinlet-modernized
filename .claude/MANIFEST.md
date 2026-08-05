@@ -17,6 +17,7 @@ project source and stay.
 | `.claude/SELF-REVIEWS.md` | Rolling log of lull-time independent-model self-reviews (full findings; material outcomes go to `DECISIONS.md`, e.g. D50). | Yes |
 | `.claude/NEXT-STEPS.md` | The live session handoff: state pointers, ordered next work, one-line discipline reminders (D57 format — no rationale recaps). | Yes |
 | `.claude/MANIFEST.md` | This file. | Yes |
+| `.claude/skills/java-refactor/` | Skill: refactoring Java at a fixed version floor, with payoff grading and claim discipline. `SKILL.md` + `references/this-repo.md` are what Claude loads; `evals/` holds the 6-case benchmark and `evals/RESULTS.md` the measurements that shaped it. Markdown only — no build or hook depends on it. | Yes — Claude then refactors Java here unaided |
 
 ## Policy (keep the repo tidy)
 
