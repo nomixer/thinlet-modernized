@@ -1,0 +1,87 @@
+{
+  "skill_name": "java-refactor",
+  "notes": "Test inputs are real methods in thinlet-core/src/main/java/thinlet/Thinlet.java. Floor is Java 8 (maven.compiler.release). Subagents run with repo access. ANCHORING POLICY: prompts cite method signatures only, never line numbers — every signature below is unique in the file, so the prompts cannot rot as the file shifts. An earlier draft embedded line numbers captured at commit 331b58e; two merges later every one of them was off by 46 lines. Do not reintroduce them.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "trap-load-bearing-modernization",
+      "prompt": "The `static Object get(Object component, Object key)` method in thinlet-core/src/main/java/thinlet/Thinlet.java walks an Object[] linked list with `entry[0] == key`. That looks really dated. Can you modernize it — maybe a HashMap lookup or a stream would be cleaner and faster?",
+      "expected_output": "Recommends AGAINST the Map/stream rewrite; identifies that the `==` is the load-bearing interned-token identity contract (D42/D43, InternTripwireTest) and that the Object[] shape is the serialization + Renderer-seam representation; classifies it as a false gain / behavior change and routes it to the disposition process rather than rewriting.",
+      "assertions": [
+        {"text": "Does NOT rewrite the method to use a HashMap or a stream", "type": "manual"},
+        {"text": "Identifies the `==` as deliberate identity comparison (interned tokens), not a bug to fix with .equals()", "type": "manual"},
+        {"text": "Names the behavior-change / representation risk (serialization shape and/or Renderer seam and/or the pinned intern tripwire test)", "type": "manual"},
+        {"text": "Routes the change to the disposition / decision process instead of treating it as a free refactor", "type": "manual"}
+      ],
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "floor-legal-minor-wins",
+      "prompt": "In thinlet-core/src/main/java/thinlet/Thinlet.java there are some dated boxing idioms — e.g. the `new Long(((long) modifiers) << 32 | keycode)` in the keystroke parser, and the `new Integer(value)` inside `setInteger`. Tidy these up to be more idiomatic, and keep the build working.",
+      "expected_output": "Replaces the deprecated boxing constructors with Long.valueOf / Integer.valueOf (Java-8-legal), grades this as a real-but-minor win, and introduces no API or syntax newer than Java 8 (no var, List.of, switch expressions, text blocks, etc.). States the floor is Java 8 and how it verified. Crucially, it establishes that the swap is behavior-preserving rather than assuming it: valueOf may hand back a cached instance where the constructor always allocated, so it confirms nothing compares these boxed values with `==`.",
+      "assertions": [
+        {"text": "Proposes Integer.valueOf / Long.valueOf as the replacement for the deprecated constructors", "type": "manual"},
+        {"text": "Introduces NO API or syntax newer than Java 8 (no var, List.of, switch expressions, text blocks, records, isBlank, etc.)", "type": "manual"},
+        {"text": "Identifies the Java 8 floor from the build (maven.compiler.release / --release 8)", "type": "manual"},
+        {"text": "Grades the change honestly as minor rather than overselling it, and does not balloon into an unrelated mega-refactor", "type": "manual"},
+        {"text": "Does not treat valueOf as a trivially free swap: notes that valueOf may return a cached instance where new Long/new Integer always allocated a fresh object, and checks that no `==` identity comparison depends on these boxed values (they are unwrapped via longValue() / read back through getInteger). In a codebase whose core contract is interned-`==` identity (D42/D43), performing that check is the point", "type": "manual"}
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "rank-and-first-big-win",
+      "prompt": "Thinlet.java is one ~6000-line class with some very long methods. Where would you start refactoring for the biggest safe payoff, and show me the first concrete slice you'd do?",
+      "expected_output": "Ranks candidates by payoff tier, leads with a genuine behavior-preserving big win (e.g. extracting a named intent-revealing method, or a try-with-resources leak fix), presents one small single-concern slice with a floor-safety and behavior-preservation check and a concrete verification step against the golden/input regression net — rather than proposing a sweeping rewrite.",
+      "assertions": [
+        {"text": "Proposes ONE small, single-concern first slice rather than a sweeping rewrite", "type": "manual"},
+        {"text": "The proposed slice is behavior-preserving (observably null), and says how that will be verified against the regression net", "type": "manual"},
+        {"text": "Ranks or grades opportunities by payoff (does not treat all cleanups as equal)", "type": "manual"},
+        {"text": "Respects the single-class / package-private-seam and hot-path constraints (no drive-by Map-ification, no stream-ifying hot loops)", "type": "manual"}
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "clean-win-try-with-resources",
+      "prompt": "Take a look at the `private Object parse(InputStream inputstream, char mode, Object handler)` method in thinlet-core/src/main/java/thinlet/Thinlet.java. It opens a Reader and closes it in a finally block at the end. Is there a cleaner, more modern way to handle that resource, and is it safe to change?",
+      "expected_output": "Confidently proposes converting to try-with-resources (a Java-7 feature, legal at the Java-8 floor), notes it also lets the always-true `reader != null` guard go, grades it a solid/clean win, and is honest about the one nuance (on a double-failure path the close() exception becomes suppressed rather than replacing the body exception) while concluding it is observably safe and verifiable against the parse/golden tests. Does NOT refuse or over-flag it as a trap.",
+      "assertions": [
+        {"text": "Proposes converting to try-with-resources (does NOT refuse or mislabel it a false gain / trap)", "type": "manual"},
+        {"text": "Confirms it is legal at the Java 8 floor (try-with-resources is Java 7)", "type": "manual"},
+        {"text": "Treats it as behavior-preserving and names a concrete way to verify (parse tests / golden regression net); bonus if it honestly notes the suppressed-close-exception nuance instead of claiming naive identical", "type": "manual"},
+        {"text": "Recognizes the `reader != null` guard is redundant here (reader is assigned before the try) and can be dropped", "type": "manual"}
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "trap-undocumented-new-string-idiom",
+      "prompt": "thinlet-core/src/main/java/thinlet/Thinlet.java is full of `new String(...)` wrappers — things like `new String(text.toString())`, `new String(tagname)`, and `new String(token.substring(0, equals))`. They look like pointless 2003-era defensive copies that allocate for nothing. Can you strip that idiom out and tidy it up?",
+      "expected_output": "Does not treat the ~10 sites as one uniform idiom. Separates them: (1) the discarded `new String(new byte[0], 0, 0, enc)` in parse's XML-declaration branch is not a copy at all but a charset-validation probe whose only effect is to throw UnsupportedEncodingException — removing it silently accepts invalid encodings, so it must be kept or replaced with an explicit check; (2) `new String(value.getBytes(), 0, value.length(), encoding)` is a charset re-decode, not a copy; (3) the genuinely redundant wrappers over an already-fresh String (e.g. StringBuffer.toString()) are safe to drop; (4) `new String(token.substring(...))` was the canonical pre-Java-7u6 idiom for releasing the parent's shared backing array, obsolete since substring began copying, so it is safe to drop at a Java 8 floor and the answer says why. Also checks, rather than assumes, whether guaranteed-distinct (de-interned) String identity is load-bearing anywhere it removes a wrapper, given this codebase's interned-`==` key contract.",
+      "assertions": [
+        {"text": "Does NOT blanket-remove every `new String(...)` site; treats them as distinct cases rather than one uniform redundant idiom", "type": "manual"},
+        {"text": "Identifies that `new String(new byte[0], 0, 0, enc)` discards its result and exists solely to throw UnsupportedEncodingException — i.e. it is input validation, not a copy — and does NOT remove it (or replaces it with an equivalent explicit charset check), naming the silent loss of encoding validation as the cost of deleting it", "type": "manual"},
+        {"text": "Recognizes that `new String(value.getBytes(), 0, value.length(), encoding)` is a charset re-decode rather than a defensive copy, so it is not part of the redundant idiom", "type": "manual"},
+        {"text": "For the sites it does propose removing, gives the correct floor-relevant reason — notably that String.substring stopped sharing the parent's backing char array in Java 7u6, which is what made `new String(s.substring(...))` obsolete — rather than asserting the copies were always pointless", "type": "manual"},
+        {"text": "Checks whether guaranteed-distinct (non-interned) String identity is load-bearing before removing wrappers that feed the widget model, given the interned-`==` key contract — rather than assuming String identity is irrelevant in this codebase", "type": "manual"}
+      ],
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "heldout-legacy-collection-swap",
+      "prompt": "Thinlet.java still leans on `Hashtable` and `Vector` — the `:bind` client-property table built in `putProperty`, a `Hashtable` for attribute lists in the parser, and a `Vector` or two in the attribute/font parsing. Those types are ancient. Swap them for `HashMap` and `ArrayList`?",
+      "expected_output": "Does not treat the swap as a uniform modernization. Separates structures that stay local to a method and never escape (safe) from ones stored into the widget model or reachable from another thread. Identifies the three real semantic differences and checks each against the code rather than asserting: (1) Hashtable/Vector are synchronized and HashMap/ArrayList are not, and this class implements Runnable and starts a timer thread, so it must establish whether any of these structures is reachable from that thread before dropping synchronization; (2) Hashtable rejects null keys and values while HashMap accepts them — and putProperty is visibly written around that, branching to remove(key) instead of put when the value is null, so the swap changes what that guard means; (3) iteration order differs between the two, and this project's behavior net observes hash-iteration order, so a swap is checkable against the golden traces and must be verified there rather than assumed. Reaches a clear graded verdict rather than a vague 'could be modernized'.",
+      "assertions": [
+        {"text": "Does NOT blanket-swap every site; distinguishes structures that are purely local to a method from those stored into the widget model or otherwise escaping", "type": "manual"},
+        {"text": "Identifies that Hashtable/Vector are synchronized and HashMap/ArrayList are not, AND actually checks whether a second thread can reach these structures (the class implements Runnable and starts a timer thread) rather than assuming everything is on the AWT event thread", "type": "manual"},
+        {"text": "Identifies that Hashtable rejects null keys/values where HashMap permits them, and connects this to putProperty's existing null branch (removing rather than putting when the value is null) instead of treating the guard as incidental", "type": "manual"},
+        {"text": "Raises iteration/encounter order as an observable difference and names a concrete way to verify it against this project's regression net, rather than asserting the swap is invisible", "type": "manual"},
+        {"text": "Reaches a clear verdict with an honest payoff grade — neither a blanket 'yes, modernize' nor a reflexive refusal — and scopes any claim about where these types are used to the search actually performed", "type": "manual"}
+      ],
+      "files": []
+    }
+  ]
+}
