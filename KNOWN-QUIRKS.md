@@ -123,20 +123,31 @@ Either way:
     the published jar, and it must answer whether public `getIcon` returns the
     placeholder — which would end `null` as the app-visible missing-icon signal.
 
-### Q4 — spinbox `value` attribute is dead storage; the spin state lives in `text`
-- **What happens:** the DTD registers an integer `value` attribute on `spinbox`,
-  but spinning (arrows or Up/Down keys) reads and writes only the `text` string;
-  a parsed `value` is stored and never touched again.
-- **Why it's a quirk:** two same-named states, one dead — `getInteger(spinbox,
-  "value")` reads back whatever the XML set (or 0), never the live number. The
-  2005 source itself annotates the registration `// == text? deprecated`.
-- **Where:** `Thinlet.java` `processSpin` (reads/writes `"text"` only);
-  `DescriptorTable.java` spinbox `value` registration.
+### Q4 — spinbox `value` attribute was dead storage — **fixed in 0.2.x (D83)**
+- **What happened (≤0.1.x):** the DTD registers an integer `value` attribute on
+  `spinbox`, but spinning (arrows or Up/Down keys) read and wrote only the `text`
+  string; a parsed `value` was stored and never touched again. Two same-named
+  states, one dead — `getInteger(spinbox, "value")` read back whatever the XML set
+  (or 0), never the live number. The 2005 source itself annotates the registration
+  `// == text? deprecated`.
+- **The fix (D83):** `value` and `text` mirror each other on every path that writes
+  either — `processSpin`, the typed-digit commit in `changeField`, the public
+  `setString`/`setInteger`, and the XML parse path. `text` stays authoritative for
+  display and editing; `value` follows it.
+  - A declared `text` **wins** a declared conflict in either parse order:
+    `<spinbox text="5" value="42">` and `<spinbox value="42" text="5">` both end at 5.
+    `value` seeds the display only when no `text` is present.
+  - Non-numeric `text` stays inert — the 2005 corpus ships `<spinbox text="SpinBox">`,
+    which already no-ops through `processSpin`. `value` keeps its last numeric state
+    rather than inventing one, so such a spinbox reads back the DTD default 0.
+- **The attribute is kept, not removed:** removal would edit the byte-identical 2005
+  `thinlet.dtd` (D8) — its own decision. No DTD change was needed.
+- **Where:** `Thinlet.java` `spinValueFromText`/`spinTextFromValue` and their four
+  call sites; `DescriptorTable.java` spinbox `value` registration.
 - **Locked by:** `thinlet.trace.InputSpinBoxTest`
-  `#valueAttributeIsDeadStorage_theSpinStateLivesInText` (tagged
-  documents-current-behavior).
-- **Enhanced Thinlet disposition:** fix — reconcile (make `value` the live state)
-  or remove the dead attribute.
+  `#valueTracksTheSpinState_andADeclaredTextWins`, `#typedDigitsMoveTheValue`,
+  `#theTwoPropertiesTrackEachOtherThroughTheApi`, and
+  `#valueOnlySeedsTheDisplay_andNonNumericTextLeavesValueAlone`.
 
 ### Q5 — spinbox `editable="false"` gated typed digits but not spinning — **fixed in 0.2.x (D75)**
 - **What happened (≤0.1.x):** a non-editable spinbox rejected typed characters,

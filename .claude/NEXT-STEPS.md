@@ -94,18 +94,25 @@
   `Renderer` paints the bar from the same value layout was clamping, so the effective
   position is published as the reserved `:divider` and read by the renderer and the
   keyboard step (the drag path derives its own and needed nothing). Non-proportional
-  resize stays 2005 by choice. No golden re-record. Base row: 358 (core) + 13 (drafts).
+  resize stays 2005 by choice. No golden re-record.
+- **Q4 done (D83, 2026-08-15)**: `value` and `text` mirror each other on all four write
+  paths (spin, typed-digit commit, the two public setters, XML parse), so the
+  DTD-declared integer is live. `text` stays authoritative and wins a declared conflict
+  in either parse order; non-numeric text leaves `value` alone. The attribute is kept —
+  removing it would edit the verbatim 2005 DTD (D8). No golden re-record.
+  **The quirk backlog is empty again — this time checked against `KNOWN-QUIRKS.md`
+  dispositions, not memory.** Base row: 361 (core) + 13 (drafts).
 
 ## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 
-1. **Q4 — spinbox `value` (authorized 2026-08-15, D83 pending).** Keep `text`
-   authoritative, mirror the numeric state into `value` so `getInteger(…, "value")`
-   is live; seed `text` from `value` when only `value` is given. Do **not** remove
-   the attribute — that edits the verbatim 2005 DTD (D8), its own decision.
-3. **Q14 (inert table column header) — parked, not open** — held deliberately until
+1. **Q14 (inert table column header) — parked, not open** — held deliberately until
    the fork sources land, because wiring a header click adds *new* public behavior
-   the maintainer's own fork may already define (D78). Q6/Q10 stay kept (D75).
-4. **Fork mapping (arrival-triggered; no expectations built on it)** — sources still
+   the maintainer's own fork may already define (D78). Q6/Q10 stay kept (D75), and
+   Q2's non-proportional half stays 2005 by choice (D82).
+2. **No other open dispositions** — the three authorized on 2026-08-15 are done
+   (D81/D82/D83). Further 3c work starts from fresh recording (drive a widget, assert
+   what it does today, then decide) rather than a queue.
+3. **Fork mapping (arrival-triggered; no expectations built on it)** — sources still
    pending (2026-08-15: not arrived, a month past the expected window). The gate
    covers **only** the Cut 4/5/6 seam commitments (D48/D50/D61/D69), never net or
    preparatory work. When they land: fork files → subsystems; boundaries vs Cut 2–6
