@@ -100,17 +100,17 @@ class InputSplitPaneTest {
     }
 
     /**
-     * Locked 2005 quirk: the divider is stored in absolute pixels and only ever
-     * *clamped* on resize — never rescaled. So growing the splitpane does not keep the
-     * split ratio, and shrinking past the divider clamps it down **permanently** (the
-     * position is lost, not restored when the pane grows back). See KNOWN-QUIRKS Q2.
+     * KNOWN-QUIRKS Q2, fixed in 0.2.x (D82): a shrink past the divider no longer destroys
+     * the requested position — it is clamped for layout and restored when the pane grows
+     * back. The divider stays **absolute pixels**, deliberately: rescaling it would change
+     * what {@code getInteger(sp, "divider")} means for every app that sets it.
      */
     @Test
-    @Tag("documents-current-behavior")
-    void dividerIsAbsolutePixels_nonProportionalAndDestructiveClampOnResize() throws IOException {
+    void dividerIsAbsolutePixels_andSurvivesAShrinkPastIt() throws IOException {
         InputDriver d = InputDriver.load(FIXTURE, new InputHandler());
         Thinlet t = d.thinlet();
         Object sp = d.find("sp");
+        Object leftPane = t.getParent(d.find("bL")); // its width IS the effective divider
         t.setInteger(sp, "divider", 200);
 
         d.resize(400, 768);
@@ -124,12 +124,40 @@ class InputSplitPaneTest {
 
         d.resize(150, 768);
         assertThat(t.getInteger(sp, "divider"))
-                .as("shrink past the divider clamps it to width-5")
+                .as("shrunk past the divider: the requested 200 is remembered, not overwritten")
+                .isEqualTo(200);
+        assertThat(d.size(leftPane).width)
+                .as("...while the pane on screen is clamped to width-5, so nothing paints past the edge")
                 .isEqualTo(145);
+
         d.resize(800, 768);
         assertThat(t.getInteger(sp, "divider"))
-                .as("clamp is destructive: the 200 position is lost permanently, not restored on grow")
-                .isEqualTo(145);
+                .as("grown back: the remembered 200 is honoured again")
+                .isEqualTo(200);
+        assertThat(d.size(leftPane).width)
+                .as("...and the pane returns to it — the 2005 clamp lost this permanently")
+                .isEqualTo(200);
+    }
+
+    /** A drag while the pane is too narrow to honour the request replaces it outright. */
+    @Test
+    void draggingWhileClampedReplacesTheRememberedPosition() throws IOException {
+        InputDriver d = InputDriver.load(FIXTURE, new InputHandler());
+        Thinlet t = d.thinlet();
+        Object sp = d.find("sp");
+        Object leftPane = t.getParent(d.find("bL"));
+        t.setInteger(sp, "divider", 200);
+        d.resize(150, 768); // clamped: on screen at 145, remembering 200
+
+        d.dragInside(sp, d.size(leftPane).width + 2, 50, 100, 50); // grab the bar where it is
+        assertThat(t.getInteger(sp, "divider"))
+                .as("the drag is a new request, so the remembered 200 is gone")
+                .isEqualTo(98);
+
+        d.resize(800, 768);
+        assertThat(t.getInteger(sp, "divider"))
+                .as("growing back honours the dragged position, not the pre-clamp one")
+                .isEqualTo(98);
     }
 
     /**

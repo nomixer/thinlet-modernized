@@ -3374,3 +3374,50 @@ raises a real API question — whether the placeholder is returned from public `
 would end `null` as the app-visible missing-icon signal. Recorded in `KNOWN-QUIRKS.md` Q3 and
 the `ROADMAP.md` 3c backlog. (Cross-ref D54 the vendored assets, D69 the change-control
 protocol, D31 the dependency-free constraint.)
+
+## D82 — Q2: the splitpane clamp stops destroying the requested divider
+
+**Date:** 2026-08-15. **Status:** accepted. **Phase:** 3c (enhanced line, 0.2.x).
+Authorized by the maintainer 2026-08-15 (with D81/D83).
+
+**Decision.** `"divider"` now means *the position the app asked for*, and `doLayout` clamps
+to `maxdiv` for the current layout **without writing the clamp back**. A shrink past the
+divider no longer overwrites the request, so growing the pane returns it to where it was.
+The divider stays **absolute pixels**: rescaling it proportionally would change what
+`getInteger(sp, "divider")` returns for every app that sets one, which is a separate
+decision and probably wants a new attribute rather than a redefinition of this one.
+
+**Not the one-line change it looked like.** The obvious fix — delete the write-back — paints
+the divider bar off the pane's edge, because `Renderer.paintSplitPane` positions the bar from
+the same model value that layout was clamping. The clamped position therefore has to be
+published: `doLayout` writes `":divider"` (reserved-key convention, added to the model-schema
+comment above `createImpl`) every layout, and the two readers that must see the *effective*
+position now read it:
+
+- **`Renderer`** paints the bar at `":divider"`, falling back to `"divider"` for a paint that
+  precedes any layout.
+- **The keyboard path** steps from `":divider"`, so Left/Right in a pane too small to honour
+  the request move the visible bar instead of silently incrementing a request nothing shows.
+- **The drag path needed nothing.** It derives `moveto` from the pointer and already clamps to
+  `[0, size−5]`, reading `"divider"` only to skip a no-op write — so a drag is simply a new
+  request, which is the right semantics.
+
+**Divergence, stated plainly.** While a pane is too small, `getInteger(sp, "divider")` returns
+the remembered request, not what is on screen. That is the point of the fix (the app's property
+is no longer silently rewritten by the layout), but it does mean the two can differ until the
+pane has room again.
+
+**Validation.** `InputSplitPaneTest#dividerIsAbsolutePixels_andSurvivesAShrinkPastIt` replaces
+the pin of the destructive clamp (tag `documents-current-behavior` off) and asserts both halves
+black-box: the request survives the shrink, and the first pane's *width* — the effective
+divider — is clamped to 145 and then restored to 200. A second test pins that a drag while
+clamped replaces the remembered position rather than snapping back on grow; it passes against
+2005 too (there was no memory to clear), so it is a guard, not a discriminator. Red-green
+checked: with the source stashed, the flipped pin fails on the remembered-request assertion.
+Full container run green — 358 core (+1) + 13 drafts — with **no golden re-record**: no corpus
+splitpane starts clamped, so the derived `":divider"` equals `"divider"` everywhere the goldens
+look, and `":divider"` is not one of the keys the D61 layout-state sidecars record.
+
+**Still 2005 by choice:** the non-proportional half of Q2. Growing a splitpane does not keep
+the split ratio; the entry stays in `KNOWN-QUIRKS.md` recording that, now as the open half.
+(Cross-ref D69 the change-control protocol, D61 the sidecar key set, D48 the Renderer seam.)

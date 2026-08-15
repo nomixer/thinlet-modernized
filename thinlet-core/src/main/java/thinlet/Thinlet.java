@@ -484,8 +484,16 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 divider = Math.min(d1, maxdiv);
                 setInteger(component, "divider", divider, -1);
             } else if (divider > maxdiv) {
-                setInteger(component, "divider", divider = maxdiv, -1);
+                // 0.2.x (D82): KNOWN-QUIRKS Q2 — 2005 wrote the clamp back over "divider",
+                // so a shrink destroyed the app's requested position permanently. Clamp for
+                // this layout only; "divider" keeps what was asked for, and the pane returns
+                // to it once there is room. Pinned by InputSplitPaneTest.
+                divider = maxdiv;
             }
+            // 0.2.x (D82): "divider" is now the *requested* position and may sit past maxdiv,
+            // so the effective on-screen one is published here for the paint (Renderer) and
+            // keyboard paths — neither may act on a position the pane is too small to show.
+            setInteger(component, ":divider", divider, -1);
 
             if (visible1) {
                 setRectangle(
@@ -2585,7 +2593,10 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 invoke(component, null, "action");
             }
         } else if (is(classname, "splitpane")) {
-            int divider = getInteger(component, "divider", -1);
+            // Steps from the effective position, not the requested one (D82): in a pane too
+            // small to honour the request, stepping from the request would move "divider"
+            // without moving the visible bar.
+            int divider = getInteger(component, ":divider", getInteger(component, "divider", -1));
             int d = 0;
             if (keycode == KeyEvent.VK_HOME) {
                 d = -divider;
@@ -4492,7 +4503,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
     // ":port"/":view"/":combolist"/":popup"/":lead"; "bounds" holds a Rectangle.
     // Pinned: DescriptorContractTest (canonical-key identity, storage semantics).
     // Further reserved keys: ":widths"/":offset" (layout state; pinned:
-    // GoldenLayoutStateTraceTest, D61), ":anchor" (shift-range selection anchor;
+    // GoldenLayoutStateTraceTest, D61), ":divider" (splitpane: the effective
+    // position doLayout derives from the requested "divider"; pinned:
+    // InputSplitPaneTest, D82), ":anchor" (shift-range selection anchor;
     // pinned: InputListTest.shiftArrowExtendsMultiSelection), ":horizontal"/
     // ":vertical" (scrollbar Rectangles), ":tooltipbounds", ":titleheight".
     // The dialog resize hit-tokens ":n"/":s"/":e"/":w"/":nw"/":ne"/":sw"/":se"

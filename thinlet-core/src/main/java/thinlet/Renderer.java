@@ -1464,7 +1464,9 @@ final class Renderer {
             boolean focus,
             boolean enabled) {
         boolean horizontal = (!Thinlet.is(Thinlet.get(component, "orientation"), "vertical"));
-        int divider = t.getInteger(component, "divider", -1);
+        // ":divider" is the effective position doLayout published; "divider" is what the app
+        // asked for and can exceed the pane (D82). Fallback covers a paint before any layout.
+        int divider = t.getInteger(component, ":divider", t.getInteger(component, "divider", -1));
         t.paintRect(
                 g,
                 horizontal ? divider : 0,
