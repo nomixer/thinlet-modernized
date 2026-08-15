@@ -1,4 +1,4 @@
-# Next steps — session handoff (2026-07-24)
+# Next steps — session handoff (2026-08-15)
 
 > State pointers + ordered work only; rationale lives in `DECISIONS.md`
 > (single-home rule + comment rules: **D57**). Charter:
@@ -63,7 +63,8 @@
   a tab with no focusable content keeps focus on the pane (the pane asks before
   it walks, via the new `hasFocusableInside`), and a disabled menu item swallows
   the release with the popup left open. Zero golden re-records; two more
-  `documents-current-behavior` tags off. **The quirk backlog is now empty.**
+  `documents-current-behavior` tags off. (This entry once read "the quirk backlog is
+  now empty" — it was wrong; see the 2026-08-15 bullet.)
 - **Table behavior recorded (D78, 2026-07-23)**: `InputTableTest` (14 tests) +
   `input/table2.xml` close the last major input-net gap — selection by mouse and
   keyboard, shift/control paths, `interval` vs `multiple`, `perform`, and the
@@ -80,20 +81,34 @@
   interaction golden (`table-selected-lead-focus`) re-recorded because its click
   now lands on the intended row 1 instead of mis-aiming to row 0. Test harness
   only; no library change.
+- **Three dispositions authorized, one correction (2026-08-15)**: Q2/Q3/Q4 carried
+  `disposition: fix` citing **no** D-entry — proposals, not decisions — while this
+  file reported the backlog as empty. The maintainer settled all three, and held the
+  3a Cut 4/5/6 gate closed despite the fork delay. **Q3 step 1 done (D81)**: the
+  icon miss logs at WARNING (and FINE per attempt, plus a `MediaTracker` check for
+  resolved-but-undecodable) — **log only, no throw**, return value untouched, so no
+  golden moved; step 2 (a supplied missing-image indicator) is deferred with a brief
+  in KNOWN-QUIRKS Q3 and the ROADMAP 3c backlog. Base row: 357 (core) + 13 (drafts).
 
 ## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 
-1. **Q14 (inert table column header) — parked, not open** — the only quirk
-   without a settled disposition, held deliberately until the fork sources land,
-   because wiring a header click adds *new* public behavior the maintainer's own
-   fork may already define (D78).
-2. **No other open dispositions.** Further 3c work starts from fresh recording
-   (drive a widget, assert what it does today, then decide) rather than a queue.
-   Q2/Q3/Q4/Q6/Q10 remain deliberately kept, still pinned and tagged.
-3. **Fork mapping (arrival-triggered; no expectations built on it)** — sources
-   still pending (2026-07-18: not arrived). When they land: fork files →
-   subsystems; boundaries vs Cut 2–6 seams; enhancement backlog; then Cut 4+
-   seam commitments unblock (3a resumes).
+1. **Q2 — splitpane divider (authorized 2026-08-15, D82 pending).** Clamp for layout
+   without writing back, so a transient shrink stops destroying the requested
+   position. Flip the `InputSplitPaneTest` pin; keep the divider absolute-pixel —
+   proportional dividers are a separate decision (they would redefine what
+   `getInteger(…, "divider")` returns, so they want a new attribute).
+2. **Q4 — spinbox `value` (authorized 2026-08-15, D83 pending).** Keep `text`
+   authoritative, mirror the numeric state into `value` so `getInteger(…, "value")`
+   is live; seed `text` from `value` when only `value` is given. Do **not** remove
+   the attribute — that edits the verbatim 2005 DTD (D8), its own decision.
+3. **Q14 (inert table column header) — parked, not open** — held deliberately until
+   the fork sources land, because wiring a header click adds *new* public behavior
+   the maintainer's own fork may already define (D78). Q6/Q10 stay kept (D75).
+4. **Fork mapping (arrival-triggered; no expectations built on it)** — sources still
+   pending (2026-08-15: not arrived, a month past the expected window). The gate
+   covers **only** the Cut 4/5/6 seam commitments (D48/D50/D61/D69), never net or
+   preparatory work. When they land: fork files → subsystems; boundaries vs Cut 2–6
+   seams; enhancement backlog; then Cut 4+ seam commitments unblock (3a resumes).
 
 ## Discipline (one-liners; the D-entries carry the why)
 

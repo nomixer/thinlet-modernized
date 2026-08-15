@@ -3323,3 +3323,54 @@ failed with `but was: 1`, proving the click lands on the addressed row rather th
 the fix masking a mis-aim. Base row + 8/11/17 green; no library behavior change.
 (Cross-ref D78 the symptom, D79 the deferral this closes, D44/D69 the golden
 re-record protocol, D68 the mutation-check norm.)
+
+## D81 — Q3 step 1: the icon miss becomes audible (log only; the return value is untouched)
+
+**Date:** 2026-08-15. **Status:** accepted. **Phase:** 3c (enhanced line, 0.2.x).
+Authorized by the maintainer 2026-08-15, together with D82/D83 — the three quirks whose
+`KNOWN-QUIRKS.md` dispositions read `fix` but cited no entry, so they were proposals, not
+decisions. `.claude/NEXT-STEPS.md` had reported that backlog as empty; corrected here.
+
+**Decision.** `getIcon(String, boolean)` reports what it used to swallow. A non-empty path
+that resolves to no image logs at WARNING; each failed resolution attempt logs its
+`Throwable` at FINE; and on the `preload` path a `MediaTracker.isErrorID` check reports the
+resolved-but-undecodable image — the "unloadable" half of Q3, which is invisible without the
+tracker because `Toolkit.getImage` returns non-null for a URL that is not an image.
+
+**Log only — no throw, and the return value is unchanged.** The maintainer's reasoning,
+recorded because it generalizes: a throw is either a real behavior break for apps that do not
+catch it, or pointless for apps that do. So `getIcon` still returns `null` for a miss and
+still returns the broken `Image` for a decode failure; the public javadoc contract
+(`@return the loaded image or null`) stays true, and no golden moves. Q3 is therefore
+**half-fixed by design** — the silence is gone, the null remains.
+
+**Scope boundaries.** An absent or empty `icon` attribute reaches `getIcon` as `null`/`""`
+and stays silent: no icon was asked for, so there is no miss to report. No dedup cache — the
+call site is attribute-set (`set(component, key, getIcon(value))`), not per-paint, so a static
+path `Set` would add thread-safety and retention surface for no gain.
+
+**`java.util.logging`, deliberately.** `thinlet-core` ships runtime-dependency-free (D31), so
+the JDK logger is the only option that does not add a dependency to the published jar. The
+logger name is `thinlet.Thinlet`, which is what the test attaches its handler to.
+
+**Validation.** `IconResolutionLoggingTest` (4 tests, untagged) pins the WARNING for an
+unresolvable path, the WARNING for a resolved-but-undecodable file URL, and silence for both
+the resolvable and the absent-path cases. Red-green checked both ways: with the source change
+stashed, the two behavior-asserting tests fail and the two negative controls still pass.
+`GetIconSilentNullQuirkTest` and its `documents-current-behavior` tag stay as they are — the
+null return is deliberately retained. Full container run green: 357 core (+4) + 13 drafts, no
+golden re-record.
+
+**The diagnostic immediately earned itself.** The suite now emits 33 WARNING lines, all but
+one for `/icon/volume.gif` — the single asset genuinely absent in 2005 (D54), referenced once
+at `corpus/drafts/widgets.xml:222`. That is the intended signal, not noise: the quirk's own
+history is that this silence hid 25 unvendored corpus assets until D54.
+
+**Step 2 deferred, with a brief.** The maintainer wants a supplied replacement asset shipped
+with the library and painted in place of the missing icon — an Outlook-style blocked-image
+indicator. Deferred deliberately: it changes layout wherever an icon is missing (widths stop
+being zero), needs an asset that would be the first image resource in the published jar, and
+raises a real API question — whether the placeholder is returned from public `getIcon`, which
+would end `null` as the app-visible missing-icon signal. Recorded in `KNOWN-QUIRKS.md` Q3 and
+the `ROADMAP.md` 3c backlog. (Cross-ref D54 the vendored assets, D69 the change-control
+protocol, D31 the dependency-free constraint.)

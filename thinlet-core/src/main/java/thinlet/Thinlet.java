@@ -24,6 +24,8 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -75,6 +77,11 @@ public class Thinlet extends Container implements Runnable, Serializable {
 
     private static final int DRAG_ENTERED = AWTEvent.RESERVED_ID_MAX + 1;
     private static final int DRAG_EXITED = AWTEvent.RESERVED_ID_MAX + 2;
+
+    // 0.2.x (D81): the icon-resolution diagnostic of KNOWN-QUIRKS Q3. java.util.logging
+    // keeps thinlet-core runtime-dependency-free; the logger name is "thinlet.Thinlet",
+    // which is what IconResolutionLoggingTest attaches its handler to.
+    private static final Logger LOG = Logger.getLogger(Thinlet.class.getName());
 
     private static long WHEEL_MASK = 0;
     private static int MOUSE_WHEEL = 0;
@@ -6150,7 +6157,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      */
     public Image getIcon(String path, boolean preload) {
         if ((path == null) || (path.length() == 0)) {
-            return null;
+            return null; // no icon was asked for: not a miss, nothing to report (D81)
         }
         Image image = null; // (Image) imagepool.get(path);
         try {
@@ -6159,6 +6166,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 image = Toolkit.getDefaultToolkit().getImage(url);
             }
         } catch (Throwable e) {
+            logIconAttempt(path, e);
         }
         if (image == null) {
             try {
@@ -6173,6 +6181,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     image = Toolkit.getDefaultToolkit().getImage(new URL(path));
                 }
             } catch (Throwable e) {
+                logIconAttempt(path, e);
             }
         }
         if (preload && (image != null)) {
@@ -6182,9 +6191,34 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 mediatracker.waitForID(1, 5000);
             } catch (InterruptedException ie) {
             }
+            // 0.2.x (D81): a resolved-but-broken image is the "unloadable" half of Q3 —
+            // getImage returns non-null for an unreadable URL and only the tracker knows.
+            // Reported, not repaired: the broken Image is still returned, as in 2005.
+            if (mediatracker.isErrorID(1)) {
+                LOG.warning("icon resource resolved but could not be loaded: " + path);
+            }
             // imagepool.put(path, image);
         }
+        // 0.2.x (D81): KNOWN-QUIRKS Q3 — 2005 swallowed both attempts and returned null with
+        // no log and no throw. The null return is deliberately kept (apps read it as "no
+        // icon"); only the silence is fixed. Pinned by IconResolutionLoggingTest.
+        if (image == null) {
+            LOG.warning("icon resource not resolved: " + path);
+        }
         return image;
+    }
+
+    /**
+     * Records one failed icon-resolution attempt at FINE (D81). The throwable is detail,
+     * not the headline: a classpath miss reaches the fallback as the
+     * {@code MalformedURLException} of a protocol-less path, so it is the routine shape of
+     * a miss rather than a distinct fault. The WARNING in {@link #getIcon(String, boolean)}
+     * is what says the icon is gone.
+     */
+    private static void logIconAttempt(String path, Throwable e) {
+        if (LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, "icon resolution attempt failed for " + path, e);
+        }
     }
 
     /**

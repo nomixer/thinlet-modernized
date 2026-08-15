@@ -173,5 +173,10 @@ items first:
   active batch** (D69): `checkLocation` y-arg → Q1 → `FileChooser` → Q8 → Q7.
 - The public vocabulary (constants/enums for the DTD-facing sets —
   `project-docs/VOCABULARY-INVENTORY.md`, the rows marked 3c).
+- **Missing-image indicator** (KNOWN-QUIRKS Q3 step 2, D81): paint a supplied
+  placeholder asset — an Outlook-style blocked-image indicator — where an icon
+  fails to resolve. Q3's step 1 (the diagnostic) landed with D81; step 2 waits on
+  the asset and on the API call it forces (whether public `getIcon` returns the
+  placeholder, ending `null` as the missing-icon signal).
 - HiDPI / alternative rendering backends, informed by the backend-portability
   docs.
