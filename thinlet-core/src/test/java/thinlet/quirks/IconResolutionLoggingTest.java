@@ -22,10 +22,9 @@ import thinlet.Thinlet;
 import thinlet.trace.XvfbDisplayExtension;
 
 /**
- * Pins the 0.2.x half of KNOWN-QUIRKS Q3 (D81): an icon that cannot be resolved or cannot
- * be loaded is reported at WARNING instead of vanishing into an empty catch block. What
- * {@code getIcon} <em>returns</em> is unchanged — {@link GetIconSilentNullQuirkTest} still
- * pins the null, which stays until the missing-image indicator lands.
+ * Pins KNOWN-QUIRKS Q3 step 1 (D81): an unresolvable or undecodable icon is reported at
+ * WARNING, not swallowed. What {@code getIcon} returns is unchanged —
+ * {@link GetIconSilentNullQuirkTest} still pins the null.
  */
 @ExtendWith(XvfbDisplayExtension.class)
 class IconResolutionLoggingTest {

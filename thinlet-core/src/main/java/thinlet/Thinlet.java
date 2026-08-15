@@ -6209,11 +6209,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
     }
 
     /**
-     * Records one failed icon-resolution attempt at FINE (D81). The throwable is detail,
-     * not the headline: a classpath miss reaches the fallback as the
-     * {@code MalformedURLException} of a protocol-less path, so it is the routine shape of
-     * a miss rather than a distinct fault. The WARNING in {@link #getIcon(String, boolean)}
-     * is what says the icon is gone.
+     * Records one failed icon-resolution attempt at FINE (D81): a classpath miss reaches the
+     * fallback as the {@code MalformedURLException} of a protocol-less path, so the throwable
+     * is the routine shape of a miss, not a distinct fault. The WARNING is the headline.
      */
     private static void logIconAttempt(String path, Throwable e) {
         if (LOG.isLoggable(Level.FINE)) {
