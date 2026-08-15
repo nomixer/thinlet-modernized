@@ -101,8 +101,22 @@ Either way:
   separate `thinlet.trace.CorpusResourceResolutionTest` guard ensures our own
   fixtures never *rely* on it (it fails the build on any unresolved corpus resource,
   save the documented 2005 gap `/icon/volume.gif`).
-- **Enhanced Thinlet disposition:** fix — log or throw a descriptive error on an
-  unresolved/unloadable resource instead of returning `null`.
+- **Enhanced Thinlet disposition (D81):** fix, in two steps.
+  - **Step 1 — the silence, fixed in 0.2.x (D81).** An unresolvable path logs at
+    WARNING, each failed attempt logs its `Throwable` at FINE, and the
+    resolved-but-undecodable case is reported via `MediaTracker.isErrorID` on the
+    `preload` path. **Log only, no throw** — a throw is either a real behavior break
+    for apps that do not catch it or pointless for apps that do. The return value is
+    unchanged, so the bullets above still describe what callers see, and
+    `GetIconSilentNullQuirkTest` keeps its tag. Locked by
+    `thinlet.quirks.IconResolutionLoggingTest` (untagged: the logging *is* a chosen
+    contract).
+  - **Step 2 — the null, still open.** Paint a supplied missing-image indicator
+    (Outlook-style blocked-image placeholder) in place of the absent icon, shipped as
+    an asset with the library. Deferred deliberately: it moves layout wherever an icon
+    is missing (icon widths stop being zero), it would be the first image resource in
+    the published jar, and it must answer whether public `getIcon` returns the
+    placeholder — which would end `null` as the app-visible missing-icon signal.
 
 ### Q4 — spinbox `value` attribute is dead storage; the spin state lives in `text`
 - **What happens:** the DTD registers an integer `value` attribute on `spinbox`,
