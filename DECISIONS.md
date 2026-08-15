@@ -3421,3 +3421,50 @@ look, and `":divider"` is not one of the keys the D61 layout-state sidecars reco
 **Still 2005 by choice:** the non-proportional half of Q2. Growing a splitpane does not keep
 the split ratio; the entry stays in `KNOWN-QUIRKS.md` recording that, now as the open half.
 (Cross-ref D69 the change-control protocol, D61 the sidecar key set, D48 the Renderer seam.)
+
+## D83 — Q4: the spinbox's `value` attribute stops being dead storage
+
+**Date:** 2026-08-15. **Status:** accepted. **Phase:** 3c (enhanced line, 0.2.x).
+Authorized by the maintainer 2026-08-15 (with D81/D82), closing the last of the three
+uncited dispositions.
+
+**Decision.** `value` and `text` mirror each other on every path that writes either, so the
+DTD-declared integer is the spinbox's live state instead of a slot nothing read. `text`
+stays authoritative for display and editing — apps read `getString(sp, "text")` today and
+must keep working — and `value` follows it.
+
+**The attribute is kept, not removed.** The other half of the recorded disposition
+("remove the dead attribute") would edit `thinlet.dtd`, which is byte-identical 2005 (D8)
+and its own decision. No DTD change was needed: `value CDATA '0'` is already declared.
+
+**Four write paths, two directions, one rule.** Two private helpers (`spinValueFromText`,
+`spinTextFromValue`) both no-op for any component that is not a spinbox, and both write the
+model directly rather than through the public setters, so the mirror cannot recurse:
+
+- `processSpin` — arrows, Up/Down keys, and the auto-repeat timer.
+- `changeField` — typed digits, the shared field-edit commit (the spinbox guard keeps
+  textfield/textarea/combobox untouched).
+- `setString(sp, "text", …)` and `setInteger(sp, "value", …)` — the public setters, each
+  driving the other property.
+- `addAttribute` — the XML parse path, where the interesting case lives (below).
+
+**A declared `text` wins a declared conflict, in either parse order.** `value` seeds the
+display only when no `text` is present; when `text` is already there, the `value` attribute
+is reconciled *down* to it. So `<spinbox text="5" value="42">` and
+`<spinbox value="42" text="5">` both end at 5 — the display is the truth, which is what
+2005 apps encode. The input fixture ships exactly that conflicting pair, and the pin asserts
+5, not 42.
+
+**Non-numeric text stays inert.** `<spinbox text="SpinBox">` is real — the 2005 corpus ships
+it in `drafts/{looks,widgets}.xml` — and already no-ops through `processSpin`'s
+`NumberFormatException`. The mirror does the same: `value` keeps its last numeric state
+rather than inventing one, so an unparseable spinbox reads back the DTD default 0.
+
+**Validation.** `InputSpinBoxTest` — the Q4 pin flips to
+`valueTracksTheSpinState_andADeclaredTextWins` (tag `documents-current-behavior` off) and
+three tests are added: typed digits move `value`, the two public setters drive each other,
+and a new fixture (`input/spin-value.xml`, new file per the no-modify-fixtures rule) covers
+`value`-only seeding plus the non-numeric case. Red-green checked: with the source stashed
+all four fail. Full container run green — 361 core (+3) + 13 drafts — with **no golden
+re-record**: `value` is never painted, and no corpus spinbox declared it. (Cross-ref D64 the
+suite that locked Q4, D75 the `editable` gate in the same method, D8 the verbatim DTD.)

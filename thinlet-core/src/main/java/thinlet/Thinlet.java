@@ -2934,6 +2934,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         if (insert != null) {
             int min = Math.min(movestart, moveend);
             set(component, "text", text.substring(0, min) + insert + text.substring(Math.max(movestart, moveend)));
+            spinValueFromText(component); // D83: typed digits move the spinbox's "value" too
             movestart = moveend = min + insert.length();
             invoke(component, null, "action"); // deprecated
         }
@@ -3909,6 +3910,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     : (itext - step >= getInteger(component, "minimum", Integer.MIN_VALUE))) {
                 String value = String.valueOf((is(part, "up")) ? (itext + step) : (itext - step));
                 set(component, "text", value);
+                spinValueFromText(component); // D83: the integer "value" tracks the spin
                 setInteger(component, "start", value.length(), 0);
                 setInteger(component, "end", 0, 0);
                 repaint(component, "spinbox", "text");
@@ -5537,6 +5539,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
         if (is(definition.type, "string")) {
             value = (encoding == null) ? new String(value) : new String(value.getBytes(), 0, value.length(), encoding);
             set(component, key, value);
+            if (is(key, "text")) {
+                spinValueFromText(component); // D83
+            }
         } else if (is(definition.type, "choice")) {
             String[] values = (String[]) definition.defaultValue;
             setChoice(component, key, value, values, values[0]);
@@ -5552,6 +5557,16 @@ public class Thinlet extends Container implements Runnable, Serializable {
             } else throw new IllegalArgumentException(value);
         } else if (is(definition.type, "integer")) {
             set(component, key, Integer.valueOf(value));
+            // D83: a spinbox declaring only value="n" gets the matching display; a declared
+            // text wins over a conflicting value, whichever order the parser meets them in.
+            // Both helpers no-op for every other widget that has a "value" attribute.
+            if (is(key, "value")) {
+                if (get(component, "text") == null) {
+                    spinTextFromValue(component, Integer.parseInt(value));
+                } else {
+                    spinValueFromText(component);
+                }
+            }
         } else if (is(definition.type, "icon")) {
             set(component, key, getIcon(value));
         } else if ((is(definition.type, "method")) || (is(definition.type, "component"))) {
@@ -5664,6 +5679,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
     public void setString(Object component, String key, String value) {
         AttributeDescriptor definition = getDefinition(getClass(component), key, "string");
         if (set(component, definition.name, value)) {
+            if (is(definition.name, "text")) {
+                spinValueFromText(component); // D83
+            }
             update(component, definition.invalidate);
         }
     }
@@ -5717,7 +5735,35 @@ public class Thinlet extends Container implements Runnable, Serializable {
     public void setInteger(Object component, String key, int value) {
         AttributeDescriptor definition = getDefinition(getClass(component), key, "integer");
         if (setInteger(component, definition.name, value, ((Integer) definition.defaultValue).intValue())) {
+            if (is(definition.name, "value")) {
+                spinTextFromValue(component, value); // D83
+            }
             update(component, definition.invalidate);
+        }
+    }
+
+    /**
+     * KNOWN-QUIRKS Q4, fixed in 0.2.x (D83): the spinbox's DTD-declared integer
+     * {@code value} was dead storage — the spin state lived only in {@code text}. These
+     * two keep them in step, in both directions, on every path that writes either.
+     * Non-spinbox components are untouched, and both write the model directly (never the
+     * public setters) so the mirror cannot recurse. Pinned by {@code InputSpinBoxTest}.
+     */
+    private void spinValueFromText(Object component) {
+        if (is(getClass(component), "spinbox")) {
+            try {
+                setInteger(component, "value", Integer.parseInt(getString(component, "text", "")), 0);
+            } catch (NumberFormatException nfe) {
+                // Non-numeric text is legal and inert here, as it is for spinning: the 2005
+                // corpus ships <spinbox text="SpinBox">. Leave the last numeric value
+                // standing rather than inventing one.
+            }
+        }
+    }
+
+    private void spinTextFromValue(Object component, int value) {
+        if (is(getClass(component), "spinbox")) {
+            set(component, "text", String.valueOf(value));
         }
     }
 

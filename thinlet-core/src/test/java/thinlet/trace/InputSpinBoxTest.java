@@ -21,6 +21,7 @@ class InputSpinBoxTest {
 
     private static final String FIXTURE = "/input/spin.xml";
     private static final String ARROWS_FIXTURE = "/input/arrows.xml";
+    private static final String VALUE_FIXTURE = "/input/spin-value.xml";
 
     /** Clicks the widget's up-arrow block: right-edge column, upper half. */
     private static void clickUpArrow(InputDriver d, Object spinbox) {
@@ -115,23 +116,79 @@ class InputSpinBoxTest {
                 .isZero();
     }
 
-    /** Locked 2005 quirk: the DTD-registered integer {@code value} never participates. See KNOWN-QUIRKS Q4. */
+    /**
+     * KNOWN-QUIRKS Q4, fixed in 0.2.x (D83): the DTD-registered integer {@code value} was
+     * dead storage. It now tracks the spin state, and a declared {@code text} wins over a
+     * conflicting declared {@code value} — the fixture declares {@code text="5" value="42"}.
+     */
     @Test
-    @Tag("documents-current-behavior")
-    void valueAttributeIsDeadStorage_theSpinStateLivesInText() throws IOException {
+    void valueTracksTheSpinState_andADeclaredTextWins() throws IOException {
         InputDriver d = InputDriver.load(FIXTURE, new RecordingHandler());
         Thinlet t = d.thinlet();
         Object sp = d.find("spdead");
         assertThat(t.getInteger(sp, "value"))
-                .as("the parsed value attribute is stored")
-                .isEqualTo(42);
+                .as("text is the display, so it wins the declared conflict: 5, not 42")
+                .isEqualTo(5);
         d.focusGained();
         d.click(sp);
         d.arrowUp();
         assertThat(t.getString(sp, "text")).as("spinning moves the text").isEqualTo("6");
         assertThat(t.getInteger(sp, "value"))
-                .as("but never the value attribute — dead storage")
-                .isEqualTo(42);
+                .as("and the value follows it — no longer dead storage")
+                .isEqualTo(6);
+    }
+
+    /** Typing into the spinbox moves {@code value} too — the same mirror as spinning (D83). */
+    @Test
+    void typedDigitsMoveTheValue() throws IOException {
+        InputDriver d = InputDriver.load(FIXTURE, new RecordingHandler());
+        Thinlet t = d.thinlet();
+        Object sp = d.find("spmid"); // text="50"
+        d.focusGained();
+        d.click(sp);
+        d.type("7"); // appended at the caret the click placed
+
+        assertThat(t.getInteger(sp, "value"))
+                .as("value mirrors whatever the field now reads")
+                .isEqualTo(Integer.parseInt(t.getString(sp, "text")));
+    }
+
+    /** The mirror runs both ways on the public setters (D83). */
+    @Test
+    void theTwoPropertiesTrackEachOtherThroughTheApi() throws IOException {
+        InputDriver d = InputDriver.load(FIXTURE, new RecordingHandler());
+        Thinlet t = d.thinlet();
+        Object sp = d.find("spmid");
+
+        t.setInteger(sp, "value", 33);
+        assertThat(t.getString(sp, "text"))
+                .as("setInteger(value) drives the display")
+                .isEqualTo("33");
+
+        t.setString(sp, "text", "8");
+        assertThat(t.getInteger(sp, "value"))
+                .as("setString(text) drives the value")
+                .isEqualTo(8);
+    }
+
+    /**
+     * A spinbox declaring only {@code value} gets the matching display; non-numeric text
+     * (the 2005 corpus ships {@code <spinbox text="SpinBox">}) leaves {@code value} at its
+     * default rather than inventing a number.
+     */
+    @Test
+    void valueOnlySeedsTheDisplay_andNonNumericTextLeavesValueAlone() throws IOException {
+        InputDriver d = InputDriver.load(VALUE_FIXTURE, new RecordingHandler());
+        Thinlet t = d.thinlet();
+
+        Object seeded = d.find("spvalue");
+        assertThat(t.getString(seeded, "text")).as("value=\"7\" alone shows 7").isEqualTo("7");
+        assertThat(t.getInteger(seeded, "value")).isEqualTo(7);
+
+        Object words = d.find("sptext");
+        assertThat(t.getInteger(words, "value"))
+                .as("unparseable text leaves the DTD default standing")
+                .isZero();
     }
 
     /**
