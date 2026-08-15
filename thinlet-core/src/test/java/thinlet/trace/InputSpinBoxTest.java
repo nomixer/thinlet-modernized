@@ -11,9 +11,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import thinlet.Thinlet;
 
 /**
- * Input regression net — spinbox: the live value is the {@code "text"} string, so
- * assertions are exact getter reads (re-paint diff skipped) and mouse spins start
- * clamp-adjacent to neutralize the 375ms auto-repeat (DECISIONS.md D64).
+ * Input regression net — spinbox: {@code "text"} is authoritative and the integer
+ * {@code "value"} mirrors it (D83), so assertions are exact getter reads (re-paint diff
+ * skipped) and mouse spins start clamp-adjacent to neutralize the 375ms auto-repeat
+ * (DECISIONS.md D64).
  */
 @Tag("input")
 @ExtendWith(XvfbDisplayExtension.class)
