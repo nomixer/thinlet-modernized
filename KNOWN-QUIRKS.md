@@ -61,23 +61,28 @@ Either way:
   contract; the old NPE-locking tests were flipped in the same PR, red-green
   checked both ways).
 
-### Q2 — `splitpane` divider is absolute pixels: non-proportional + destructive clamp on resize
-- **What happens:** the divider position is an absolute pixel value (`divider`
-  property) that is only ever *clamped* on resize, never rescaled. Growing the
-  splitpane keeps the same pixel divider (the split ratio drifts); shrinking it
-  below the divider clamps the value to `width-5` and does **not** restore the
-  original position when the pane grows back — the value is lost.
-- **Why it's a quirk:** a 50/50 split is expected to track on resize, or at least
-  to survive a transient shrink. Both fail: resize is non-proportional, and the
-  shrink-clamp is destructive (permanent position loss). Surfaces on 2026 hardware
-  where window/scale changes are routine.
-- **Where:** `Thinlet.java` splitpane layout (~457-475): the `divider > maxdiv`
-  branch overwrites `divider` with `maxdiv`; there is no proportional rescale.
+### Q2 — `splitpane` divider is absolute pixels — **destructive clamp fixed in 0.2.x (D82); non-proportional resize kept**
+- **What happened (≤0.1.x):** the divider position is an absolute pixel value
+  (`divider` property) that is only ever *clamped* on resize, never rescaled.
+  Shrinking the pane below the divider overwrote `divider` with `width-5`, and the
+  original position was **not** restored when the pane grew back — permanent loss of
+  a property the app had set.
+- **The fix (D82):** `divider` now means the position the app asked for.
+  `doLayout` clamps to `maxdiv` for that layout only and publishes the effective
+  position as the reserved `:divider`, which the `Renderer` bar and the keyboard
+  step path read. A transient shrink is therefore lossless. While the pane is too
+  small, `getInteger(sp, "divider")` returns the remembered request rather than what
+  is on screen — the two reconverge as soon as there is room.
+- **Still 2005, deliberately:** resize is **non-proportional**. Growing the splitpane
+  keeps the same pixel divider, so the split ratio drifts. Rescaling would change what
+  `getInteger(sp, "divider")` means for every app that sets one; if wanted it should
+  arrive as a new attribute, with its own D-entry, not as a redefinition of this one.
+- **Where:** `Thinlet.java` splitpane branch of `doLayout` (the `divider > maxdiv`
+  clamp) and `processKeyPress`; `Renderer.paintSplitPane`.
 - **Locked by:** `thinlet.trace.InputSplitPaneTest`
-  `#dividerIsAbsolutePixels_nonProportionalAndDestructiveClampOnResize` (tagged
-  documents-current-behavior).
-- **Enhanced Thinlet disposition:** fix — preserve the ratio on resize (or at least
-  restore the remembered divider after a transient shrink).
+  `#dividerIsAbsolutePixels_andSurvivesAShrinkPastIt` (asserts both the remembered
+  request and the clamped on-screen width) and
+  `#draggingWhileClampedReplacesTheRememberedPosition`.
 
 ### Q3 — `getIcon` silently returns `null` for a missing/unloadable resource
 - **What happens:** `getIcon(String path, boolean preload)` resolves an icon via
