@@ -9,9 +9,8 @@
 - **Cuts 1–3 done** (D42–D59). Cut 3 landed 2026-07-14: net #81, typed core
   D58 (one recorded divergence there), façade cleanup + close D59.
 - **Cut 4 net prerequisite done (D61)**: layout-state sidecar goldens pin
-  `:port`/`:view`/`:widths`/`:offset` (58 sidecars / 184 nodes, bidirectional
-  regression + permanent coverage guard). Residual gap: non-zero `:view.x`
-  (no horizontal-scroll scenario).
+  `:port`/`:view`/`:widths`/`:offset` (bidirectional regression + permanent
+  coverage guard). Its residual `:view.x` gap is closed (D84).
 - **Tooltip captured (D62)**: the last D45-deferred interaction state; every
   interaction state D45 enumerated is now guarded.
 - **Cut 2 fully closed (D63)**: `paintDesktop`/`paintReverse` moved to
@@ -102,6 +101,11 @@
   removing it would edit the verbatim 2005 DTD (D8). No golden re-record.
   **The quirk backlog is empty again — this time checked against `KNOWN-QUIRKS.md`
   dispositions, not memory.** Base row: 361 (core) + 13 (drafts).
+- **`:view.x` pinned (D84, 2026-08-16)**: the D61 residual gap closed — every one of
+  the 58 sidecars had `:view.x == 0`, and the coverage guard's either-axis check
+  called that covered. New `arrows-hlist-scrolled-right` scenario (knob drag to the
+  clamp; the wheel cannot scroll horizontally) plus a per-axis guard. No existing
+  golden moved. Test net only; no library change. Base row: 363 (core) + 13 (drafts).
 
 ## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 

@@ -3468,3 +3468,48 @@ and a new fixture (`input/spin-value.xml`, new file per the no-modify-fixtures r
 all four fail. Full container run green — 361 core (+3) + 13 drafts — with **no golden
 re-record**: `value` is never painted, and no corpus spinbox declared it. (Cross-ref D64 the
 suite that locked Q4, D75 the `editable` gate in the same method, D8 the verbatim DTD.)
+
+## D84 — the D61 residual gap closed: `:view.x` is pinned by a horizontal-scroll scenario
+
+**Date:** 2026-08-16. **Status:** accepted. **Phase:** 3c (test net; zero library
+change). Closes the residual gap D61 recorded and left open.
+
+**The gap was real and measurable.** Across all 58 committed layout-state sidecars
+`:view.x` was `0` everywhere; exactly one node carried any scroll at all
+(`:view.y = 317`). The horizontal half of the scroll state was therefore pinned
+only at rest — a regression that moved `view.x` would have gone unseen. The
+coverage guard did not catch this because `allFourKeysExercised` tested
+`view[0] != 0 || view[1] != 0`, and the single vertical scroll satisfied it.
+
+**Decision.** New interaction scenario `arrows-hlist-scrolled-right` on the
+existing `/input/arrows.xml` fixture (no fixture modified, per the new-files-only
+rule), and the guard's either-axis check split into two assertions so neither axis
+can silently go unexercised again.
+
+**Why a knob drag and not the wheel.** The first attempt wheeled the list and
+recorded a still-zero `:view.x`: the wheel drives the vertical bar only, which
+`InputScrollBarTest.wheelIsANoOpWithoutAVerticalScrollbar` already pinned. The
+scenario uses the knob drag `InputScrollBarTest.horizontalKnobAndArrowsClampExactly`
+asserts against — dragged past the track's right end it clamps to
+`view.width - port.width`, so the recorded offset is a **clamp**, not a
+drag-distance computation, and no auto-repeat timer is armed (the D51 constraint).
+
+**Metric stability, checked rather than assumed.** The clamp derives from the
+fixture's very wide row, so the recorded `:view.x = 473` is a text-metric-derived
+number, which D7 treats as tolerant-within-±2px rather than exact. `view.width`
+(1487) was already recorded in existing sidecars that pass on every row, so the
+derived clamp was expected to be stable; it was then confirmed on all four JDKs.
+
+**Validation.** Red-green: with the scenario absent the split guard fails on
+`a non-zero horizontal :view.x scroll offset exercised`. Two new goldens recorded
+in the CI container (D44), all 52 interaction goldens and 59 sidecars regenerated
+with **only** the two new files appearing — no existing golden moved. Base row 363
+(+2) + 13 drafts, and JDK 8/11/17 rows green at 360.
+
+**Unrelated hygiene folded in.** `mvnw.cmd` was committed by the D-less Dependabot
+merge (#117) with CRLF bytes in the blob, while `.gitattributes` specifies
+`*.cmd text eol=crlf` — store LF, check out CRLF. Git's clean filter therefore
+reported the file permanently modified in every worktree. `git add --renormalize`
+stores the LF blob; the checked-out file stays CRLF. No wrapper behavior change.
+(Cross-ref D61 the sidecar net and the gap, D7 the tolerance model, D51 the
+timer-free-gesture constraint, D44 the container-record rule.)

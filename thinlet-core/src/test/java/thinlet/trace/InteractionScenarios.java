@@ -176,6 +176,21 @@ final class InteractionScenarios {
             Dimension dim = d.size(sp);
             d.pressAndHoldAt(sp, dim.width - 4, dim.height * 3 / 4);
         }));
+        // Closes the D61 residual gap: before this scenario every committed sidecar
+        // carried :view.x == 0, so the horizontal half of the scroll state was
+        // pinned only at rest. The gesture is the knob drag
+        // InputScrollBarTest.horizontalKnobAndArrowsClampExactly asserts against —
+        // dragged past the track's right end it clamps to view.width - port.width
+        // exactly, so the recorded offset is a clamp, not a drag-distance
+        // computation, and no auto-repeat timer is armed. (The wheel cannot do this:
+        // it drives the vertical bar only, per
+        // InputScrollBarTest.wheelIsANoOpWithoutAVerticalScrollbar.)
+        s.add(new Scenario("arrows-hlist-scrolled-right", "/input/arrows.xml", d -> {
+            Object lst = d.find("hlist");
+            Rectangle h = (Rectangle) d.property(lst, ":horizontal");
+            int block = h.height; // bar thickness == arrow block size
+            d.dragInside(lst, h.x + block + 2, h.y + h.height / 2, h.x + h.width, h.y + h.height / 2);
+        }));
         // Tree/table model-state + focus renders (Package A): guard the
         // port-content painter's tree/table row paths ahead of its extraction
         s.add(new Scenario("tree-selected-lead-focus", "/input/tree.xml", d -> {
