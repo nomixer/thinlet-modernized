@@ -111,8 +111,11 @@ class GoldenLayoutStateTraceTest {
 
     /**
      * Coverage guard, not a one-time check: the committed sidecar set must keep
-     * exercising all four keys, a scrolled :view, and the positive (scrolled)
-     * :offset branch — losing any of these silently thins the Cut 4 net.
+     * exercising all four keys, a scrolled :view on <em>both</em> axes, and the
+     * positive (scrolled) :offset branch — losing any of these silently thins the
+     * Cut 4 net. The axes are asserted separately because until
+     * {@code arrows-hlist-scrolled-right} the whole set had :view.x == 0, and an
+     * either-axis check called that covered.
      */
     @Test
     void allFourKeysExercised() throws IOException {
@@ -126,7 +129,8 @@ class GoldenLayoutStateTraceTest {
         boolean view = false;
         boolean widths = false;
         boolean offset = false;
-        boolean scrolledView = false;
+        boolean scrolledViewX = false;
+        boolean scrolledViewY = false;
         boolean positiveOffset = false;
         for (File f : sidecars) {
             for (LayoutStateNode n : TraceJson.readLayoutState(GoldenTraceRecorder.readFile(f))) {
@@ -135,14 +139,20 @@ class GoldenLayoutStateTraceTest {
                 offset |= n.offset != null;
                 positiveOffset |= n.offset != null && n.offset > 0;
                 view |= n.view != null;
-                scrolledView |= n.view != null && (n.view[0] != 0 || n.view[1] != 0);
+                scrolledViewX |= n.view != null && n.view[0] != 0;
+                scrolledViewY |= n.view != null && n.view[1] != 0;
             }
         }
         assertThat(port).as(":port exercised").isTrue();
         assertThat(view).as(":view exercised").isTrue();
         assertThat(widths).as(":widths exercised").isTrue();
         assertThat(offset).as(":offset exercised").isTrue();
-        assertThat(scrolledView).as("a non-zero :view scroll offset exercised").isTrue();
+        assertThat(scrolledViewX)
+                .as("a non-zero horizontal :view.x scroll offset exercised")
+                .isTrue();
+        assertThat(scrolledViewY)
+                .as("a non-zero vertical :view.y scroll offset exercised")
+                .isTrue();
         assertThat(positiveOffset)
                 .as("the positive (scrolled) :offset branch exercised")
                 .isTrue();
