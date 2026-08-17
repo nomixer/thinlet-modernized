@@ -3,9 +3,11 @@
   "build": {
     "dockerfile": "Dockerfile",
     "args": {
-      // The CI matrix builds the same Dockerfile per JDK target, switching only
-      // this arg (8 / 11 / 17 / 21 / 25). The default dev image is the LTS used
-      // to run Maven itself.
+      // Always 21: the JVM that runs Maven. CI builds this same Dockerfile
+      // through .devcontainer/ci/devcontainer.json, which also hardcodes 21 —
+      // the cross-JDK matrix varies the *test runtime* (-Pcrossjdk
+      // -Djdk.target=N forks Surefire onto /opt/jdk8|11|17 via
+      // .mvn/toolchains.xml), not the image (DECISIONS.md D31).
       "JDK_VERSION": "21"
     }
   },
@@ -29,10 +31,32 @@
         "redhat.vscode-xml",
         "EditorConfig.EditorConfig"
       ],
+      // Real JDK locations in the built image — verified, not inferred. JDK 21 is
+      // the MS base's own install and is what JAVA_HOME points at; 8/11/17 are the
+      // extra JDKs the Dockerfile layers in, at the same paths .mvn/toolchains.xml
+      // uses as jdkHome. JavaSE-1.8 must be declared or the editor reports the
+      // project's `maven.compiler.release=8` compliance with no matching runtime
+      // and the whole project reads as broken-Java-8.
+      //
+      // Do NOT point these at /usr/local/sdkman/candidates/java/current. The MS
+      // base is assembled from the devcontainers java:1 feature, which installs
+      // SDKMAN and sets JAVA_HOME there, and the base's final layer then overrides
+      // JAVA_HOME back to /usr/lib/jvm/msopenjdk-current without ever installing a
+      // SDKMAN java candidate — so that path does not exist. It survives only in
+      // PATH and in the feature's baked devcontainer.metadata label.
       "settings": {
         "java.configuration.runtimes": [
-          { "name": "JavaSE-21", "path": "/usr/local/sdkman/candidates/java/current" }
-        ]
+          { "name": "JavaSE-1.8", "path": "/opt/jdk8" },
+          { "name": "JavaSE-11", "path": "/opt/jdk11" },
+          { "name": "JavaSE-17", "path": "/opt/jdk17" },
+          { "name": "JavaSE-21", "path": "/usr/lib/jvm/msopenjdk-current", "default": true }
+        ],
+        // The JVM the language server itself runs on (needs 17+).
+        "java.jdt.ls.java.home": "/usr/lib/jvm/msopenjdk-current",
+        // Overrides the dangling SDKMAN path the java:1 feature baked into the base
+        // image's devcontainer.metadata label. No Gradle here; this just stops the
+        // extension reporting a missing folder.
+        "java.import.gradle.java.home": "/usr/lib/jvm/msopenjdk-current"
       }
     }
   },

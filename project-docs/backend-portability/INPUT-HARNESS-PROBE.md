@@ -71,9 +71,10 @@ unaffected). New code is test-scope only; `thinlet-core` stays runtime-dependenc
 
 ## Known limits of this probe (deliberate)
 
-- **Cross-JDK is unproven locally** — only JDK 21 is in the container (`/opt/jdk8|11|17` absent).
-  The same-JDK determinism is confirmed; cross-JDK (8/11/17) determinism is the remaining
-  unknown and is delegated to the `crossjdk` CI matrix on push.
+- **Cross-JDK was unproven at probe time** — the probe ran a single JDK, so cross-JDK (8/11/17)
+  determinism was the remaining unknown and was delegated to the `crossjdk` CI matrix on push.
+  Same-JDK determinism is confirmed. (The container carries `/opt/jdk8|11|17` alongside the
+  JDK-21 base, so those rows also run locally: `.devcontainer/ci/local-ci.sh 8|11|17` — D31/D44.)
 - Direct `processEvent` is used (deterministic); the heavier full-AWT `dispatchEvent` path is
   not exercised. Deferred regardless: list/tree/combo (scroll-offset coordinates), drag
   pseudo-events, tooltip/auto-repeat timers, keyboard type-ahead timing (wall-clock at `:4500`).
