@@ -56,7 +56,15 @@
         // Overrides the dangling SDKMAN path the java:1 feature baked into the base
         // image's devcontainer.metadata label. No Gradle here; this just stops the
         // extension reporting a missing folder.
-        "java.import.gradle.java.home": "/usr/lib/jvm/msopenjdk-current"
+        "java.import.gradle.java.home": "/usr/lib/jvm/msopenjdk-current",
+        // vscode-java-dependency otherwise offers to "upgrade to the latest LTS"
+        // on every open, because the project compiles at Java 8. That floor is
+        // deliberate and permanent (maven.compiler.release=8, D31) — the offer can
+        // never be actionable, and accepting it would break the compatibility the
+        // crossjdk matrix exists to protect. The same flag covers that extension's
+        // dependency EOL/CVE reminders; Dependabot already watches maven weekly
+        // (.github/dependabot.yml), including the pinned-major ignore rules.
+        "java.dependency.enableDependencyCheckup": false
       }
     }
   },
