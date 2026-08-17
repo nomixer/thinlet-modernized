@@ -23,6 +23,7 @@ readonly TARGET="thinlet-core/src/main/java"
 readonly MSG_REL=".modernise-msg"
 readonly LOG_REL=".modernise-verify.log"
 readonly COAUTHOR="${MODERNISE_COAUTHOR:-Claude Opus 5}"
+readonly BASELINE_JAR=".m2/repository/com/nomixer/thinlet/thinlet-core/0.1.0/thinlet-core-0.1.0.jar"
 
 root="$(git rev-parse --show-toplevel)"
 msg_file="$root/$MSG_REL"
@@ -65,9 +66,21 @@ run_logged() {
 }
 
 japicmp() {
-    run_logged env -C "$root" MAVEN_USER_HOME="$root/.m2" "$root/mvnw" \
+    if ! run_logged env -C "$root" MAVEN_USER_HOME="$root/.m2" "$root/mvnw" \
         -B -ntp -Papicheck -DskipTests -pl thinlet-core -am \
-        -Dmaven.repo.local=.m2/repository verify
+        -Dmaven.repo.local=.m2/repository verify; then
+        return 1
+    fi
+    # An unresolvable baseline is only a WARNING: japicmp reports "Comparing …
+    # against " with an empty right-hand side, scores every member as NEW, and
+    # the build still succeeds. Exit status alone therefore scores an ungated
+    # build as a pass. The cached baseline jar is the proof it had something to
+    # compare against. Verified 2026-08-17: without read:packages the resolve
+    # 401s and only a .lastUpdated marker is written, never the jar.
+    if [ ! -f "$root/$BASELINE_JAR" ]; then
+        echo "loop-modernise: japicmp found no v0.1.0 baseline — the API gate did not run" >&2
+        return 1
+    fi
 }
 
 slice_prompt() {
