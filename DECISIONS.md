@@ -3513,3 +3513,54 @@ reported the file permanently modified in every worktree. `git add --renormalize
 stores the LF blob; the checked-out file stays CRLF. No wrapper behavior change.
 (Cross-ref D61 the sidecar net and the gap, D7 the tolerance model, D51 the
 timer-free-gesture constraint, D44 the container-record rule.)
+
+## D85 — a home for started-then-stopped work: `project-docs/UNFINISHED-IDEAS.md`
+
+**Date:** 2026-08-25. **Status:** accepted. **Phase:** documentation only (no
+library, build or test change).
+
+**The gap is a class of fact with nowhere to live.** Four homes already partition
+the project's documentation (D27/D57): `DECISIONS.md` holds rationale,
+`project-docs/ROADMAP.md` holds work intended but not begun, `.claude/NEXT-STEPS.md`
+holds current state and the ordered next work, and `KNOWN-QUIRKS.md` holds behavior
+contracts. None of them answers *"there is a half-built tool on a branch — what was
+it for, and what stopped it?"*. Started-then-stopped work is neither an intention
+nor current state, and its rationale is worth recording precisely when the work is
+**not** being decided on. Left unhomed, the artifact survives in git while
+everything that makes it legible survives only in the conversation that produced
+it — and conversations end.
+
+**Decision.** A fifth home, `project-docs/UNFINISHED-IDEAS.md`, owning exactly one
+class of fact: work that was started and then stopped — where the artifact is, how
+far it got, what stopped it, and what a cold resume costs. It cross-references the
+other four rather than restating them, and names the parked items that stay put
+(Q14 per D78, the fork mapping, Q3 step 2, D5's `--release 8` hedge) so they are
+never copied in. An entry is not a commitment to finish anything.
+
+**Why `project-docs/` and not `.claude/`.** `.claude/MANIFEST.md` advertises that
+directory as a one-pass deletion — every path in it is listed as safe to remove.
+A record whose entire purpose is to outlive the context that produced it cannot
+live somewhere designed to be thrown away. The file is durable project
+documentation and is therefore not listed in the manifest.
+
+**Two format rules the class forces.** Entries describe work that usually does not
+exist on `main`, so every path must be **qualified by the branch it lives on** or
+the reference dangles for a reader on trunk. And the narrative fields carry **no
+length cap** — Intent in particular should run as long as the idea needs, because
+it is the field that must survive the loss of the conversation; under-writing it
+is the expensive failure mode. Only Status and the two dates are meant to be terse.
+
+**Retention.** Entries are updated in place as the facts change (the `last
+reviewed` date makes staleness visible on the page), and are removed only by the
+maintainer when the work resumes or is abandoned outright. Unlike this log, the
+file is not append-only and keeps no history: it speaks in today's tense (D66).
+
+**Seeded with `loop-modernise`.** The branch — an autonomous behavior-preserving
+modernisation loop over `thinlet-core/src/main/java`, three commits, never merged
+— was pushed to `origin` on 2026-08-25 so it stopped being a single local copy,
+and is recorded rather than finished. It has never completed a pass: its preflight
+cannot run japicmp because GitHub Packages needs read auth even for public reads
+(D4) and this host has no `~/.m2/settings.xml`. The entry records all three routes
+past that, so they are not re-derived.
+(Cross-ref D27 the directory layout, D57 the single-home rule, D66 the tense rule,
+D4 the packages-auth fact the seed entry rests on.)
