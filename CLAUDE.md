@@ -42,7 +42,8 @@ modernization phases built. Public artifacts, unsupported.
 
 - **Single home per fact:** rationale/evidence → `DECISIONS.md`; charter/invariants →
   `project-docs/PHASE-3-GOALS.md`; current state → `.claude/NEXT-STEPS.md`; behavior
-  contracts → `KNOWN-QUIRKS.md` + sentence-named tests. Everything else
+  contracts → `KNOWN-QUIRKS.md` + sentence-named tests; started-then-stopped work →
+  `project-docs/UNFINISHED-IDEAS.md` (D85). Everything else
   cross-references — never recaps.
 - **Comments state only:** facts checkable in the code beneath them, facts pinned by a
   named test (cite it), or tagged `// UNVERIFIED:` hypotheses. Fact-density, not
