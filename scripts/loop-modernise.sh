@@ -215,7 +215,11 @@ main() {
 
     # One loop per worktree: local-ci.sh bind-mounts the repo and writes .m2/ and
     # target/ inside it, so two concurrent runs corrupt each other's build state.
-    exec 9> "$root/.git/loop-modernise.lock"
+    # --git-dir, not "$root/.git": in a linked worktree that path is a FILE and the
+    # redirect dies with "Not a directory". --git-dir resolves to the worktree's own
+    # admin directory, which keeps the lock per-worktree as the rationale above needs
+    # (--git-common-dir would wrongly serialise runs in separate worktrees).
+    exec 9> "$(git -C "$root" rev-parse --git-dir)/loop-modernise.lock"
     if ! flock -n 9; then
         echo "loop-modernise: another run holds the lock in this worktree" >&2
         exit 1
