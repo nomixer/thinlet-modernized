@@ -13,6 +13,10 @@
 # Runs on the bare HOST, not in the dev container: it shells out to `docker run`
 # via local-ci.sh, and the container has no docker CLI or socket.
 #
+# The japicmp baseline needs GitHub Packages read auth (D4). No credential is kept
+# at rest: a settings.xml is minted from `gh auth token` per run and deleted on
+# exit, and is skipped entirely once the baseline jar is cached.
+#
 # MODERNISE_COAUTHOR overrides the commit trailer (default: Claude Opus 5).
 #
 # The whole body lives in main() so bash parses the file before executing any of
@@ -28,6 +32,15 @@ readonly BASELINE_JAR=".m2/repository/com/nomixer/thinlet/thinlet-core/0.1.0/thi
 root="$(git rev-parse --show-toplevel)"
 msg_file="$root/$MSG_REL"
 log="$root/$LOG_REL"
+
+# Set by maven_settings() when it mints a credential file; "" means none exists.
+settings_file=""
+
+drop_settings() {
+    [ -n "$settings_file" ] && rm -f "$settings_file"
+    settings_file=""
+}
+trap drop_settings EXIT
 
 new_uuid() {
     if command -v uuidgen > /dev/null 2>&1; then
@@ -65,9 +78,45 @@ run_logged() {
     return "$status"
 }
 
+# The v0.1.0 baseline lives in GitHub Packages, which requires a token even for
+# public reads (D4). Mint a settings.xml for the run rather than leaving a
+# credential on disk; drop_settings deletes it on exit. Returns without minting
+# when the jar is already cached (the resolve is then offline) or when `gh`
+# cannot supply a token — japicmp's own baseline check reports the miss, so a
+# failure here must never masquerade as a passed gate.
+maven_settings() {
+    [ -f "$root/$BASELINE_JAR" ] && return 0
+    [ -n "$settings_file" ] && return 0
+    command -v gh > /dev/null 2>&1 || return 0
+    local token login
+    token="$(gh auth token 2> /dev/null)" || return 0
+    [ -n "$token" ] || return 0
+    # GitHub Packages authenticates on the token; the username must be the GitHub
+    # login, not `git config user.name`, which may carry spaces.
+    login="$(gh api user --jq .login 2> /dev/null)" || login=""
+    [ -n "$login" ] || login="x-access-token"
+
+    settings_file="$(mktemp "${TMPDIR:-/tmp}/loop-modernise-settings.XXXXXX")"
+    chmod 600 "$settings_file"
+    cat > "$settings_file" << XML
+<settings>
+  <servers>
+    <server>
+      <id>github-nomixer</id>
+      <username>$login</username>
+      <password>$token</password>
+    </server>
+  </servers>
+</settings>
+XML
+}
+
 japicmp() {
+    maven_settings
+    local settings_arg=()
+    [ -n "$settings_file" ] && settings_arg=(-s "$settings_file")
     if ! run_logged env -C "$root" MAVEN_USER_HOME="$root/.m2" "$root/mvnw" \
-        -B -ntp -Papicheck -DskipTests -pl thinlet-core -am \
+        -B -ntp "${settings_arg[@]}" -Papicheck -DskipTests -pl thinlet-core -am \
         -Dmaven.repo.local=.m2/repository verify; then
         return 1
     fi
@@ -168,6 +217,9 @@ main() {
     echo "  verify per slice: local-ci.sh base + rows 8/11/17 + japicmp (~2 min)"
     echo "  commit: each green slice, no tags$([ "$dry_run" = true ] && echo ' (DISABLED: --dry-run)')"
     echo "  context: $([ "$fresh" = true ] && echo 'fresh per slice (--new)' || echo 'one resumed session')"
+    echo "  api baseline: $([ -f "$root/$BASELINE_JAR" ] \
+        && echo 'cached, resolves offline' \
+        || echo 'fetched with an ephemeral settings.xml from gh auth token')"
     echo "  options: [N] cap slices | --new fresh context | --dry-run verify without committing"
 
     preflight
@@ -259,9 +311,12 @@ preflight() {
     fi
     if ! japicmp; then
         echo "loop-modernise: japicmp cannot gate the public API (see $LOG_REL)." >&2
-        echo "  GitHub Packages needs read auth even for public reads (D4). Once:" >&2
-        echo "    gh auth refresh -s read:packages" >&2
-        echo "    add a <server> id 'github-nomixer' to ~/.m2/settings.xml (user nomixer, password the token)" >&2
+        echo "  The v0.1.0 baseline comes from GitHub Packages, which needs read auth (D4)." >&2
+        echo "  This run mints a settings.xml from 'gh auth token', so either:" >&2
+        echo "    gh auth login && gh auth refresh -s read:packages" >&2
+        echo "  or seed the cache once, after which the resolve needs no credential:" >&2
+        echo "    ./mvnw install:install-file -Dmaven.repo.local=.m2/repository \\" >&2
+        echo "      -Dfile=<thinlet-core-0.1.0.jar> -DpomFile=<thinlet-core-0.1.0.pom>" >&2
         exit 1
     fi
     echo "loop-modernise: preflight green (base verify + japicmp)"
