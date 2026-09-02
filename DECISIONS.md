@@ -3618,3 +3618,51 @@ golden corpus and is untouched here.
 (Cross-ref D85 the `loop-modernise` record this came out of, D57 the
 sentence-named-tests-are-the-spec rule, D43 the public-API discipline japicmp
 enforces, D52 the string-literal rewrite hazard this class of change sits nearest.)
+
+## D87 — `loop-modernise.sh` lands on `main`; the loop runs in a worktree on its own branch
+
+**Date:** 2026-09-02. **Status:** accepted. **Phase:** 3c (tooling only; no
+library, build or behavior change — the script is not wired into the build and
+nothing invokes it automatically).
+
+**What changes.** `scripts/loop-modernise.sh` moves from the parked
+`loop-modernise` branch onto trunk. D85 recorded it as started-then-stopped work
+precisely because it had never completed a pass; that reason is gone. It is
+unblocked (the japicmp credential gap, D85), it has completed a verified slice,
+its net now reaches the code it was most likely to damage (D86), and the parser it
+must not touch is fenced with an enforced guard, not a prompt rule.
+
+**Why the tool belongs on trunk and its output does not.** Keeping the script on
+the same branch as the slices it produces would mean every future PR of modernised
+code also carried the tool's history, and a reviewer would have to separate the two
+by hand. On `main`, the script is a tool like `local-ci.sh` or `comment-pass.sh`,
+and a run branch contains **only** slices — which is the thing being reviewed.
+
+**Runs happen in a linked worktree, not the primary checkout.** The loop rewrites
+`thinlet-core/src/main/java` and rolls back on failure; doing that in the working
+copy someone is reading conflicts with ordinary work, and the loop refuses to start
+on a dirty tree anyway. A worktree also isolates `target/` and `.m2/`, which is
+what makes concurrent use safe at all. Two facts were checked rather than assumed:
+`local-ci.sh` bind-mounts the worktree, whose `.git` is a *file* pointing outside
+the mount, and the base row still runs green (no build plugin here reads git); and
+a fresh worktree has no `.m2/`, so it is seeded by copy — which also carries the
+japicmp baseline, letting the API gate resolve offline.
+
+**One bug this surfaced.** The `flock` used `$root/.git/loop-modernise.lock`,
+which assumes `.git` is a directory. In a worktree it is a file, so the redirect
+failed and took the run with it under `set -e` — the loop could only ever have run
+in the primary worktree. It now uses `git rev-parse --git-dir`, deliberately not
+`--git-common-dir`: the lock is meant to be per-worktree, because it is sharing
+`.m2/` and `target/` that corrupts build state, and separate worktrees share
+neither.
+
+**What is still unproven, and is why the first real run is capped.** No slice has
+ever failed verification, so the **repair** path has never executed; nor has the
+**commit** path, which `--dry-run` deliberately stops short of. The first real run
+is capped at three slices for that reason — enough to exercise committing and to
+show whether quality holds across passes, small enough to review as one batch.
+Merging what it produces stays a separate, ordinary PR decision; nothing here
+authorizes the loop's output onto `main`.
+(Cross-ref D85 the record this closes out, D86 the parser net, D69 the
+change-control protocol any observable change would still go through, D44 the
+container-only golden rule the loop's verification rests on.)

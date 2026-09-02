@@ -62,18 +62,18 @@ Two rules the format depends on:
 
 ### `loop-modernise` — an autonomous behavior-preserving modernisation loop
 
-- **Status:** Parked, and no longer blocked. The credential gap is closed and one
-  slice has been verified end to end (2026-09-02); what remains undone is the
-  decision to let it run for real, which is the maintainer's.
+- **Status:** Resumed. **This entry is now a candidate for removal — the
+  maintainer's call, per the retention rule below.** The script merged to `main`
+  on 2026-09-02 (D87) and the loop is being run for real, capped at three slices.
+  It is kept only until that run shows whether the repair and commit paths, both
+  still unexercised, hold up.
 
-- **Where it lives:** branch **`loop-modernise`**, pushed to `origin`. Not merged,
-  no PR. Five commits — `4563769` (unadapted import), `087b3d5` (adapted to this
-  repository's gates), `3da36c1` (detect the japicmp no-op), `ea4fafe` (mint the
-  Packages credential per run), `1824470` (fence the XML parser) — rebased onto
-  `main` at `197180d`, which is why the first three carry different hashes than
-  the ones D85 recorded. The whole branch is one new file,
-  **`scripts/loop-modernise.sh`**, **which exists on that branch only and not on
-  `main`**.
+- **Where it lives:** **`main`**, at `scripts/loop-modernise.sh` — no longer
+  branch-only, which retires the qualify-paths-by-branch caveat this entry used to
+  need. The `loop-modernise` branch was squash-merged by D87, so the commit hashes
+  earlier revisions of this entry listed no longer resolve; trunk history is the
+  record. Slices the loop produces land on their own branch off `main`, run from a
+  linked worktree — never in the primary checkout, and never on `main`.
 
 - **Intent:**
 
