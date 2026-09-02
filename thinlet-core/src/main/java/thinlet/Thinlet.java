@@ -167,6 +167,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      *
      * @param font the default font is <i>SansSerif</i>, <i>plain</i>, and <i>12pt</i>
      */
+    @Override
     public void setFont(Font font) {
         block = getFontMetrics(font).getHeight();
         super.setFont(font);
@@ -1136,6 +1137,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      *
      * @return a dimension object indicating the root component's preferred size
      */
+    @Override
     public Dimension getPreferredSize() {
         return getPreferredSize(content);
     }
@@ -1528,6 +1530,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
     /**
      * Invokes the paint method
      */
+    @Override
     public void update(Graphics g) {
         paint(g);
     }
@@ -1542,6 +1545,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
     /**
      * Paints the components inside the graphics clip area
      */
+    @Override
     public void paint(Graphics g) {
         // The 2005 reflective lookup was not merely dead weight at the Java-8 floor: it
         // cached one Method in a static keyed to the first Graphics class, so a second
@@ -2008,6 +2012,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * A second thread is used to repeat value change events for scrollbar or spinbox
      * during the mouse is pressed, or to pop up tooltip
      */
+    @Override
     public synchronized void run() {
         while (timer == Thread.currentThread()) {
             try {
@@ -2066,6 +2071,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      *
      * @return true as focus-transverable component, overwrites the default false value
      */
+    @Override
     public boolean isFocusTraversable() {
         return true;
     }
@@ -2074,6 +2080,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * Dispatches mouse, key, focus, and component events occurring on the
      * <i>Thinlet</i> component internally
      */
+    @Override
     protected void processEvent(AWTEvent e) {
         // evm (touchscreen) events: entered/moved/pressed -> dragged -> dragged/released/exited
         int id = e.getID();
