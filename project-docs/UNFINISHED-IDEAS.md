@@ -159,6 +159,16 @@ Two rules the format depends on:
   diff. It is preserved on `loop-modernise` as a `git stash` entry, not committed —
   proving the loop works is not authorization to modernise the source.
 
+  That green result was also **weaker than it looked**, and finding out why is the
+  more useful thing this run produced. Five of the nine edits sit in the DOM and
+  SAX branches of `parse`, which no test called: the rows were green partly
+  because the code never ran. **D86** closed that gap with `ParserSaxModeTest` and
+  `ParserDomModeTest` (19 tests, mutation-checked), and the slice re-run against
+  them passes — so it is safe as a result rather than an assumption. The lesson
+  generalises past this slice: the loop's premise holds only where the net
+  reaches, and neither the stray-path guard nor japicmp notices an uncovered
+  branch.
+
   Confirmed by watching the run rather than reading the script: the nested agent is
   invoked `--print --permission-mode acceptEdits`, so it edits freely but its own
   attempts to run `spotless:apply` and `local-ci.sh` are declined at the permission

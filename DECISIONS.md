@@ -3564,3 +3564,57 @@ cannot run japicmp because GitHub Packages needs read auth even for public reads
 past that, so they are not re-derived.
 (Cross-ref D27 the directory layout, D57 the single-home rule, D66 the tense rule,
 D4 the packages-auth fact the seed entry rests on.)
+
+## D86 — the SAX and DOM parser modes get a net, ahead of any automated rewrite
+
+**Date:** 2026-09-02. **Status:** accepted. **Phase:** 3c (test-only; no library,
+build or behavior change).
+
+**The gap was found by using the net, not by auditing it.** `loop-modernise`'s
+first completed `--dry-run` (D85) proposed retiring nine redundant `new String(…)`
+copies in `Thinlet.java`. The slice passed every gating row — base, JDK 8/11/17,
+japicmp — and that green result was weaker than it looked: five of the nine edits
+sit inside `if (mode == 'D')` and the SAX `else` branches of `parse`, and nothing
+under `src/test` called `parseXML` or `parseDOM`. The rows were green partly
+because that code never ran.
+
+**Why this is a net gap and not a slice problem.** The loop's whole premise is
+that a green net proves nothing observable moved, so the maintainer's attention is
+spent on the disposition rather than the diff. That premise holds only where the
+net reaches. Neither of the loop's other guards closes this: the stray-path guard
+passes because `Thinlet.java` is squarely in the target tree, and japicmp passes
+because removing a `new String(…)` changes no signature. An unattended run over
+`thinlet-core/src/main/java` would keep proposing changes to `parse`, and the only
+thing standing between an uncovered branch and a committed regression would be the
+slice author's own judgement.
+
+**Decision.** Two characterization suites, `ParserSaxModeTest` and
+`ParserDomModeTest`, pinning the 'S' and 'D' branches through their documented
+surfaces — the `startElement`/`characters`/`endElement` callbacks, and the
+`getDOM*` accessors. 19 sentence-named tests (D57: the tests are the spec). They
+cover the callback sequence, attribute delivery, element text, whitespace
+collapsing with the trailing-space trim, nesting, and the declaration/comment/
+doctype skips. SAX-mode attribute assertions sort the raw `Hashtable` first,
+because its iteration order is unspecified and would otherwise vary by JDK row.
+
+**Proven to have teeth, not merely to pass.** Passing on first run proves nothing
+about a characterization suite, so the five previously-uncovered lines were each
+mutated to a constant and the suites re-run: **15 of 19 tests failed**, spanning
+both classes and every assertion kind. The mutations were then reverted and the
+source confirmed byte-identical to its pre-mutation state. The four DOM tests that
+survive the mutation assert null-returns and tag counts, which those five lines do
+not feed.
+
+**The slice that prompted this is safe — now demonstrably.** Re-run against the
+new suites, all 19 pass. That was the likely outcome; the point is that it is now
+a result rather than an assumption. The slice remains uncommitted (a `git stash`
+entry on `loop-modernise`), because proving the loop works is not authorization to
+modernise the source.
+
+**What this does not claim.** Only the five lines the slice touched were mutation-
+checked, so this is a net for the branches the parser modes expose, not a coverage
+guarantee for `parse` as a whole. The `'T'` GUI branch was already covered by the
+golden corpus and is untouched here.
+(Cross-ref D85 the `loop-modernise` record this came out of, D57 the
+sentence-named-tests-are-the-spec rule, D43 the public-API discipline japicmp
+enforces, D52 the string-literal rewrite hazard this class of change sits nearest.)
