@@ -29,6 +29,13 @@ readonly LOG_REL=".modernise-verify.log"
 readonly COAUTHOR="${MODERNISE_COAUTHOR:-Claude Opus 5}"
 readonly BASELINE_JAR=".m2/repository/com/nomixer/thinlet/thinlet-core/0.1.0/thinlet-core-0.1.0.jar"
 
+# The XML parser is fenced off pending the ROADMAP 3c decision on whether it
+# survives at all (recorded 2026-09-02): modernising ~207 lines that may be
+# deleted is wasted work, and its whitespace semantics are the delicate part of
+# any JAXP replacement. Matched against the enclosing method of each changed
+# line, so it tracks the code rather than line numbers.
+readonly FENCED_FILE="thinlet-core/src/main/java/thinlet/Thinlet.java"
+
 root="$(git rev-parse --show-toplevel)"
 msg_file="$root/$MSG_REL"
 log="$root/$LOG_REL"
@@ -159,6 +166,10 @@ Hard rules. A violation fails the pass and the slice is rolled back:
    the goldens did not cover. After any repetitive edit, re-read the literals you
    passed over.
 6. Minimal diff. Never reformat lines you are not otherwise changing.
+7. Do not touch the XML parser: parse(InputStream, char, Object), parseXML,
+   parseDOM, or the getDOM* accessors. Whether it is replaced by JAXP outright is
+   an open ROADMAP 3c decision, so modernising it now may be work on deleted code.
+   A slice that reaches into it is rolled back.
 
 Use the java-refactor skill with a target floor of Java 8, and take its payoff
 judgment seriously — skip anything it rates cosmetic or a false gain.
@@ -242,6 +253,7 @@ main() {
 
         guard_changes || return 0
         guard_strays
+    guard_fenced
         warn_api_shape
 
         # Same command the container-only pre-commit hook runs. Formatting is not
@@ -268,6 +280,7 @@ main() {
             return 1
         fi
         guard_strays
+    guard_fenced
         (cd "$root" && ./mvnw -q -B spotless:apply)
 
         if ! verify_all; then
@@ -344,6 +357,60 @@ guard_changes() {
 # Anything outside the target tree is out of scope by construction, which is what
 # keeps the frozen artifacts safe: thinlet.dtd, the XML corpus, the golden traces
 # under src/test/resources/trace/, the 2005 *.gif icons, and scripts/ itself.
+fenced_methods() {
+    cat << 'NAMES'
+Object parse(InputStream inputstream, char mode
+void parseXML(
+Object parseDOM(
+String getDOMAttribute(
+String getDOMText(
+int getDOMCount(
+Object getDOMNode(
+NAMES
+}
+
+# Line numbers changed in FENCED_FILE, one per line, from the unified-0 hunks.
+changed_lines() {
+    git -C "$root" diff -U0 -- "$FENCED_FILE" | awk '
+        /^@@/ {
+            split($3, a, ",")
+            sub(/^\+/, "", a[1])
+            count = (a[2] == "" ? 1 : a[2])
+            for (i = 0; i < count; i++) print a[1] + i
+        }'
+}
+
+# The enclosing method signature of one line, or "" above the first method.
+enclosing_method() {
+    awk -v n="$1" '
+        NR <= n && /^    (private|protected|public).*\(/ { m = $0 }
+        NR == n { print m; exit }' "$root/$FENCED_FILE"
+}
+
+# Refuses a slice that reached into the fenced parser. Advisory prompt rules are
+# not enough on their own — this is the same distrust guard_strays encodes.
+guard_fenced() {
+    if ! git -C "$root" diff --quiet -- "$FENCED_FILE"; then
+        local line method hit=""
+        while read -r line; do
+            [ -z "$line" ] && continue
+            method="$(enclosing_method "$line")"
+            [ -z "$method" ] && continue
+            if printf '%s\n' "$method" | grep -qFf <(fenced_methods); then
+                hit="$hit
+  line $line: $(echo "$method" | sed 's/^ *//')"
+            fi
+        done <<< "$(changed_lines)"
+        if [ -n "$hit" ]; then
+            echo "loop-modernise: slice touched the fenced XML parser — rolling back and stopping" >&2
+            echo "  the parser's fate is an open ROADMAP 3c decision; do not modernise it yet" >&2
+            echo "$hit" >&2
+            rollback
+            exit 1
+        fi
+    fi
+}
+
 guard_strays() {
     local strays new
     strays="$(changed_paths | grep -v "^$TARGET/" || true)"
