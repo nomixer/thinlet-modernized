@@ -1,4 +1,4 @@
-# Next steps — session handoff (2026-08-25)
+# Next steps — session handoff (2026-09-02)
 
 > State pointers + ordered work only; rationale lives in `DECISIONS.md`
 > (single-home rule + comment rules: **D57**). Charter:
@@ -121,10 +121,14 @@
    covers **only** the Cut 4/5/6 seam commitments (D48/D50/D61/D69), never net or
    preparatory work. When they land: fork files → subsystems; boundaries vs Cut 2–6
    seams; enhancement backlog; then Cut 4+ seam commitments unblock (3a resumes).
-4. **`loop-modernise` — parked, pushed, recorded** — the autonomous modernisation
-   loop stalled on a local japicmp credential gap, not on the idea. Full record
-   (intent, progress, blocker, cost to resume) in `project-docs/UNFINISHED-IDEAS.md`,
-   the D85 home for started-then-stopped work.
+4. **`loop-modernise` — parked, unblocked, one slice proven** — the japicmp
+   credential gap that stalled the autonomous modernisation loop is closed
+   (2026-09-02) and `--dry-run` has verified a slice end to end for the first
+   time. What is left is the maintainer's call on whether to run it for real; the
+   repair and commit paths are still unexercised. Full record (intent, progress,
+   how the blocker was cleared, cost to resume) in
+   `project-docs/UNFINISHED-IDEAS.md`, the D85 home for started-then-stopped
+   work.
 
 ## Discipline (one-liners; the D-entries carry the why)
 

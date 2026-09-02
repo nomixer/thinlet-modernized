@@ -62,15 +62,17 @@ Two rules the format depends on:
 
 ### `loop-modernise` — an autonomous behavior-preserving modernisation loop
 
-- **Status:** Parked. Blocked on one piece of local credential wiring (below);
-  nothing about the idea is in doubt.
+- **Status:** Parked, and no longer blocked. The credential gap is closed and one
+  slice has been verified end to end (2026-09-02); what remains undone is the
+  decision to let it run for real, which is the maintainer's.
 
-- **Where it lives:** branch **`loop-modernise`**, pushed to `origin` on
-  2026-08-25 so it is no longer a single copy. Not merged, no PR. Three commits
-  — `5489f3f` (unadapted import), `b32a8df` (adapted to this repository's gates),
-  `bd1f5c3` (detect the japicmp no-op) — on top of `main` at `8825515`, so no
-  rebase is owed. The whole branch is one new file, **`scripts/loop-modernise.sh`**
-  (344 lines), **which exists on that branch only and not on `main`**.
+- **Where it lives:** branch **`loop-modernise`**, pushed to `origin`. Not merged,
+  no PR. Four commits — `4563769` (unadapted import), `087b3d5` (adapted to this
+  repository's gates), `3da36c1` (detect the japicmp no-op), `ea4fafe` (mint the
+  Packages credential per run) — rebased onto `main` at `197180d`, which is why
+  the first three carry different hashes than the ones D85 recorded. The whole
+  branch is one new file, **`scripts/loop-modernise.sh`**, **which exists on that
+  branch only and not on `main`**.
 
 - **Intent:**
 
@@ -140,49 +142,87 @@ Two rules the format depends on:
   refactoring regression this repository has had, and the loop is the highest-risk
   place for it to happen again.
 
-- **Progress:** The script is complete and its gates work as far as they have been
-  exercised. Under the loop's own harness the dev-container base row runs green
-  end to end (`.modernise-verify.log` from the 2026-08-18 run). What has **never**
-  happened is a single complete slice — not even under `--dry-run`, which
-  verifies one slice and deliberately stops short of committing. No pass has ever
-  reached the point of proposing a change, so the prompt, the repair path and the
-  commit path are all unexercised.
+- **Progress:** A complete pass now exists. On 2026-09-02
+  `scripts/loop-modernise.sh --dry-run` reached `preflight green (base verify +
+  japicmp)` and then `slice 1 verified; left uncommitted (--dry-run)` — the
+  milestone the work had never reached, and the first evidence that the prompt and
+  the verification path work rather than merely being written down.
 
-- **Blocker:** the preflight's japicmp gate cannot run on this machine.
+  What the slice did is worth recording, because it is the only sample of this
+  loop's judgement that exists. It retired redundant `new String(…)` copies in the
+  XML parser and the `parse`/`putProperty` helpers (11 insertions, 9 deletions in
+  `Thinlet.java`) — and it left the `new String(new byte[0], 0, 0, enc)` in the
+  `?xml encoding` branch alone, adding a comment that it is a charset probe rather
+  than a copy. Distinguishing those two is the discrimination the prompt asks for
+  and the thing a blanket rewriter gets wrong. The slice passed the base row, JDK
+  rows 8/11/17 and japicmp: seven Maven builds, seven `BUILD SUCCESS`, no golden
+  diff. It is preserved on `loop-modernise` as a `git stash` entry, not committed —
+  proving the loop works is not authorization to modernise the source.
 
-  japicmp compares the build's public API against the **published** `v0.1.0` jar,
-  which lives in GitHub Packages — and GitHub Packages requires a token even to
-  read public artifacts (D4). CI has one: the `Set up JDK 21 + GitHub Packages
-  read auth` step in `.github/workflows/ci.yml` (on `main`) uses `actions/setup-java`
-  to write a `~/.m2/settings.xml` containing a `github-nomixer` server. This
-  machine has no `~/.m2/settings.xml` at all, so Maven authenticates with nothing,
-  takes a 401, and writes only a `thinlet-core-0.1.0.jar.lastUpdated` marker whose
-  recorded error is `status code: 401`. The `MAVEN_USER_HOME` the script exports
-  cannot help — `mvnw` uses that variable only to locate `wrapper/dists`, never to
-  resolve settings.
+  Confirmed by watching the run rather than reading the script: the nested agent is
+  invoked `--print --permission-mode acceptEdits`, so it edits freely but its own
+  attempts to run `spotless:apply` and `local-ci.sh` are declined at the permission
+  prompt. That is the design working — verification belongs to the script, which
+  ran it — not a defect to fix.
 
-  The reason this now stops the run rather than being silently tolerated is
-  `bd1f5c3`. An unresolvable baseline makes japicmp a **no-op**: it reports
-  `Comparing … against ` with an empty right-hand side, scores every member as
-  NEW, and the build still succeeds. Exit status alone therefore scores an
-  ungated build as a pass, so the script checks for the cached baseline jar and
-  refuses to start without it.
+  Still unexercised: the **repair** path (no slice has yet failed verification),
+  the **commit** path, and any run past a single slice.
 
-  Checked 2026-08-25: the token itself is sufficient — `gh auth` carries
-  `read:packages`, and the baseline jar fetches directly over HTTPS (HTTP 200,
-  77,131 bytes). Only the Maven wiring is missing.
+- **Blocker:** none. It was the preflight's japicmp gate, cleared on 2026-09-02.
 
-  Three ways past it, recorded so they are not re-derived:
+  What it was. japicmp compares the build's public API against the **published**
+  `v0.1.0` jar in GitHub Packages, which requires a token even to read public
+  artifacts (D4). This host had no `~/.m2/settings.xml`, so Maven authenticated
+  with nothing, took a 401, and wrote only a `thinlet-core-0.1.0.jar.lastUpdated`
+  marker recording `status code: 401`. `MAVEN_USER_HOME` could not help — `mvnw`
+  uses it only to locate `wrapper/dists`, never to resolve settings. That stopped
+  the run rather than being tolerated because of `3da36c1`: an unresolvable
+  baseline makes japicmp a **no-op** (it reports `Comparing … against ` with an
+  empty right-hand side, scores every member as NEW, and still succeeds), so the
+  script proves the baseline structurally instead of trusting the exit status.
 
-  1. Have the script mint an ephemeral `settings.xml` from `gh auth token` at run
-     time (mode 600, deleted on exit) and pass it with `-s`. No token at rest
-     anywhere; works only while `gh` is logged in.
-  2. Create a permanent `~/.m2/settings.xml`, mirroring what CI's `setup-java`
-     writes. Works for every Maven invocation, at the cost of a credential file
-     on the host.
-  3. Drop japicmp from the loop and rely on CI's `api-compat` job at PR time.
-     Cheapest, but each slice then commits without the D43 public-API gate having
-     actually run — which is the thing `bd1f5c3` was written to prevent.
+  Three ways past it were recorded on 2026-08-25 and are named here because the
+  reasoning still matters: **(1)** have the script mint an ephemeral
+  `settings.xml` at run time; **(2)** create a permanent `~/.m2/settings.xml`
+  mirroring what CI's `setup-java` writes; **(3)** drop japicmp from the loop and
+  rely on CI's `api-compat` job at PR time.
+
+  **The route actually taken was a fourth one none of those considered: seed the
+  local cache, and the credential stops being needed at all.** The loop
+  resolves with `-Dmaven.repo.local=.m2/repository`, so the repo-local cache — not
+  `~/.m2/repository` — is where the jar had to land. `thinlet-core-0.1.0.jar` and
+  its pom, plus the `thinlet-parent` pom the parent chain needs, were fetched from
+  GitHub Packages over HTTPS with the `gh` token (HTTP 200; 77,131 bytes; sha256
+  `0cf508eb…`) and placed with `install:install-file`. Maven never re-resolves a
+  release it already holds, so `./mvnw -o -Papicheck …` now passes **offline**.
+
+  Two things checked rather than assumed, because both could have made this fail
+  quietly: the stale 401 `.lastUpdated` marker does **not** interfere once the jar
+  is present, and `install:install-file` writes `_remote.repositories` with an
+  **empty** repository id (`thinlet-core-0.1.0.jar>=`), which marks the artifact
+  locally installed and resolvable by any build — so `-Dmaven.legacyLocalRepo=true`
+  was never needed.
+
+  Route 1, the ephemeral mint, is wired into the script as well by `ea4fafe`, so
+  a machine without a seeded cache is not stuck: `maven_settings()` mints a `settings.xml` carrying a
+  `github-nomixer` server from `gh auth token`, mode 600, deleted by an `EXIT`
+  trap, passed with `-s`. It mints nothing when the jar is already cached. Proven
+  by moving the cached jar aside and re-running: the baseline came back through
+  the minted settings byte-identical, with no credential left in `/tmp`.
+
+  A mint failure deliberately returns 0 rather than erroring, because the
+  authority must stay the `BASELINE_JAR`-on-disk check from `3da36c1`. A missing
+  credential therefore still surfaces as *the API gate did not run*, and can never
+  read as a gate that passed.
+
+  Route 2, the permanent `~/.m2/settings.xml`, was not taken — the seeded cache
+  reaches the same place with no credential at rest. Route 3, dropping japicmp,
+  was not taken: it is precisely the outcome `3da36c1` exists to prevent.
+
+  **What a reader should take from this:** the two live routes are the seeded
+  cache (offline, nothing at rest, but per-machine and lost on a fresh clone) and
+  the per-run mint (portable, needs `gh` logged in). They compose — the script
+  prefers the cache and falls back to the mint.
 
 - **How it stalled:** the 2026-08-18 00:39 run stopped in preflight and printed a
   two-step instruction addressed to the maintainer (grant `read:packages`, add a
@@ -190,15 +230,19 @@ Two rules the format depends on:
   the branch was not pushed, and the conversation was not resumed — eight days of
   silence, with no emergency implied. The thread simply ended. `read:packages` is
   present on the token today, but there is no evidence recording when it was
-  granted, so whether the first step was ever taken is unknown.
+  granted, so whether the first step was ever taken is unknown. The stall ended on
+  2026-09-02, when the branch triage that found the branch also cleared the gate;
+  neither step of that original instruction turned out to be the way past it.
 
-- **Cost to resume:** pick one of the three routes above and wire it in; run
-  `scripts/loop-modernise.sh --dry-run` to prove a single slice end to end, which
-  is the milestone this work has never reached. Budget roughly two minutes of
-  verification per slice attempt on top of whatever the slice itself costs. Note
-  that a branch the loop produces carries Java changes, so `gh pr create` on it is
-  blocked until the D60 comment pass is attested — the script's own closing
-  reminder says so.
+- **Cost to resume:** on this host, nothing — `scripts/loop-modernise.sh` starts
+  and preflight passes. On a fresh clone the repo-local cache is empty, so either
+  re-seed the baseline or let `maven_settings()` mint from a logged-in `gh`; the
+  script's preflight failure message names both routes. Budget roughly two minutes
+  of verification per slice on top of whatever the slice itself costs, and note
+  that the repair and commit paths are still unexercised, so the first real run
+  wants watching. A branch the loop produces carries Java changes, so `gh pr
+  create` on it is blocked until the D60 comment pass is attested — the script's
+  own closing reminder says so.
 
-- **Last touched:** 2026-08-17 (last commit) / 2026-08-18 (last run).
-  **Last reviewed:** 2026-08-25.
+- **Last touched:** 2026-09-02 (last commit `ea4fafe`) / 2026-09-02 (last run,
+  the first `--dry-run` to complete a slice). **Last reviewed:** 2026-09-02.
