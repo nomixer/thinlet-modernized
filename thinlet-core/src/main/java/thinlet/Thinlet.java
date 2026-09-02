@@ -83,18 +83,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
     // which is what IconResolutionLoggingTest attaches its handler to.
     private static final Logger LOG = Logger.getLogger(Thinlet.class.getName());
 
-    private static long WHEEL_MASK = 0;
-    private static int MOUSE_WHEEL = 0;
-    private static Method wheelrotation;
     static int evm = 0; // package-private for Renderer (D48 seam; japicmp-invisible)
 
     static {
-        try { // for mousewheel events
-            WHEEL_MASK = AWTEvent.class.getField("MOUSE_WHEEL_EVENT_MASK").getLong(null);
-            MOUSE_WHEEL = MouseEvent.class.getField("MOUSE_WHEEL").getInt(null);
-        } catch (Exception exc) {
-            /* not 1.4 */
-        }
         // EVM has larger fillRect, fillOval, and drawImage(part), others are correct
         // contributed by Ibsen Ramos-Bonilla and AK
         try {
@@ -112,23 +103,15 @@ public class Thinlet extends Container implements Runnable, Serializable {
         // setFont((Font) getToolkit().getDesktopProperty("win.messagebox.font"));
         setColors(0xe6e6e6, 0x000000, 0xffffff, 0x909090, 0xb0b0b0, 0xededed, 0xb9b9b9, 0x89899a, 0xc5c5dd);
 
-        // disable global focus-manager for this component in 1.4
-        if (MOUSE_WHEEL != 0) {
-            try {
-                getClass()
-                        .getMethod("setFocusTraversalKeysEnabled", new Class[] {Boolean.TYPE})
-                        .invoke(this, new Object[] {Boolean.FALSE});
-            } catch (Exception exc) {
-                /* never */
-            }
-        }
+        // disable global focus-manager for this component: Thinlet traverses focus itself
+        setFocusTraversalKeysEnabled(false);
         // set listeners flags
         enableEvents(AWTEvent.COMPONENT_EVENT_MASK
                 | AWTEvent.FOCUS_EVENT_MASK
                 | AWTEvent.KEY_EVENT_MASK
                 | AWTEvent.MOUSE_EVENT_MASK
                 | AWTEvent.MOUSE_MOTION_EVENT_MASK
-                | WHEEL_MASK);
+                | AWTEvent.MOUSE_WHEEL_EVENT_MASK);
     }
 
     /**
@@ -2282,16 +2265,15 @@ public class Thinlet extends Container implements Runnable, Serializable {
                             insidepart);
                 }
             }
-        } else if (id == MOUSE_WHEEL) {
+        } else if (id == MouseEvent.MOUSE_WHEEL) {
             Rectangle port = getRectangle(mouseinside, ":port");
             if (port != null) { // is scrollable
                 // TODO hide tooltip?
                 Rectangle bounds = getRectangle(mouseinside, "bounds");
-                try { // mouse wheel is supported since 1.4 thus it use reflection
-                    if (wheelrotation == null) {
-                        wheelrotation = e.getClass().getMethod("getWheelRotation", null);
-                    }
-                    int rotation = ((Integer) wheelrotation.invoke(e, null)).intValue();
+                // The catch stays load-bearing: it absorbed the reflective lookup's failure on a
+                // non-wheel event posted with this id, and now absorbs the cast's, unchanged.
+                try {
+                    int rotation = ((MouseWheelEvent) e).getWheelRotation();
 
                     if (port.x + port.width < bounds.width) { // has vertical scrollbar
                         processScroll(mouseinside, (rotation > 0) ? "down" : "up"); // TODO scroll panels too
@@ -2329,18 +2311,10 @@ public class Thinlet extends Container implements Runnable, Serializable {
                             ? setNextFocusable(focusowner, outgo)
                             : setPreviousFocusable(focusowner, outgo)) {
                         ke.consume();
-                    } else if (MOUSE_WHEEL != 0) { // 1.4
-                        if (!ke.isShiftDown()) {
-                            transferFocus();
-                        } else {
-                            try {
-                                getClass()
-                                        .getMethod("transferFocusBackward", null)
-                                        .invoke(this, null);
-                            } catch (Exception exc) {
-                                /* never */
-                            }
-                        }
+                    } else if (!ke.isShiftDown()) {
+                        transferFocus();
+                    } else {
+                        transferFocusBackward();
                     }
                     repaint(focusowner);
                     closeup();
