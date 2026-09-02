@@ -175,7 +175,7 @@ jobs:
       # apicheck profile's repository (github-nomixer), reading credentials from
       # the env vars below; the Maven wrapper reads that settings.xml by default.
       - name: Set up JDK 21 + GitHub Packages read auth
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
@@ -206,7 +206,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
