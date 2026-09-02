@@ -76,8 +76,8 @@ class ParserSaxModeTest {
 
     @Test
     void parseXmlReportsTheTagNameItWasGiven() throws Exception {
-        // Pins the identity of the string handed to startElement: SAX mode carries
-        // the tag name in `current`, and it must arrive intact and uninterned.
+        // A tag name outside the GUI vocabulary still reaches startElement verbatim:
+        // SAX mode reports the name it read rather than resolving a widget from it.
         assertThat(new Transcript().read("<mywidget></mywidget>"))
                 .containsExactly("start mywidget (no attributes)", "end");
     }
@@ -96,8 +96,8 @@ class ParserSaxModeTest {
 
     @Test
     void parseXmlCollapsesWhitespaceAndTrimsTheTrailingSpaceFromText() throws Exception {
-        // The parser folds runs of whitespace into single spaces while reading, then
-        // drops one trailing space before reporting — both are 2005 behavior.
+        // Interior whitespace runs arrive collapsed to one space, and the trailing
+        // space is gone: `parse` trims one before it reports the text.
         assertThat(new Transcript().read("<label>  hello   world \n </label>"))
                 .containsExactly("start label (no attributes)", "text [hello world]", "end");
     }
@@ -122,8 +122,8 @@ class ParserSaxModeTest {
 
     @Test
     void parseXmlDoesNotReportTheXmlDeclarationAsAnElement() throws Exception {
-        // A processing instruction sets no tag name, so no start/end pair is emitted
-        // — the encoding attribute is consumed by the declaration branch instead.
+        // `parse` assigns no tag name when its `pi` flag is set, so the declaration
+        // produces no start/end pair — only the element after it does.
         assertThat(new Transcript().read("<?xml version='1.0' encoding='UTF-8'?><panel/>"))
                 .containsExactly("start panel (no attributes)", "end");
     }

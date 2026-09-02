@@ -18,7 +18,7 @@ import thinlet.trace.XvfbDisplayExtension;
 @ExtendWith(XvfbDisplayExtension.class)
 class ParserDomModeTest {
 
-    /** Subclassed only to reach the protected parse entry point and accessors. */
+    /** Subclassed to reach protected {@code parseDOM}; the accessors need only the package. */
     private static final class Dom extends Thinlet {
 
         Object read(String xml) throws Exception {
@@ -89,8 +89,8 @@ class ParserDomModeTest {
 
     @Test
     void parseDomAcceptsTagAndAttributeNamesTheGuiVocabularyDoesNotDefine() throws Exception {
-        // DOM mode is a generic XML reader: unlike the 'T' branch it never consults
-        // the DTD, so an unknown tag is data rather than an error.
+        // DOM mode reads arbitrary XML: a tag and attributes absent from the GUI
+        // vocabulary parse to data rather than raising, unlike the 'T' branch.
         Object root = new Dom().read("<invoice currency='GBP'><line sku='x1'>widget</line></invoice>");
         assertThat(Thinlet.getDOMAttribute(root, "currency")).isEqualTo("GBP");
         Object line = Thinlet.getDOMNode(root, "line", 0);
