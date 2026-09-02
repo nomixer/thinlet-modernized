@@ -178,5 +178,34 @@ items first:
   fails to resolve. Q3's step 1 (the diagnostic) landed with D81; step 2 waits on
   the asset and on the API call it forces (whether public `getIcon` returns the
   placeholder, ending `null` as the missing-icon signal).
+- **Whether the hand-rolled XML parser should survive at all** — raised
+  2026-09-02, undecided, recorded so the analysis is not re-derived. `parse` is
+  ~207 lines serving three modes ('T' GUI, 'S' SAX-like, 'D' DOM-like), all now
+  pinned (goldens for 'T'; D86 for 'S'/'D'). The obvious move is to delegate to
+  JAXP, and the obvious argument for it does not survive checking:
+
+  - **Security nets to roughly zero, and may favour the incumbent.** Thinlet
+    resolves five entities (`lt`/`gt`/`amp`/`quot`/`apos`) plus numeric character
+    references and throws on anything else. It has no mechanism to fetch an
+    external entity, load an external DTD, or expand a nested one, so XXE, entity
+    expansion and DTD-based SSRF are impossible by construction.
+    `DocumentBuilderFactory`/`SAXParserFactory` permit all three **by default**
+    and require explicit hardening. "Better tested" holds; "more secure" does not.
+  - **Whitespace is the real blocker.** `parse` collapses interior whitespace runs
+    to a single space and trims one trailing space — pinned by
+    `parseXmlCollapsesWhitespaceAndTrimsTheTrailingSpaceFromText`. A conforming
+    parser reports text verbatim, so a naive swap changes the text of every label
+    in every corpus file. Any replacement must reimplement the collapsing, or the
+    change goes through D69 as a deliberate, recorded behavior change.
+  - **The surface is public and consumed.** `parseXML`, `startElement`,
+    `characters`, `endElement`, `parseDOM` and the `getDOM*` accessors are
+    protected on a non-final public class, so japicmp gates them (D43); the
+    callback *sequence* is the contract, not just the signatures. DOM mode has a
+    live consumer in `AmazonExplorer` (`thinlet-demos`).
+
+  The genuine wins are maintenance and conformance (namespaces, CDATA and
+  non-predefined entities are unsupported today), not safety. Deciding this is
+  prerequisite to modernising `parse` by hand or by loop — there is no sense
+  polishing code that may be deleted, which is why `loop-modernise` skips it.
 - HiDPI / alternative rendering backends, informed by the backend-portability
   docs.
