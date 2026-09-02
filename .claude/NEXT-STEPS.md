@@ -129,14 +129,13 @@
    covers **only** the Cut 4/5/6 seam commitments (D48/D50/D61/D69), never net or
    preparatory work. When they land: fork files → subsystems; boundaries vs Cut 2–6
    seams; enhancement backlog; then Cut 4+ seam commitments unblock (3a resumes).
-4. **`loop-modernise` — parked, unblocked, one slice proven** — the japicmp
-   credential gap that stalled the autonomous modernisation loop is closed
-   (2026-09-02) and `--dry-run` has verified a slice end to end for the first
-   time. What is left is the maintainer's call on whether to run it for real; the
-   repair and commit paths are still unexercised. Full record (intent, progress,
-   how the blocker was cleared, cost to resume) in
-   `project-docs/UNFINISHED-IDEAS.md`, the D85 home for started-then-stopped
-   work.
+4. **`loop-modernise` — merged to `main`, first real run capped at 3 (D87)** —
+   the script is trunk tooling now, not branch-only work. Runs happen in a linked
+   worktree on their own branch off `main`; the primary checkout is never the
+   target. Still unexercised: the repair path (no slice has failed verification)
+   and the commit path. The XML parser is fenced (D86 + the ROADMAP 3c question),
+   so no slice may touch it. The D85 entry in `project-docs/UNFINISHED-IDEAS.md`
+   is now a removal candidate.
 
 ## Discipline (one-liners; the D-entries carry the why)
 
