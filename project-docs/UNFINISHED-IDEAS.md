@@ -67,12 +67,13 @@ Two rules the format depends on:
   decision to let it run for real, which is the maintainer's.
 
 - **Where it lives:** branch **`loop-modernise`**, pushed to `origin`. Not merged,
-  no PR. Four commits — `4563769` (unadapted import), `087b3d5` (adapted to this
+  no PR. Five commits — `4563769` (unadapted import), `087b3d5` (adapted to this
   repository's gates), `3da36c1` (detect the japicmp no-op), `ea4fafe` (mint the
-  Packages credential per run) — rebased onto `main` at `197180d`, which is why
-  the first three carry different hashes than the ones D85 recorded. The whole
-  branch is one new file, **`scripts/loop-modernise.sh`**, **which exists on that
-  branch only and not on `main`**.
+  Packages credential per run), `1824470` (fence the XML parser) — rebased onto
+  `main` at `197180d`, which is why the first three carry different hashes than
+  the ones D85 recorded. The whole branch is one new file,
+  **`scripts/loop-modernise.sh`**, **which exists on that branch only and not on
+  `main`**.
 
 - **Intent:**
 
@@ -159,6 +160,16 @@ Two rules the format depends on:
   diff. It is preserved on `loop-modernise` as a `git stash` entry, not committed —
   proving the loop works is not authorization to modernise the source.
 
+  That green result was also **weaker than it looked**, and finding out why is the
+  more useful thing this run produced. Five of the nine edits sit in the DOM and
+  SAX branches of `parse`, which no test called: the rows were green partly
+  because the code never ran. **D86** closed that gap with `ParserSaxModeTest` and
+  `ParserDomModeTest` (19 tests, mutation-checked), and the slice re-run against
+  them passes — so it is safe as a result rather than an assumption. The lesson
+  generalises past this slice: the loop's premise holds only where the net
+  reaches, and neither the stray-path guard nor japicmp notices an uncovered
+  branch.
+
   Confirmed by watching the run rather than reading the script: the nested agent is
   invoked `--print --permission-mode acceptEdits`, so it edits freely but its own
   attempts to run `spotless:apply` and `local-ci.sh` are declined at the permission
@@ -167,6 +178,14 @@ Two rules the format depends on:
 
   Still unexercised: the **repair** path (no slice has yet failed verification),
   the **commit** path, and any run past a single slice.
+
+  **The parser is fenced off** as of `1824470`. Whether Thinlet's hand-rolled XML
+  parser should survive at all is an open ROADMAP 3c question, so a slice spent
+  modernising those ~207 lines may be work on deleted code. Prompt rule 7 says so,
+  and `guard_fenced` enforces it by resolving the enclosing method of each changed
+  line in `Thinlet.java` and rolling back if it is one of the seven fenced ones —
+  attribution by method rather than line range, so the fence does not go stale as
+  the file moves.
 
 - **Blocker:** none. It was the preflight's japicmp gate, cleared on 2026-09-02.
 

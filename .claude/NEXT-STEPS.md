@@ -106,6 +106,14 @@
   called that covered. New `arrows-hlist-scrolled-right` scenario (knob drag to the
   clamp; the wheel cannot scroll horizontally) plus a per-axis guard. No existing
   golden moved. Test net only; no library change. Base row: 363 (core) + 13 (drafts).
+- **Parser SAX/DOM modes netted (D86, 2026-09-02)**: `loop-modernise`'s first
+  completed `--dry-run` proposed a slice whose green rows were partly hollow —
+  five of its nine edits sat in the `'D'`/`'S'` branches of `parse`, which no test
+  called. `ParserSaxModeTest` + `ParserDomModeTest` pin those branches through the
+  SAX callbacks and the `getDOM*` accessors; the five lines were each mutated to
+  prove the suites have teeth (15 of 19 failed), then reverted. The slice re-run
+  against them passes and stays stashed, uncommitted. Test net only; no library
+  change. Base row: 382 (core) + 13 (drafts).
 
 ## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 
