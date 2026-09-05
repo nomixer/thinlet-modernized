@@ -349,6 +349,42 @@ Either way:
   reflection as dead weight at the Java 8 floor. It was proposed as a tidy-up; it
   turned out to repair a defect neither the loop nor its reviewer knew was there.
 
+### Q16 — GUI-mode `parse` silently discards a tag's inline body text            (unfixed)
+- **What happens:** parsing XML with mode `'T'` (the public `parse(InputStream)`
+  entry point), any text found between a start tag and its matching end tag —
+  e.g. `<label>hello</label>` — is scanned, whitespace-collapsed, and then
+  simply thrown away. No exception, no property set, no observable trace.
+- **Why it's a quirk:** the endtag text-flush branches on `mode`: `'D'` stores it
+  as `":text"`, `'S'` reports it through `characters`, and the `if`/`else if`
+  chain has no arm for `'T'`, so the accumulated text falls out of scope
+  unused. A widget's `text` is meant to be set through the `text=` attribute in
+  this dialect, so nothing crashes — but XML authors reaching for the more
+  common tag-body convention get silent data loss instead of a parse error.
+- **Where:** `Thinlet.java` — `parse(InputStream, char, Object)`, the endtag
+  branch's `mode == 'D'` / `mode == 'S'` pair with no `'T'` arm.
+- **Locked by:** `thinlet.ParserSyntaxTest#parseInGuiModeSilentlyDropsTextBetweenTagsUnlikeDomAndSaxMode`
+  (tagged `documents-current-behavior`).
+- **Enhanced Thinlet disposition:** undecided.
+
+### Q17 — `End` does nothing on a list/tree with no current lead item            (unfixed)
+- **What happens:** pressing `End` on a list, tree, or table with no row
+  currently the keyboard "lead" (e.g. right after the widget is created, before
+  any selection) leaves everything exactly as it was — no row selected, no
+  scroll, and the key event is not even consumed (the caller's key handler
+  falls through to `return false`). Pressing `Home` in the same state works
+  fine and jumps to the first row.
+- **Why it's a quirk:** `getListItem`'s `VK_HOME` arm reads the first child
+  unconditionally (`get(component, ":comp")`), but the `VK_END` arm is a loop
+  seeded with `last = lead` that walks forward — with `lead == null` the loop
+  never iterates, and the pre-initialized `row = null` is returned unchanged.
+  `processList` only acts when `getListItem` returns non-null, so a null lead
+  turns `End` into a silent no-op instead of the expected "jump to the last
+  row", breaking the symmetry with `Home`.
+- **Where:** `Thinlet.java` — `getListItem`'s `VK_END` arm.
+- **Locked by:** `thinlet.ListNavigationTest#endWithNoCurrentLeadReturnsNullInsteadOfTheLastItem`
+  (tagged `documents-current-behavior`).
+- **Enhanced Thinlet disposition:** undecided.
+
 
 ## Triaged for Enhanced Thinlet (not behavior-locked)
 

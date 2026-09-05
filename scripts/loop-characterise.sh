@@ -140,6 +140,13 @@ main() {
         exit 1
     fi
 
+    # The declined file is never truncated, so remember where this run starts in
+    # it. Declines are NOT carried forward as a skip list: the dry run declined
+    # `parse` and the very next run passed it once the gate was rescoped (D94/D95),
+    # so a remembered decline would permanently exclude a target that now works.
+    run_declined_start=0
+    [ -f "$declined" ] && run_declined_start="$(wc -c < "$declined")"
+
     local session
     session="$(uuidgen 2> /dev/null || cat /proc/sys/kernel/random/uuid)"
 
@@ -399,10 +406,12 @@ guard_quirk_pairing() {
 # "needs an AWT event" — the first dry run declined `parse` because its assigned
 # lines are unreachable dead code (D94), so this header states no reason.
 declined_summary() {
-    if [ -s "$declined" ]; then
+    local now=0
+    [ -f "$declined" ] && now="$(wc -c < "$declined")"
+    if [ "$now" -gt "$run_declined_start" ]; then
         echo
         echo "loop-characterise: targets declined this run, with the reason given:"
-        sed 's/^/  /' "$declined"
+        tail -c "$((now - run_declined_start))" "$declined" | sed 's/^/  /'
     fi
 }
 
