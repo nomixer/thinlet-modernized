@@ -3965,9 +3965,12 @@ repo's only refactoring regression: a blanket regex rewrote `"font"` into
 identifier renaming, so a missed insertion inside a `static` body is a **compile
 error rather than a silent behavior change** — which is how `findScroll` was
 caught reading `insidepart` and `block` after being mis-classified as pure. The
-transformation ran on literal- and comment-masked segments only, and the
+transformation ran on string- and char-literal-masked segments only, and the
 round-trip audit (D56) is decisive: **all 1 294 string literals in `Thinlet.java`
-are byte-identical to `main`.**
+are byte-identical to `main`.** Comments were *not* masked, which the audit caught
+— one trailing comment was rewritten to `// component -> t.getParent(lead)` and has
+been reverted, so all 537 line comments are byte-identical too. Mask comments as
+well as literals in any future pass.
 
 **One trap, recorded because a future scripted pass will hit it.** Converting one
 overload rewrites *call sites* of that name everywhere — including the other

@@ -3016,7 +3016,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
             for (Object prev = get(component, ":comp");
                     prev != lead;
                     prev = getNextItem(t, component, prev, recursive)) {
-                row = prev; // component -> t.getParent(lead)
+                row = prev; // component -> getParent(lead)
             }
         } else if (keycode == KeyEvent.VK_DOWN) {
             row = (lead == null) ? get(component, ":comp") : getNextItem(t, component, lead, recursive);
