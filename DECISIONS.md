@@ -3919,3 +3919,91 @@ dated baseline here, not a document to maintain.
 cannot replace, D86 and D88 the two before them, D65 the playthrough the shared
 exec file exists to include, D7 the tolerance model tier 3 measures, D31 the
 cross-JDK model this profile deliberately stays out of.)
+
+## D91 — the pure-logic surface becomes package-private static seams, so tests can reach it
+
+**Date:** 2026-09-05. **Status:** accepted. **Phase:** 3c — preparatory. No
+behavior change, no API change, no golden re-record.
+
+**Why now.** D90 measured the net at 85.9 % instructions / 74.0 % branches and
+named what it could not reach: `hasAccelerator` (accelerator dispatch never
+exercised), `findText`, `changeCheck` (2 of 16 branches), `getListItem` (15 of
+27), `processList` (15 of 25), `getChars` (14 of 22 branches missed). Every one
+of them is `private`. Tests live in package `thinlet`, so they reach
+package-private, protected and public members — **not private** — and the only
+way to drive these today is through an input event, which is precisely the
+heavyweight style a plain unit test is meant to avoid. The charter's *"where the
+net is thin, shore up coverage first"* had no cheap route to these methods.
+
+**What changed.** 42 method names in `Thinlet.java` are now package-private
+`static`, in three tiers:
+
+- **Tier 0 — already `static`, merely `private`** (8): `filter`, `createImpl`,
+  `set`, `getItemCountImpl`, `getItemImpl`, `getDefinition`, `get`,
+  `logIconAttempt`. One word each, no body movement.
+- **Tier 1 — pure bodies, no `Thinlet` parameter needed** (12): including
+  `hasAccelerator`, `instance`, `getSum`, `getIndex`, `insertItem`,
+  `removeItemImpl`, `addImpl`, `setKeystrokeImpl` and the three 4-argument
+  `setChoice`/`setBoolean`/`setInteger`. Declaration-only: private methods are
+  non-virtual, so `static` cannot move dispatch, and call sites need no receiver.
+- **Tier 2 — an explicit `Thinlet t` threaded through** (22): the D48 seam style
+  `Renderer` already uses (`static void label(Thinlet t, …)`), covering the
+  selection family, the keyboard-navigation family, the text/geometry family and
+  the element/method-binding family.
+
+**Why this is cheap, measured rather than assumed.** 25 of the 27 candidate
+methods reference **zero instance fields** — the only exceptions are
+`addAttribute` (`resourcebundle`) and `update` (`content`, already
+package-private). `Thinlet` keeps almost all of its state in the `Object[]` model
+that is passed *in* as a parameter, not in fields, which is why both production
+forks were able to decouple it with static utilities (D48).
+
+**The D52 risk does not transfer, and the audit proves it.** D52 records this
+repo's only refactoring regression: a blanket regex rewrote `"font"` into
+`"t.font"` **inside a string literal**, and it compiled. Threading `t` here is
+*receiver insertion before a call* (`t.repaint(component, null, item)`), never
+identifier renaming, so a missed insertion inside a `static` body is a **compile
+error rather than a silent behavior change** — which is how `findScroll` was
+caught reading `insidepart` and `block` after being mis-classified as pure. The
+transformation ran on string- and char-literal-masked segments only, and the
+round-trip audit (D56) is decisive: **all 1 294 string literals in `Thinlet.java`
+are byte-identical to `main`.** Comments were *not* masked, which the audit caught
+— one trailing comment was rewritten to `// component -> t.getParent(lead)` and has
+been reverted, so all 537 line comments are byte-identical too. Mask comments as
+well as literals in any future pass.
+
+**One trap, recorded because a future scripted pass will hit it.** Converting one
+overload rewrites *call sites* of that name everywhere — including the other
+overload's own **declaration**, which matches the same call pattern. Both
+`findScroll` declarations were corrupted (`findScroll(t, Thinlet t, …)` and
+`findScroll(Thinlet t, this, …)`) and their six shared call sites were
+double-threaded. Overloaded names must be converted one at a time, with the
+declaration lines excluded from call-site rewriting.
+
+**What is deliberately not extracted.** `parse(InputStream, char, Object)` — it is
+already reachable through three public entry points and pinned by D86's
+`ParserSaxModeTest`/`ParserDomModeTest`, so extraction buys no reachability, and
+the open ROADMAP 3c question about whether the hand-rolled parser survives at all
+makes it the worst place to spend risk. Also left alone: `getSize` (23 call sites,
+and the name collides with the inherited `Component.getSize()`), `setRectangle`
+(19 sites, a trivial setter), `update` (14 sites) and `findComponent`. These are
+recorded as remaining, not scheduled.
+
+**Not a Cut 4/5/6 seam commitment.** In-place staticisation creates no new file
+and chooses no subsystem boundary — it is the reversible half of the seam work,
+so it does not touch what the fork mapping gates (D48/D50/D61/D69). The maintainer
+confirmed that reading in-session before the work started.
+
+**The gate.** All four JDK rows green (383 core + 13 drafts on the base row; 380
+on the crossjdk rows, which exclude `robot`), **zero golden re-records**, and
+japicmp reports zero `MODIFIED`/`REMOVED`/`NEW` public API entries against a
+resolved v0.1.0 baseline jar.
+
+**What this unblocks.** Step 0 of the characterization-loop plan: a
+`loop-characterise.sh` that writes plain-JUnit tests against this surface, gated
+by mutation testing rather than by coverage delta, with `guard_no_main` absolute
+so it can never make a test pass by editing the code under test.
+(Cross-ref D90 the coverage baseline that named these methods, D48 the seam style
+and the two forks that validate it, D52/D56 the regression this avoids and the
+audit discipline, D86 the parser net and the fence, D43 the visibility discipline
+that keeps these package-private, D69 the enhanced-line protocol.)
