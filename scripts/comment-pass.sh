@@ -12,7 +12,12 @@
 set -euo pipefail
 
 root="$(git rev-parse --show-toplevel)"
-marker="$root/.git/java-comment-pass"
+# --git-dir, not "$root/.git": in a linked worktree that path is a FILE holding a
+# gitdir: pointer, so writing under it fails with "Not a directory" and the
+# attestation can never be recorded. --git-dir resolves to the worktree's own
+# admin directory, keeping the marker per-worktree — which is what it must be,
+# since it attests the HEAD of the branch checked out there.
+marker="$(git -C "$root" rev-parse --git-dir)/java-comment-pass"
 base="${COMMENT_PASS_BASE:-main}"
 
 java_files() { git -C "$root" diff --name-only "$base"...HEAD -- '*.java'; }
