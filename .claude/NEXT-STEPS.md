@@ -209,7 +209,17 @@
    graded by and now can; and the decline summary hard-coded a reason it did not
    know. D94 also corrects D92's survivor count (16 in `parse`, not 8) and withdraws
    an inference that a comment containing `>` mis-parses — tested, it does not.
-   **No slice has yet produced a test**; the next run starts from the second target. Superseded: (3) the loop
+   **Run 1 done (D95)**: `loop-characterise.sh 3` committed **3 of 3**, no decline,
+   no repair — `parse`, `getListItem`, `processList`, gates 21/26/33 killed with
+   **zero survivors** each. The first slice passed the very target the dry run had
+   declined, which vindicates the D94 rescoping. Two quirks found and pinned: **Q16**
+   (GUI-mode `parse` silently discards a tag's inline body text — no `'T'` arm in the
+   end-tag flush) and **Q17** (`End` is a no-op on a list with no lead, while `Home`
+   works), both `disposition: undecided`. Coverage **85.9 → 87.4 %** instructions,
+   **74.0 → 76.3 %** branches, 27 → 25 never-entered methods; base row **425** core
+   (was 383) + 13 drafts. Rejected on evidence: remembering declines to skip targets
+   in later runs — a decline is a judgement about the target *and the current gate*,
+   and this run passed one the dry run declined. Superseded: (3) the loop
    script's own D-entry. PIT is chosen over automating D89's hand-mutant
    discipline because a pass that authors both the test and the mutants grades its
    own homework. Still uncovered and unscheduled: `FrameLauncher` (0 %, published
