@@ -4220,3 +4220,74 @@ disposition. Recorded, not scheduled.
 (Cross-ref D93 the loop and the guard bug its own tests caught, D92 the gate this
 corrects and the count it got wrong, D86 the parser net whose survivors are
 measured here, D89 the repair path that still has not run.)
+
+## D95 — `loop-characterise` run 1: three slices, two quirks, and the gate fix vindicated
+
+**Date:** 2026-09-05. **Status:** accepted. **Phase:** 3c — characterization
+tests. No library or behavior change; no golden re-record.
+
+**The run.** `scripts/loop-characterise.sh 3` committed **3 of 3**, with no
+decline and no repair — the loop's first tests. Per-slice gate results, scoped to
+each slice's assigned missed lines (D94):
+
+| slice | target | killed | survived | not reached |
+|---|---|---|---|---|
+| 1 | `parse` lines 5233–5377 | 21 | 0 | 7 |
+| 2 | `getListItem` lines 3027–3056 | 26 | 0 | 0 |
+| 3 | `processList` lines 2934–2977 | 33 | 0 | 0 |
+
+**The D94 rescoping is vindicated by the first slice.** The dry run declined
+`parse` because a whole-method gate is unpassable there; the very next run
+**passed** it. Nothing about the code changed — line 5276's equivalent mutant is
+*already covered*, so it is not among the missed lines a slice is assigned, and
+the unreachable comment block at 5277+ returns `NO_COVERAGE`, which is "not
+reached" rather than a failure. The 7 not-reached in slice 1 are exactly that
+dead code.
+
+**Two quirks found, both verified independently before being relayed.**
+
+- **Q16 — GUI-mode `parse` silently discards a tag's inline body text.** The
+  end-tag flush reads `if (mode == 'D') … else if (mode == 'S') …` and then
+  `text.setLength(0)`, with **no `'T'` arm**: `<label>hello</label>` has its body
+  scanned, whitespace-collapsed and dropped, with no exception and no property
+  set. DOM stores it as `":text"`, SAX reports it through `characters`, GUI loses
+  it. The dialect sets text through the `text=` attribute, so nothing crashes —
+  but the commoner tag-body convention gives silent data loss rather than a parse
+  error.
+- **Q17 — `End` does nothing on a list/tree with no current lead.** `getListItem`'s
+  `VK_HOME` arm reads the first child unconditionally
+  (`row = get(component, ":comp")`), while its `VK_END` arm is a loop seeded
+  `for (Object last = lead; last != null; …)` that never iterates when `lead` is
+  null, returning the pre-initialised `null`. `processList` only acts on a
+  non-null return, so `End` is a silent no-op that does not even consume the key,
+  while `Home` in the same state works.
+
+Both carry `disposition: undecided` citing no D-entry — the 2026-08-15 correction
+recorded in `.claude/NEXT-STEPS.md` is why the loop may write no other value.
+
+**Coverage moved, measured over the whole net before and after the run.**
+
+| | before | after |
+|---|---|---|
+| instructions | 85.9 % (3 777 missed) | **87.4 %** (3 379 missed) |
+| branches | 74.0 % (1 103 missed) | **76.3 %** (1 009 missed) |
+| methods never entered | 27 | **25** |
+| `Thinlet` | 84.2 % / 74.1 % | **86.3 % / 76.8 %** |
+| core tests | 383 | **425** |
+
+That is the quantity measure the gate deliberately does not provide (D93): the
+gate proves each test watches what it covers, the delta proves the run covered
+more.
+
+**One defect fixed, and one proposed fix rejected on evidence.** The decline
+summary printed the whole never-truncated declined file under the heading
+"declined **this run**", so it reported the dry run's `parse` decline during a run
+that had none; it now reports only what this run appended. The obvious companion
+change — remembering declines and skipping those targets in later runs — was
+**considered and rejected**: this run passed the very target the dry run declined,
+because the gate changed underneath. A decline is a judgement about the target
+*and the current gate*, not a permanent property, and baking it in would have
+excluded a target that now works.
+(Cross-ref D94 the rescoping this run vindicates, D93 the loop, D92 the gate, D86
+the parser net Q16 sits beside, D78 the last characterization run that found a
+quirk by driving a widget.)
