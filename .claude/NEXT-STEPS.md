@@ -162,14 +162,36 @@
   the trace records image geometry, not identity (swapping `hgradient`/`vgradient`
   passes 94/94) — and tier 3's band is now measured: text at **+2 px passes, +3 px
   fails 39 of 41**.
+- **Pure-logic surface extracted to static seams (D91, 2026-09-05)**: 42 method
+  names in `Thinlet.java` are now package-private `static`, in three tiers — 8
+  already-static widenings, 12 pure bodies needing no `Thinlet` parameter, and 22
+  threading an explicit `Thinlet t` in the D48 style `Renderer` already uses.
+  Tests reach package-private but not private, so D90's named worst-covered
+  methods — `hasAccelerator` (never entered), `findText`, `changeCheck` (2 of 16
+  branches), `getListItem`, `processList`, `getChars` — were unreachable by any
+  plain unit test. **25 of 27 candidates referenced zero instance fields**: the God
+  class keeps its state in the `Object[]` model passed in, not in fields. Audit:
+  all 1 294 string literals byte-identical to `main` (D52/D56). Four JDK rows
+  green, zero golden re-records, japicmp clean. `parse` deliberately untouched
+  (already reachable via three public entry points, D86). Base row unchanged
+  (383 core + 13 drafts).
 
 ## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 
-0. **Nothing from D90 is scheduled** — the coverage findings are recorded, not
-   queued. The candidates, cheapest first: pin `FrameLauncher` (0 %, and it is
-   published API); drive an accelerator key press so `hasAccelerator` runs; cover
-   `findText`'s type-ahead. Each is ordinary characterization work under the D69
-   protocol, and none is a prerequisite for anything else.
+0. **The characterization loop — Step 0 done (D91), Steps 1-3 open.** The agreed
+   shape: a `scripts/loop-characterise.sh` mirroring `loop-modernise.sh` with its
+   scope inverted (test tree writable, `guard_no_main` absolute, new files only),
+   taking targets from a curated pure-logic allowlist ordered by coverage data, and
+   gated on **mutation testing rather than coverage delta** — D90 proved a covered
+   line proves nothing. Remaining, in order: (1) a `mutation` profile +
+   `scripts/mutation.sh` running PIT scoped to one test class, **proven against
+   `ParserSaxModeTest` before anything depends on it**; (2) a `WORKLIST=true` mode
+   in `coverage-summary.py` emitting per-method missed-line rows; (3) the loop
+   script itself, own D-entry. PIT is chosen over automating D89's hand-mutant
+   discipline because a pass that authors both the test and the mutants grades its
+   own homework. Still uncovered and unscheduled: `FrameLauncher` (0 %, published
+   API), and the four methods D91 left alone (`getSize`, `setRectangle`, `update`,
+   `findComponent`).
 1. **Q14 (inert table column header) — parked, not open** — held deliberately until
    the fork sources land, because wiring a header click adds *new* public behavior
    the maintainer's own fork may already define (D78). Q6/Q10 stay kept (D75), and
