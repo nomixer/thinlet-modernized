@@ -128,6 +128,20 @@
   `+2/-0` with exactly two distinct lines added and none removed; dropping one hint
   now fails 93 of 94 golden tests. Second instance of the loop finding code the net
   did not watch (after D86). Base row: 383 (core) + 13 (drafts).
+- **Run-2 landed (D89, 2026-09-05)**: the loop committed 3 of 3 again — the
+  deprecated `Integer`/`Long` constructors, `getSelectedItems`' quadratic regrow,
+  and the four `new String(…)` copies outside the fenced parser that D86 predicted
+  a later run would find. Reviewed by **14 mutation runs**, not by inspection: the
+  slices' live edits are watched, and the four green probes are the finding.
+  **Blind spot #3** — `TracingGraphics2D` records only a scaled blit's destination
+  rect, so `Thinlet.fill`'s gradient sampling is unobservable (collapsing the
+  source rect to 1×1 passes 94/94; moving the destination fails 76/94). And a
+  **third category** beyond D86's uncovered code and D88's unrecorded effects:
+  `evm = -1` turns the whole Insignia workaround **on** and passes all 189
+  goldens, because a 1 px delta is inside D7's ±2 px tolerance — recorded,
+  executed, still invisible. `RENDERING-PRIMITIVES.md`'s `drawImage` row was wrong
+  in consequence and is corrected; the EVM disposition is a new ROADMAP 3c backlog
+  item. Base row unchanged (383 core + 13 drafts).
 - **Run-1 landed (D87/D88, 2026-09-05, PRs #133/#135)**: the loop's first real run
   committed 3 of 3 slices, 17 Maven builds, no failures, no repairs. All three are
   on `main`. It also exposed two `.git`-is-a-file bugs in this repo's own scripts —
@@ -149,17 +163,20 @@
    covers **only** the Cut 4/5/6 seam commitments (D48/D50/D61/D69), never net or
    preparatory work. When they land: fork files → subsystems; boundaries vs Cut 2–6
    seams; enhancement backlog; then Cut 4+ seam commitments unblock (3a resumes).
-4. **`loop-modernise` — run-1 done and merged; run-2 is the next use** — the
-   script is trunk tooling (D87). Runs happen in a linked worktree on their own
-   branch off `main`; the primary checkout is never the target. **Run-1 (capped at
-   3) committed 3 slices, all now on `main`**: the antialiasing one turned out to
-   fix Q15 and landed with D88; the 1.4 feature probes and the `@Override` batch
-   landed as #135. The **commit path is therefore exercised**; the **repair path
-   still is not** — no slice has yet failed verification, so that branch of the
-   script has never run. The XML parser stays fenced (D86 + the ROADMAP 3c
-   question), enforced by `guard_fenced`, so no slice may touch it. Review the
-   loop's output sceptically: run-1's antialiasing slice was reviewed as a
-   behavior-preserving tidy-up and was in fact repairing a live defect.
+4. **`loop-modernise` — runs 1 and 2 done; the tool is proven, the net is the
+   constraint** — the script is trunk tooling (D87). Runs happen in a linked
+   worktree on their own branch off `main`; the primary checkout is never the
+   target. **Six slices across two runs, every one committed, none repaired**: the
+   commit path is well exercised and the **repair path has still never executed**.
+   Both runs' most valuable output was a net gap rather than a diff — D86 and D88
+   in run-1, D89's two in run-2 — and run-2's were found by deliberate mutation
+   probing of the lines each slice touched, not by the loop stumbling into them.
+   Before a run-3, settle whether the loop is still the right instrument: the gaps
+   it keeps exposing are findable directly, sooner, and without committing code to
+   get at them. The XML parser stays fenced (D86 + the ROADMAP 3c question),
+   enforced by `guard_fenced`. Review any output sceptically — run-1's
+   antialiasing slice was reviewed as a behavior-preserving tidy-up and was in
+   fact repairing a live defect (D88).
 
 ## Discipline (one-liners; the D-entries carry the why)
 

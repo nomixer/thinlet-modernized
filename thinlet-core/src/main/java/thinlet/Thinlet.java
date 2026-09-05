@@ -5504,6 +5504,10 @@ public class Thinlet extends Container implements Runnable, Serializable {
         AttributeDescriptor definition = getDefinition(getClass(component), key, null);
         key = definition.name;
         if (is(definition.type, "string")) {
+            // No defensive copy of the incoming value: set(Object,Object,Object) compares a
+            // stored value with .equals, never by identity. Only model KEYS are identity-
+            // compared (get's entry[0] == key; the interning half is pinned by
+            // DescriptorContractTest, which sets through a de-interned caller key).
             if (encoding != null) {
                 value = new String(value.getBytes(), 0, value.length(), encoding);
             }
@@ -5553,6 +5557,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 if (equals == -1) {
                     throw new IllegalArgumentException(token);
                 }
+                // substring has returned an independent String since Java 7, and putProperty
+                // stores into a Hashtable keyed by equals/hashCode — not the identity-compared
+                // ':' model keys — so neither 2005 copy was load-bearing.
                 putProperty(component, token.substring(0, equals), token.substring(equals + 1));
             }
         } else if (is(definition.type, "font")) {

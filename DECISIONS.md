@@ -3736,3 +3736,93 @@ that the pinned test move to the new behavior in the same change.
 (Cross-ref D86 the first instance of this blind spot, D87 the loop that found both,
 D69 the change-control protocol this behavior change follows, D7 the tolerance
 model, D44/D52 the re-record discipline this diff satisfies.)
+
+## D89 — run-2's real output is two proven blind spots: an unrecorded `drawImage` source rectangle, and a workaround that hides inside the tolerance
+
+**Date:** 2026-09-05. **Status:** accepted. **Phase:** 3c — three
+behavior-preserving source slices, plus the findings that reviewing them
+produced. No harness, net or behavior change here; the dispositions the
+findings force are deliberately left open.
+
+**What run-2 committed.** Three slices, three of three, capped as run-1 was:
+the deprecated `Integer`/`Long` constructors retired for `valueOf` (nine
+sites), `getSelectedItems`' quadratic array regrow replaced with an
+`ArrayList`, and the four redundant `new String(…)` copies that sit outside
+the fenced parser — the ones D86 predicted a later run would find again in
+`addAttribute` and `getMethod`. Twenty insertions, twenty-one deletions across
+two files. Six slices have now been produced across two runs and **the repair
+path has still never executed**: no slice has yet failed verification, so that
+branch of `loop-modernise.sh` remains untested code.
+
+**Reviewed by mutation, not by inspection.** D88 records that run-1's
+antialiasing slice was reviewed as a behavior-preserving tidy-up while it was
+in fact repairing a live defect, and that a green net plus a plausible diff is
+not a review. So every risky line these three slices touched was broken on the
+committed tree, run through `local-ci.sh -t`, and reverted — fourteen runs.
+The slices' own live edits are watched: perturbing `setInteger`'s boxed value
+fails ten slider/spinbox tests, swapping the keystroke pack fails
+`DescriptorContractTest`, perturbing the string-attribute branch fails nine
+golden tests, forcing the font family fails three, and dropping items from
+`getSelectedItems` fails `InputListTest`. Four probes came back green, and
+those four are the finding.
+
+**Blind spot #3: `TracingGraphics2D` records only half of a scaled blit.**
+Both ten-argument `drawImage` overrides call
+`recImage(dx1, dy1, dx2 - dx1, dy2 - dy1)` — the **destination** rectangle. The
+four source arguments are dropped. The only caller of that form is
+`Thinlet.fill`, the gradient background painter, so the sampling of the
+gradient image is unobservable. Proven as a paired experiment on the same call:
+moving the recorded destination argument by 40 px fails **76 of 94** golden
+tests, which establishes the path is live and heavily covered; collapsing the
+source rectangle to 1×1 — a flat fill where a gradient belongs — passes **94 of
+94**. Same shape as D88, one method along, and the third instance of the loop
+touching code the net does not watch.
+
+**The same call is invisible a second way, and this one is new.** `Thinlet.evm`
+is `-1` only under the Insignia Jeode JVM; nothing in the net sets that vendor,
+so all 26 `+ evm` terms are zero in every row. That much is ordinary dead
+scaffolding. What is not ordinary is that setting `evm = -1` — turning the whole
+2005 workaround **on** — passes all **189** golden tests. The workaround exists
+to correct a one-pixel error, and D7's numeric tolerance is ±2 px
+(`trace-tolerance.json` is `defaultPx: 2.0`, no per-op overrides, applied to
+every numeric argument by `TraceComparator`). The net is therefore blind to
+`evm` in both directions, not merely when it is inactive. D86 named uncovered
+code and D88 named unrecorded effects; this is a third category — **recorded,
+executed, and still invisible because the change is smaller than the tolerance
+band**. The 2005 comment above the initializer names the exact call it hides
+behind: *"EVM has larger fillRect, fillOval, and drawImage(part)"*.
+
+**The portability inventory inherited the blindness.**
+`project-docs/backend-portability/RENDERING-PRIMITIVES.md` was curated from the
+traces (D34), so where the trace is silent the document is confident and wrong:
+it lists `drawImage` as `x, y, w, h`, describes it as an icon/glyph blit, and
+gives `drawImage(img, x, y, w, h)` as the Canvas equivalent. A histogram of the
+committed goldens puts 2 920 of 3 887 `drawImage` ops at exactly 15×15 with a
+ragged tail of partial widths at height 15 — the signature of `fill` tiling a
+`block`-sized gradient (`block = getFontMetrics(font).getHeight()`), not of
+icons. A backend written to that row renders flat blocks where the 2005 UI has
+gradients. The row is corrected in this change; the trace it was derived from
+is not.
+
+**What is not decided here.** Whether the harness should record the source
+rectangle (it should, and it costs a re-record of every golden carrying
+`drawImage`, under the D44/D52 audit discipline); whether the tolerance model
+needs a per-op exact rule for arguments that are known to be small; and whether
+the Insignia EVM workaround survives at all on the enhanced line. The last is
+now a ROADMAP 3c backlog item alongside the parser question, for the same
+reason: there is no sense modernising 26 sites that may be deleted, and
+deleting them is a D69 behavior change the net cannot referee.
+
+**One incidental, recorded once.** The declared integer defaults in
+`DescriptorTable` are duplicated as literals at every internal call site
+(`getInteger(component, "maximum", 100)`, `getInteger(column, "width", 80)`,
+`getInteger(component, "unit", 5)`), so the table's value is consulted only by
+the public two-argument getters and by the setters' remove-at-default rule.
+That is why mutating three of those defaults changes nothing observable, and it
+is a second source of truth that can drift silently. `DescriptorContractTest`
+pins the pattern for `colspan` and `mnemonic` only.
+(Cross-ref D86 the first blind spot and the parser fence, D88 the second and the
+`setRenderingHint` precedent for closing one, D87 the loop and its still-unrun
+repair path, D7 the tolerance model this entry stresses, D34 the curation that
+inherited the gap, D65 the Drafts playthrough that turned out to be the only
+teeth on `putProperty` and the constant-argument binding.)
