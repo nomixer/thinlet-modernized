@@ -1478,7 +1478,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         return grid;
     }
 
-    private int getSum(int[] values, int from, int length, int gap, boolean last) {
+    static int getSum(int[] values, int from, int length, int gap, boolean last) {
         if (length <= 0) {
             return 0;
         }
@@ -4703,7 +4703,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         return null;
     }
 
-    private int getIndex(Object component, Object value) {
+    static int getIndex(Object component, Object value) {
         int index = 0;
         for (Object item = get(component, ":comp"); item != null; item = get(item, ":next")) {
             if (value == item) {
@@ -4752,7 +4752,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
     /**
      * Referenced by DOM
      */
-    private void insertItem(Object parent, Object key, Object component, int index) {
+    static void insertItem(Object parent, Object key, Object component, int index) {
         Object item = parent, next = get(parent, key);
         for (int i = 0; ; i++) {
             if ((i == index) || (next == null)) {
@@ -4793,7 +4793,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @param parent
      * @param component
      */
-    private void removeItemImpl(Object parent, Object component) {
+    static void removeItemImpl(Object parent, Object component) {
         Object previous = null; // the widget before the given component
         for (Object comp = get(parent, ":comp"); comp != null; ) {
             Object next = get(comp, ":next");
@@ -4975,7 +4975,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @param modifiers
      * @return true if the component has the given accelerator
      */
-    private boolean hasAccelerator(Object component, int keycode, int modifiers) {
+    static boolean hasAccelerator(Object component, int keycode, int modifiers) {
         Object accelerator = get(component, "accelerator");
         if (accelerator != null) {
             long keystroke = ((Long) accelerator).longValue();
@@ -5439,7 +5439,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @param index add at the specified index
      * @throws java.lang.IllegalArgumentException
      */
-    private void addImpl(Object parent, Object component, int index) {
+    static void addImpl(Object parent, Object component, int index) {
         String parentclass = getClass(parent);
         String classname = getClass(component);
         if (((is(parentclass, "combobox")) && (is(classname, "choice")))
@@ -5471,7 +5471,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         } else throw new IllegalArgumentException(classname + " add " + parentclass);
     }
 
-    private boolean instance(Object classname, Object extendclass) {
+    static boolean instance(Object classname, Object extendclass) {
         if (classname == extendclass) {
             return true;
         }
@@ -5737,7 +5737,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         }
     }
 
-    private void spinTextFromValue(Object component, int value) {
+    static void spinTextFromValue(Object component, int value) {
         if (is(getClass(component), "spinbox")) {
             set(component, "text", String.valueOf(value));
         }
@@ -5860,7 +5860,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         }
     }
 
-    private void setKeystrokeImpl(Object component, String key, String value) {
+    static void setKeystrokeImpl(Object component, String key, String value) {
         Long keystroke = null;
         if (value != null) {
             String token = value;
@@ -6112,7 +6112,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      *
      * @throws java.lang.IllegalArgumentException
      */
-    private boolean setChoice(Object component, String key, String value, String[] values, String defaultvalue) {
+    static boolean setChoice(Object component, String key, String value, String[] values, String defaultvalue) {
         if (value == null) {
             return set(component, key, defaultvalue);
         }
@@ -6130,7 +6130,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         return (value == null) ? defaultvalue : (Image) value;
     }
 
-    private boolean setBoolean(Object component, String key, boolean value, boolean defaultvalue) {
+    static boolean setBoolean(Object component, String key, boolean value, boolean defaultvalue) {
         return set(component, key, (value == defaultvalue) ? null : (value ? Boolean.TRUE : Boolean.FALSE));
     }
 
@@ -6140,7 +6140,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         return (value == null) ? defaultvalue : ((Boolean) value).booleanValue();
     }
 
-    private boolean setInteger(Object component, String key, int value, int defaultvalue) {
+    static boolean setInteger(Object component, String key, int value, int defaultvalue) {
         return set(component, key, (value == defaultvalue) ? null : Integer.valueOf(value));
     }
 
