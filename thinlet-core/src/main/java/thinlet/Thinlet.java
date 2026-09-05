@@ -5870,7 +5870,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                         keycode = KeyEvent.class.getField("VK_" + token).getInt(null);
                     }
                 }
-                keystroke = new Long(((long) modifiers) << 32 | keycode);
+                keystroke = Long.valueOf(((long) modifiers) << 32 | keycode);
             } catch (Exception exc) {
                 throw new IllegalArgumentException(token);
             }
@@ -6135,7 +6135,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
     }
 
     private boolean setInteger(Object component, String key, int value, int defaultvalue) {
-        return set(component, key, (value == defaultvalue) ? null : new Integer(value));
+        return set(component, key, (value == defaultvalue) ? null : Integer.valueOf(value));
     }
 
     // package-private for Renderer (D48 seam; japicmp-invisible)
