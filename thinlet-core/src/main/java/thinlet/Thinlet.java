@@ -2423,7 +2423,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                         || (keycode == KeyEvent.VK_PAGE_DOWN)
                         || (keycode == KeyEvent.VK_HOME)
                         || (keycode == KeyEvent.VK_END)) {
-                    Object next = getListItem(component, combolist, keycode, get(combolist, ":lead"), false);
+                    Object next = getListItem(this, component, combolist, keycode, get(combolist, ":lead"), false);
                     if (next != null) {
                         setInside(combolist, next, true);
                     }
@@ -2433,7 +2433,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     closeCombo(component, combolist, null);
                 } else if (!processField(
                         component, shiftdown, controldown, modifiers, keychar, keycode, false, false, false)) {
-                    Object item = findText((char) keychar, component, combolist, false);
+                    Object item = findText(this, (char) keychar, component, combolist, false);
                     if (item != null) {
                         setInside(combolist, item, true);
                     } else return false;
@@ -2588,7 +2588,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 validate(component);
             }
         } else if ((is(classname, "list")) || (is(classname, "table"))) {
-            return processList(component, shiftdown, controldown, keychar, keycode, false);
+            return processList(this, component, shiftdown, controldown, keychar, keycode, false);
         } else if (is(classname, "tree")) {
             // ? clear childs' selection, select this is its 	subnode was selected
             if (keycode == KeyEvent.VK_LEFT) {
@@ -2625,7 +2625,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     return true;
                 }
             }
-            return processList(component, shiftdown, controldown, keychar, keycode, true);
+            return processList(this, component, shiftdown, controldown, keychar, keycode, true);
         } else if ((is(classname, "menubar")) || (is(classname, "popupmenu"))) {
             // find the last open :popup and the previous one
             Object previous = null;
@@ -2642,7 +2642,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
             }
 
             if ((keycode == KeyEvent.VK_UP) || (keycode == KeyEvent.VK_DOWN)) {
-                Object next = getMenu(hotpopup, selected, keycode == KeyEvent.VK_DOWN, true);
+                Object next = getMenu(this, hotpopup, selected, keycode == KeyEvent.VK_DOWN, true);
                 if (next != null) {
                     set(hotpopup, "selected", null);
                     popupMenu(hotpopup);
@@ -2657,11 +2657,11 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     set(previous, "selected", selected);
                     repaint(previous); // , selected
                 } else if (is(classname, "menubar")) { // select the previous menubar menu
-                    Object next = getMenu(component, get(component, "selected"), false, false);
+                    Object next = getMenu(this, component, get(component, "selected"), false, false);
                     if (next != null) {
                         set(component, "selected", next);
                         Object popup = popupMenu(component);
-                        set(popup, "selected", getMenu(popup, null, true, true));
+                        set(popup, "selected", getMenu(this, popup, null, true, true));
                         repaint(component); // , selected
                     }
                 }
@@ -2671,13 +2671,13 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     repaint(last); // , selected
                 } else if ((selected != null) && (is(getClass(selected), "menu"))) { // expand menu
                     Object popup = popupMenu(last);
-                    set(popup, "selected", getMenu(popup, null, true, true));
+                    set(popup, "selected", getMenu(this, popup, null, true, true));
                 } else if (is(classname, "menubar")) { // select the next menubar menu
-                    Object next = getMenu(component, get(component, "selected"), true, false);
+                    Object next = getMenu(this, component, get(component, "selected"), true, false);
                     if (next != null) {
                         set(component, "selected", next);
                         Object popup = popupMenu(component);
-                        set(popup, "selected", getMenu(popup, null, true, true));
+                        set(popup, "selected", getMenu(this, popup, null, true, true));
                         repaint(component); // , selected
                     }
                 }
@@ -2726,13 +2726,13 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @param popup the given component is :popup if true, menubar otherwise
      * @return the next/previous item relative to the current one excluding separators, or null
      */
-    private Object getMenu(Object component, Object part, boolean forward, boolean popup) {
+    static Object getMenu(Thinlet t, Object component, Object part, boolean forward, boolean popup) {
         Object previous = null;
         for (int i = 0; i < 2; i++) { // 0: next to last, 1: first to previous
             for (Object item = (i == 0) ? get(part, ":next") : get(popup ? get(component, "menu") : component, ":comp");
                     (i == 0) ? (item != null) : (item != part);
                     item = get(item, ":next")) {
-                if ((!is(getClass(item), "separator")) && getBoolean(item, "enabled", true)) {
+                if ((!is(getClass(item), "separator")) && t.getBoolean(item, "enabled", true)) {
                     if (forward) {
                         return item;
                     }
@@ -2919,8 +2919,14 @@ public class Thinlet extends Container implements Runnable, Serializable {
         return true;
     }
 
-    private boolean processList(
-            Object component, boolean shiftdown, boolean controldown, int keychar, int keycode, boolean recursive) {
+    static boolean processList(
+            Thinlet t,
+            Object component,
+            boolean shiftdown,
+            boolean controldown,
+            int keychar,
+            int keycode,
+            boolean recursive) {
         if ((keycode == KeyEvent.VK_UP)
                 || // select previous/next/first/... item
                 (keycode == KeyEvent.VK_DOWN)
@@ -2929,38 +2935,38 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 || (keycode == KeyEvent.VK_HOME)
                 || (keycode == KeyEvent.VK_END)) {
             Object lead = get(component, ":lead");
-            Object row = getListItem(component, component, keycode, lead, recursive);
+            Object row = getListItem(t, component, component, keycode, lead, recursive);
             if (row != null) {
-                String selection = getString(component, "selection", "single");
+                String selection = t.getString(component, "selection", "single");
                 if (shiftdown && (!is(selection, "single")) && (lead != null)) {
-                    extend(this, component, lead, row, recursive);
+                    extend(t, component, lead, row, recursive);
                 } else if (!controldown) {
-                    selectItem(this, component, row, recursive);
+                    selectItem(t, component, row, recursive);
                 }
-                setLead(this, component, lead, row);
+                setLead(t, component, lead, row);
                 return true;
             }
         } else if (keycode == KeyEvent.VK_LEFT) {
-            return processScroll(component, "left");
+            return t.processScroll(component, "left");
         } else if (keycode == KeyEvent.VK_RIGHT) {
-            return processScroll(component, "right");
+            return t.processScroll(component, "right");
         } else if (keychar == KeyEvent.VK_SPACE) { // select the current item
-            select(this, component, get(component, ":lead"), recursive, shiftdown, controldown); // ...
+            select(t, component, get(component, ":lead"), recursive, shiftdown, controldown); // ...
             return true;
         } else if (controldown) {
             if (((keycode == KeyEvent.VK_A) || (keycode == 0xBF))
                     && // KeyEvent.VK_SLASH
-                    (!is(getString(component, "selection", "single"), "single"))) { // select all
-                selectAll(this, component, true, recursive);
+                    (!is(t.getString(component, "selection", "single"), "single"))) { // select all
+                selectAll(t, component, true, recursive);
                 return true;
             } else if (keycode == 0xDC) { // KeyEvent.VK_BACK_SLASH // deselect all
-                selectAll(this, component, false, recursive);
+                selectAll(t, component, false, recursive);
                 return true;
             }
         } else {
-            Object item = findText((char) keychar, component, component, recursive);
+            Object item = findText(t, (char) keychar, component, component, recursive);
             if (item != null) {
-                select(this, component, item, recursive, false, false);
+                select(t, component, item, recursive, false, false);
                 return true;
             }
         }
@@ -2976,22 +2982,23 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @param recursive if the component is a tree
      * @return the appropriate item or null
      */
-    private Object findText(char keychar, Object component, Object leadowner, boolean recursive) {
+    static Object findText(Thinlet t, char keychar, Object component, Object leadowner, boolean recursive) {
         if (keychar != 0) {
             long current = System.currentTimeMillis();
-            int i = (current > findtime + 1000) ? 1 : 0; // clear the starting string after a second
-            findtime = current;
+            int i = (current > t.findtime + 1000) ? 1 : 0; // clear the starting string after a second
+            t.findtime = current;
             Object lead = get(leadowner, ":lead");
             for (; i < 2; i++) { // 0: find the long text, 1: the stating character only
-                findprefix = (i == 0) ? (findprefix + keychar) : String.valueOf(keychar);
+                t.findprefix = (i == 0) ? (t.findprefix + keychar) : String.valueOf(keychar);
                 for (int j = 0; j < 2; j++) { // 0: lead to last, 1: first to lead
                     for (Object item = (j == 0)
-                                    ? ((i == 0) ? lead : getNextItem(this, component, lead, recursive))
+                                    ? ((i == 0) ? lead : getNextItem(t, component, lead, recursive))
                                     : get(component, ":comp");
                             (j == 0) ? (item != null) : (item != lead);
-                            item = getNextItem(this, component, item, recursive)) {
-                        if (getString(item, "text", "")
-                                .regionMatches(true, 0, findprefix, 0, findprefix.length())) { // table first column...
+                            item = getNextItem(t, component, item, recursive)) {
+                        if (t.getString(item, "text", "")
+                                .regionMatches(
+                                        true, 0, t.findprefix, 0, t.findprefix.length())) { // table first column...
                             return item;
                         }
                     }
@@ -3001,20 +3008,21 @@ public class Thinlet extends Container implements Runnable, Serializable {
         return null;
     }
 
-    private Object getListItem(Object component, Object scrollpane, int keycode, Object lead, boolean recursive) {
+    static Object getListItem(
+            Thinlet t, Object component, Object scrollpane, int keycode, Object lead, boolean recursive) {
         Object row = null;
         if (keycode == KeyEvent.VK_UP) {
             for (Object prev = get(component, ":comp");
                     prev != lead;
-                    prev = getNextItem(this, component, prev, recursive)) {
-                row = prev; // component -> getParent(lead)
+                    prev = getNextItem(t, component, prev, recursive)) {
+                row = prev; // component -> t.getParent(lead)
             }
         } else if (keycode == KeyEvent.VK_DOWN) {
-            row = (lead == null) ? get(component, ":comp") : getNextItem(this, component, lead, recursive);
+            row = (lead == null) ? get(component, ":comp") : getNextItem(t, component, lead, recursive);
         } else if ((keycode == KeyEvent.VK_PAGE_UP) || (keycode == KeyEvent.VK_PAGE_DOWN)) {
-            Rectangle view = getRectangle(scrollpane, ":view");
-            Rectangle port = getRectangle(scrollpane, ":port");
-            Rectangle rl = (lead != null) ? getRectangle(lead, "bounds") : null;
+            Rectangle view = t.getRectangle(scrollpane, ":view");
+            Rectangle port = t.getRectangle(scrollpane, ":port");
+            Rectangle rl = (lead != null) ? t.getRectangle(lead, "bounds") : null;
             int vy = (keycode == KeyEvent.VK_PAGE_UP) ? view.y : (view.y + port.height);
             if ((keycode == KeyEvent.VK_PAGE_UP) && (rl != null) && (rl.y <= view.y)) {
                 vy -= port.height;
@@ -3024,8 +3032,8 @@ public class Thinlet extends Container implements Runnable, Serializable {
             }
             for (Object item = get(component, ":comp");
                     item != null;
-                    item = getNextItem(this, component, item, recursive)) {
-                Rectangle r = getRectangle(item, "bounds");
+                    item = getNextItem(t, component, item, recursive)) {
+                Rectangle r = t.getRectangle(item, "bounds");
                 if (keycode == KeyEvent.VK_PAGE_UP) {
                     row = item;
                     if (r.y + r.height > vy) {
@@ -3041,7 +3049,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         } else if (keycode == KeyEvent.VK_HOME) {
             row = get(component, ":comp");
         } else if (keycode == KeyEvent.VK_END) {
-            for (Object last = lead; last != null; last = getNextItem(this, component, last, recursive)) {
+            for (Object last = lead; last != null; last = getNextItem(t, component, last, recursive)) {
                 row = last;
             }
         }
