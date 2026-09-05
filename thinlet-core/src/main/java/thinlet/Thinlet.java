@@ -4612,18 +4612,15 @@ public class Thinlet extends Container implements Runnable, Serializable {
      */
     public Object[] getSelectedItems(Object component) {
         String classname = getClass(component);
-        Object[] selecteds = new Object[0];
+        ArrayList<Object> selecteds = new ArrayList<>();
         for (Object item = findNextItem(component, classname, null);
                 item != null;
                 item = findNextItem(component, classname, item)) {
             if (getBoolean(item, "selected", false)) {
-                Object[] temp = new Object[selecteds.length + 1];
-                System.arraycopy(selecteds, 0, temp, 0, selecteds.length);
-                temp[selecteds.length] = item;
-                selecteds = temp;
+                selecteds.add(item);
             }
         }
-        return selecteds;
+        return selecteds.toArray();
     }
 
     /**
