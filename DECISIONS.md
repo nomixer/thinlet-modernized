@@ -4141,3 +4141,82 @@ and uncommitted, for review before anything is committed.
 that makes `guard_no_main` affordable, D90 the coverage instrument the worklist
 reads, D87 the loop this mirrors, D44/D52 the frozen-fixture rule the
 new-files-only guard enforces.)
+
+## D94 — the first dry run declined, and the decline proved the gate was scoped wrong
+
+**Date:** 2026-09-05. **Status:** accepted. **Phase:** 3c — tooling. No library,
+behavior or golden change; no test was committed.
+
+**What the run did.** `loop-characterise.sh --dry-run`: preflight green, 29
+allowlisted targets, worklist put `parse` first (35 missed branches, the worst in
+scope), the pass **declined**, the decline was recorded and printed, coverage was
+re-measured, nothing was committed and the tree was left clean. Every mechanical
+stage worked, and **the decline path executed on its first run** — worth noting
+against `loop-modernise`, whose repair path has still never run across six slices
+(D89).
+
+**The pass's reasoning, and the measurement that confirms it.** It declined
+because it judged the gate unpassable: at line 5267 the `else if (c == '!')`
+branch takes *any* `<!` opener, so inside the start-tag branch below it
+`text.charAt(0)` can never be `'!'` and the comment block at 5277–5291 is dead
+code. Line 5276's `text.length() == 3` is nevertheless evaluated on every start
+tag, so its `NEGATE_CONDITIONALS` mutant is **covered and equivalent** — it must
+survive. Measured afterwards with
+`scripts/mutation.sh thinlet.ParserSaxModeTest --gate parse`:
+
+```
+gate parse: killed 63   survived 16   not reached 28
+  SURVIVED :5276  negated conditional
+  SURVIVED :5277  negated conditional
+```
+
+The pass was right. It reached that **from reading the source, without running
+PIT**, and said so explicitly rather than presenting it as measured.
+
+**Correction 1 — the gate was scoped to the wrong thing.** D92 set the condition
+as "killed > 0 and survived == 0 **within the assigned method**". That is
+unreachable for any method carrying equivalent mutants, and `parse` carries
+several (the two above, plus removed `Reader::close` calls and null returns in
+the SAX/DOM branches). Worse, the gate cannot tell an equivalent mutant from a
+genuine net gap. It is now scoped by `GATE_LINES` to **the missed lines the
+worklist actually handed the slice** — line 5276 is already *covered*, so it was
+never this slice's job. Proven both ways against the same report: lines
+5276–5277 → `killed 0, survived 2, FAIL`; lines 5233–5239 → `killed 11,
+survived 0, PASS`.
+
+**Correction 2 — the pass was graded by a tool it could not run.** The loop
+invoked `claude --permission-mode acceptEdits`, which permits edits but not bash,
+so the pass had to reason about surviving mutants instead of measuring them. It
+was right; that is not a property to build on. The two harness scripts are now
+allowed explicitly (`Bash(scripts/mutation.sh:*)`,
+`Bash(.devcontainer/ci/local-ci.sh:*)`) and the prompt instructs the pass to
+iterate until the gate says PASS and not to report success without having run it.
+
+**Correction 3 — the decline summary asserted a reason it did not know.** Its
+header read *"targets declined this run (need an AWT event)"*. This decline was
+explicitly **not** that: the pass wrote that `parse` is reachable without an AWT
+event and declined for the gate reason above. The header now states no reason and
+lets the pass's own words stand.
+
+**Two corrections to earlier claims, recorded here because entries are
+append-only.**
+
+- **D92 undercounts.** It says `ParserSaxModeTest` leaves "28 survivors, of which
+  8 are negated conditionals inside `parse`". That was read off a truncated
+  display. Measured: **16 survivors inside `parse`, 7 of them negated
+  conditionals.**
+- **A behavioral inference that did not survive testing.** From the dead comment
+  block it looked as though a comment containing `>` must mis-parse, since the
+  doctype branch reads only to the first `>`. It does not:
+  `<panel><!-- a > b --><label/></panel>` and `<panel><!-- note --><label/></panel>`
+  produce the **identical** transcript `[start panel, start label, end, end]`. The
+  narrow claim about the mutants holds; the extrapolation to observable behavior
+  was wrong and is withdrawn.
+
+**What is not decided.** Whether the unreachable comment block in `parse` should
+be removed. It is dead code in a method whose survival is itself an open ROADMAP
+3c question, and deleting it is a behavior-neutral change that still needs its own
+disposition. Recorded, not scheduled.
+(Cross-ref D93 the loop and the guard bug its own tests caught, D92 the gate this
+corrects and the count it got wrong, D86 the parser net whose survivors are
+measured here, D89 the repair path that still has not run.)

@@ -197,9 +197,19 @@
    worklist. Testing the guards by deliberate violation caught `guard_no_main` —
    the load-bearing one — **silently passing a modified `Renderer.java`**: a git
    pathspec with a wildcard matches the whole path, so `*/src/main/java` matches
-   the directory and nothing under it. Fixed and all five guards re-tested. **The
-   loop has not been run end to end** — `--dry-run` next, for review before
-   anything is committed. Superseded: (3) the loop
+   the directory and nothing under it. Fixed and all five guards re-tested. **First `--dry-run` done (D94)**: preflight
+   green, 29 targets, the worklist put `parse` first and the pass **declined** —
+   correctly. Its reasoning (line 5276's negated conditional is covered but
+   equivalent, because the `<!` opener is taken by the doctype branch above, making
+   the comment block dead code) was confirmed by measurement afterwards. The decline
+   path therefore ran on its first outing, unlike `loop-modernise`'s repair path
+   across six slices. The run exposed three defects, all fixed: the gate was scoped
+   to the whole method (unreachable wherever equivalent mutants live) and is now
+   scoped to the slice's **assigned lines**; the pass could not run the gate it is
+   graded by and now can; and the decline summary hard-coded a reason it did not
+   know. D94 also corrects D92's survivor count (16 in `parse`, not 8) and withdraws
+   an inference that a comment containing `>` mis-parses — tested, it does not.
+   **No slice has yet produced a test**; the next run starts from the second target. Superseded: (3) the loop
    script's own D-entry. PIT is chosen over automating D89's hand-mutant
    discipline because a pass that authors both the test and the mutants grades its
    own homework. Still uncovered and unscheduled: `FrameLauncher` (0 %, published
