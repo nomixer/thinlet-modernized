@@ -36,9 +36,9 @@ final class DescriptorTable {
     static final WidgetDescriptor[] WIDGETS;
 
     static {
-        Integer integer_1 = new Integer(-1);
-        Integer integer0 = new Integer(0);
-        Integer integer1 = new Integer(1);
+        Integer integer_1 = Integer.valueOf(-1);
+        Integer integer0 = Integer.valueOf(0);
+        Integer integer1 = Integer.valueOf(1);
         String[] orientation = {"horizontal", "vertical"};
         String[] leftcenterright = {"left", "center", "right"};
         String[] selections = {"single", "interval", "multiple"}; // +none
@@ -152,21 +152,21 @@ final class DescriptorTable {
                 new AttributeDescriptor("boolean", "iconifiable", "paint", Boolean.FALSE)
             }),
             new WidgetDescriptor("spinbox", "textfield", new AttributeDescriptor[] {
-                new AttributeDescriptor("integer", "minimum", null, new Integer(Integer.MIN_VALUE)),
-                new AttributeDescriptor("integer", "maximum", null, new Integer(Integer.MAX_VALUE)),
+                new AttributeDescriptor("integer", "minimum", null, Integer.valueOf(Integer.MIN_VALUE)),
+                new AttributeDescriptor("integer", "maximum", null, Integer.valueOf(Integer.MAX_VALUE)),
                 new AttributeDescriptor("integer", "step", null, integer1),
                 new AttributeDescriptor("integer", "value", null, integer0)
             }), // == text? deprecated
             new WidgetDescriptor("progressbar", "component", new AttributeDescriptor[] {
                 new AttributeDescriptor("choice", "orientation", "validate", orientation),
                 new AttributeDescriptor("integer", "minimum", "paint", integer0), // ...checkvalue
-                new AttributeDescriptor("integer", "maximum", "paint", new Integer(100)),
+                new AttributeDescriptor("integer", "maximum", "paint", Integer.valueOf(100)),
                 new AttributeDescriptor("integer", "value", "paint", integer0)
             }),
             // change stringpainted
             new WidgetDescriptor("slider", "progressbar", new AttributeDescriptor[] {
-                new AttributeDescriptor("integer", "unit", null, new Integer(5)),
-                new AttributeDescriptor("integer", "block", null, new Integer(25)),
+                new AttributeDescriptor("integer", "unit", null, Integer.valueOf(5)),
+                new AttributeDescriptor("integer", "block", null, Integer.valueOf(25)),
                 new AttributeDescriptor("method", "action")
             }),
             // minor/majortickspacing
@@ -201,7 +201,7 @@ final class DescriptorTable {
             // selection row column cell
             // editing row/column
             new WidgetDescriptor("column", "choice", new AttributeDescriptor[] {
-                new AttributeDescriptor("integer", "width", null, new Integer(80)),
+                new AttributeDescriptor("integer", "width", null, Integer.valueOf(80)),
                 new AttributeDescriptor("choice", "sort", null, new String[] {"none", "ascent", "descent"})
             }),
             new WidgetDescriptor("row", null, new AttributeDescriptor[] {

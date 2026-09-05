@@ -27,7 +27,7 @@ paint*:
 
 | Op | Args (numeric unless noted) | Corpus calls | Role |
 | --- | --- | --- | --- |
-| `drawImage` | `x, y, w, h` | 1777 | Blit a pre-decoded icon/glyph image |
+| `drawImage` | `x, y, w, h` (**destination only** — see below) | 1777 | Icon blits *and* gradient tiles |
 | `drawLine` | `x1, y1, x2, y2` | 1309 | 1-px strokes; **also rectangle borders** (4 lines) |
 | `setColor` | `#RRGGBBAA` (categorical) | 1121 | Set current foreground color |
 | `translate` | `dx, dy` | 740 | Shift the origin (widget-relative coords) |
@@ -92,11 +92,21 @@ context-state stack.
   risk: the baseline `y` and any following advance depend on the backend's font
   metrics, which is exactly the variance D7's ±2 px tolerance absorbs. Canvas:
   `fillText` (with `textBaseline = "alphabetic"`).
-- **`drawImage(img,x,y,w,h)`** — icon/glyph blits at an explicit destination
-  rect (the corpus uses scaled 15×15 and similar icon sizes — see the three
-  consecutive `drawImage … 15 15` blits in `amazon/about.json`). Images are
-  pre-decoded AWT `Image`s; the trace records only geometry, not pixels. Canvas:
-  `drawImage(img, x, y, w, h)`.
+- **`drawImage`** — two different calls collapse into this one trace op, and the
+  trace cannot tell them apart (D89). Icon/glyph blits use the 4-arg destination
+  form (see the three consecutive `drawImage … 15 15` blits in
+  `amazon/about.json`). **The majority of the traffic is not icons**: `Thinlet.fill`
+  paints every `c_ctrl` background by tiling a gradient image with AWT's **10-arg
+  scaled form**, whose four *source* arguments `TracingGraphics2D.recImage` does
+  not record. 2 920 of the 3 887 `drawImage` ops across the committed goldens (static +
+  interaction, so not the corpus-only count in the table above) are
+  exactly 15×15 with a ragged tail of partial widths at height 15 — the signature
+  of tiling at `block = getFontMetrics(font).getHeight()`, not of icon sizes.
+  Images are pre-decoded AWT `Image`s; the trace records only geometry, not
+  pixels. Canvas: `drawImage(img, x, y, w, h)` for icons, but a gradient tile
+  needs the 9-arg `drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh)` with a source
+  rect **the trace does not carry** — read it from `Thinlet.fill` rather than from
+  a golden.
 - **`drawOval` / `fillOval(x,y,w,h)`** — the only curved primitives, used sparsely
   (5 each) for radio-style indicators. Canvas: `arc()` + `stroke`/`fill`.
 

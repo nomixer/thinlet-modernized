@@ -207,5 +207,17 @@ items first:
   non-predefined entities are unsupported today), not safety. Deciding this is
   prerequisite to modernising `parse` by hand or by loop — there is no sense
   polishing code that may be deleted, which is why `loop-modernise` skips it.
+- **Whether the Insignia EVM workaround survives** — raised 2026-09-05 (D89),
+  undecided. `Thinlet.evm` is `0` except on the Insignia Jeode JVM off Windows CE,
+  where it is `-1`; 26 sites add it to `fillRect`/`fillOval` sizes and to the
+  gradient blit's source rect, correcting a one-pixel error in that JVM's
+  primitives. The net cannot referee the decision either way: setting `evm = -1`
+  passes all 189 golden tests, because a one-pixel delta is inside D7's ±2 px
+  tolerance and the gradient blit's source rect is not recorded at all. Deleting
+  the terms is therefore a D69 behavior change that must be argued on the merits —
+  is a 2002-era embedded JVM still a supported target? — rather than demonstrated
+  green. Prerequisite to modernising those 26 sites by hand or by loop, for the
+  same reason the parser question is: there is no sense polishing code that may
+  be deleted.
 - HiDPI / alternative rendering backends, informed by the backend-portability
   docs.
