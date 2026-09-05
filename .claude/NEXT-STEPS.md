@@ -190,10 +190,17 @@
    silent-success traps are recorded, and the gate was **redesigned from the
    measurement**: an assertion-free test still scores 50 % (PIT counts a thrown
    exception as a kill), so a flat score threshold is weak. The gate is "killed > 0
-   and **survived == 0 within the slice's assigned target method**". Remaining:
-   (2) a `WORKLIST=true` mode in `coverage-summary.py` emitting per-method
-   missed-line rows; (3) the loop
-   script itself, own D-entry. PIT is chosen over automating D89's hand-mutant
+   and **survived == 0 within the slice's assigned target method**". **Steps 2 and 3 done (D93)**:
+   `coverage.sh --worklist` emits per-method missed-line rows (cross-checked
+   against JaCoCo's own counters, 125 methods, zero mismatches) and
+   `scripts/loop-characterise.sh` is in, with 29 allowlisted targets on today's
+   worklist. Testing the guards by deliberate violation caught `guard_no_main` —
+   the load-bearing one — **silently passing a modified `Renderer.java`**: a git
+   pathspec with a wildcard matches the whole path, so `*/src/main/java` matches
+   the directory and nothing under it. Fixed and all five guards re-tested. **The
+   loop has not been run end to end** — `--dry-run` next, for review before
+   anything is committed. Superseded: (3) the loop
+   script's own D-entry. PIT is chosen over automating D89's hand-mutant
    discipline because a pass that authors both the test and the mutants grades its
    own homework. Still uncovered and unscheduled: `FrameLauncher` (0 %, published
    API), and the four methods D91 left alone (`getSize`, `setRectangle`, `update`,

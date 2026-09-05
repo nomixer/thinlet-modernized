@@ -298,11 +298,21 @@ verify_all() {
 
 # The load-bearing guard. A loop that can edit both the code and its tests can
 # make a test pass by changing the code, and nothing else here would catch it.
+# The pathspec needs the trailing /*: a bare '*/src/main/java' is a wildmatch
+# against the whole path, so it matches the directory name and NOTHING under it —
+# the guard silently passed a modified Renderer.java until a deliberate-violation
+# test caught it.
 guard_no_main() {
-    if ! git -C "$root" diff --quiet -- '*/src/main/java' \
-        || [ -n "$(git -C "$root" status --porcelain=v1 --untracked-files=all -- '*/src/main/java')" ]; then
+    local spec=':(glob)*/src/main/java/**'
+    if ! git -C "$root" diff --quiet -- "$spec" \
+        || [ -n "$(git -C "$root" status --porcelain=v1 --untracked-files=all -- "$spec")" ]; then
         echo "loop-characterise: slice touched main source — rolling back and stopping" >&2
-        git -C "$root" status --porcelain=v1 -- '*/src/main/java' >&2
+        git -C "$root" status --porcelain=v1 -- "$spec" >&2
+        # Main source is out of scope by construction, and preflight proved the
+        # tree was clean, so anything here is this slice's and must go back too —
+        # otherwise the run stops leaving the library edited.
+        git -C "$root" checkout -- "$spec" > /dev/null 2>&1 || true
+        git -C "$root" clean -fdq -- "$spec" > /dev/null 2>&1 || true
         rollback
         exit 1
     fi
