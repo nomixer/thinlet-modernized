@@ -366,6 +366,25 @@ Either way:
   (tagged `documents-current-behavior`).
 - **Enhanced Thinlet disposition:** undecided.
 
+### Q17 — `End` does nothing on a list/tree with no current lead item            (unfixed)
+- **What happens:** pressing `End` on a list, tree, or table with no row
+  currently the keyboard "lead" (e.g. right after the widget is created, before
+  any selection) leaves everything exactly as it was — no row selected, no
+  scroll, and the key event is not even consumed (the caller's key handler
+  falls through to `return false`). Pressing `Home` in the same state works
+  fine and jumps to the first row.
+- **Why it's a quirk:** `getListItem`'s `VK_HOME` arm reads the first child
+  unconditionally (`get(component, ":comp")`), but the `VK_END` arm is a loop
+  seeded with `last = lead` that walks forward — with `lead == null` the loop
+  never iterates, and the pre-initialized `row = null` is returned unchanged.
+  `processList` only acts when `getListItem` returns non-null, so a null lead
+  turns `End` into a silent no-op instead of the expected "jump to the last
+  row", breaking the symmetry with `Home`.
+- **Where:** `Thinlet.java` — `getListItem`'s `VK_END` arm.
+- **Locked by:** `thinlet.ListNavigationTest#endWithNoCurrentLeadReturnsNullInsteadOfTheLastItem`
+  (tagged `documents-current-behavior`).
+- **Enhanced Thinlet disposition:** undecided.
+
 
 ## Triaged for Enhanced Thinlet (not behavior-locked)
 
