@@ -1,4 +1,4 @@
-# Next steps — session handoff (2026-09-02)
+# Next steps — session handoff (2026-09-05)
 
 > State pointers + ordered work only; rationale lives in `DECISIONS.md`
 > (single-home rule + comment rules: **D57**). Charter:
@@ -112,8 +112,10 @@
   called. `ParserSaxModeTest` + `ParserDomModeTest` pin those branches through the
   SAX callbacks and the `getDOM*` accessors; the five lines were each mutated to
   prove the suites have teeth (15 of 19 failed), then reverted. The slice re-run
-  against them passes and stays stashed, uncommitted. Test net only; no library
-  change. Base row: 382 (core) + 13 (drafts).
+  against them passes. That slice was never committed and its stash is gone; six of
+  its nine edits sit inside the now-fenced `parse`, and the other three are in
+  `addAttribute`/`getMethod` where a later run will find them again. Test net only;
+  no library change. Base row: 382 (core) + 13 (drafts).
 
 - **Rendering hints netted, Q15 found and fixed (D88, 2026-09-05)**:
   `TracingGraphics2D.setRenderingHint` delegated without recording, so the trace was
@@ -126,6 +128,12 @@
   `+2/-0` with exactly two distinct lines added and none removed; dropping one hint
   now fails 93 of 94 golden tests. Second instance of the loop finding code the net
   did not watch (after D86). Base row: 383 (core) + 13 (drafts).
+- **Run-1 landed (D87/D88, 2026-09-05, PRs #133/#135)**: the loop's first real run
+  committed 3 of 3 slices, 17 Maven builds, no failures, no repairs. All three are
+  on `main`. It also exposed two `.git`-is-a-file bugs in this repo's own scripts —
+  `loop-modernise.sh`'s `flock` (#131) and `comment-pass.sh`'s attestation marker
+  (#134) — both fixed; a linked worktree's `.git` is a file, so any script writing
+  beneath it breaks. Check new helper scripts for the same assumption.
 
 ## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 
@@ -141,13 +149,17 @@
    covers **only** the Cut 4/5/6 seam commitments (D48/D50/D61/D69), never net or
    preparatory work. When they land: fork files → subsystems; boundaries vs Cut 2–6
    seams; enhancement backlog; then Cut 4+ seam commitments unblock (3a resumes).
-4. **`loop-modernise` — merged to `main`, first real run capped at 3 (D87)** —
-   the script is trunk tooling now, not branch-only work. Runs happen in a linked
-   worktree on their own branch off `main`; the primary checkout is never the
-   target. Still unexercised: the repair path (no slice has failed verification)
-   and the commit path. The XML parser is fenced (D86 + the ROADMAP 3c question),
-   so no slice may touch it. The D85 entry in `project-docs/UNFINISHED-IDEAS.md`
-   is now a removal candidate.
+4. **`loop-modernise` — run-1 done and merged; run-2 is the next use** — the
+   script is trunk tooling (D87). Runs happen in a linked worktree on their own
+   branch off `main`; the primary checkout is never the target. **Run-1 (capped at
+   3) committed 3 slices, all now on `main`**: the antialiasing one turned out to
+   fix Q15 and landed with D88; the 1.4 feature probes and the `@Override` batch
+   landed as #135. The **commit path is therefore exercised**; the **repair path
+   still is not** — no slice has yet failed verification, so that branch of the
+   script has never run. The XML parser stays fenced (D86 + the ROADMAP 3c
+   question), enforced by `guard_fenced`, so no slice may touch it. Review the
+   loop's output sceptically: run-1's antialiasing slice was reviewed as a
+   behavior-preserving tidy-up and was in fact repairing a live defect.
 
 ## Discipline (one-liners; the D-entries carry the why)
 
