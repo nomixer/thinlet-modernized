@@ -153,7 +153,12 @@ main() {
         echo
         echo "loop-characterise: slice $step of $max — target $target_method"
         : > "$log"
-        rm -f "$msg_file" "$declined"
+        rm -f "$msg_file"
+        # Never truncated: declines accumulate across the run and are the
+        # worklist for the later event-driven phase. A new one is detected by
+        # the file growing, not by it being non-empty.
+        local declined_before=0
+        [ -f "$declined" ] && declined_before="$(wc -c < "$declined")"
 
         if [ "$fresh" = true ] || [ "$first" = true ]; then
             first=false
@@ -166,9 +171,11 @@ main() {
         fi
 
         if [ -z "$(changed_paths)" ]; then
-            if [ -s "$declined" ]; then
+            local declined_now=0
+            [ -f "$declined" ] && declined_now="$(wc -c < "$declined")"
+            if [ "$declined_now" -gt "$declined_before" ]; then
                 echo "loop-characterise: pass declined $target_method —" >&2
-                cat "$declined" >&2
+                tail -c "$((declined_now - declined_before))" "$declined" >&2
                 iteration="$step"
                 continue
             fi
@@ -223,6 +230,7 @@ main() {
 
     echo
     echo "loop-characterise: stopped after $iteration slice(s) (cap $max)"
+    declined_summary
     coverage_delta
     reminder
 }
@@ -354,7 +362,9 @@ guard_new_files_only() {
 # append-only here: the loop records a finding, it never revises one.
 guard_quirk_pairing() {
     local tagged entry deletions
-    tagged="$(grep -l 'documents-current-behavior' $(new_test_file) 2> /dev/null || true)"
+    local file
+    file="$(new_test_file)"
+    tagged="$(grep -l 'documents-current-behavior' "$file" 2> /dev/null || true)"
     entry="$(git -C "$root" diff --cached --numstat -- KNOWN-QUIRKS.md; git -C "$root" diff --numstat -- KNOWN-QUIRKS.md)"
     deletions="$(printf '%s\n' "$entry" | awk '{s+=$2} END {print s+0}')"
     if [ "$deletions" -gt 0 ]; then
@@ -371,6 +381,16 @@ guard_quirk_pairing() {
         echo "loop-characterise: KNOWN-QUIRKS entry with no documents-current-behavior tag" >&2
         rollback
         exit 1
+    fi
+}
+
+# Declined targets are a finding, not litter: they are the input to the later
+# event-driven phase, so print them rather than leaving them in an ignored file.
+declined_summary() {
+    if [ -s "$declined" ]; then
+        echo
+        echo "loop-characterise: targets declined this run (need an AWT event):"
+        sed 's/^/  /' "$declined"
     fi
 }
 
@@ -445,8 +465,9 @@ Hard rules. A violation fails the pass and the slice is rolled back:
    values and on model state read back through the getters.
 
 If this target genuinely cannot be reached without synthesising an AWT input
-event, do not write a bad test: write one or two lines explaining why to
-$DECLINED_REL, create no file, and stop. That file is the worklist for the later
+event, do not write a bad test: APPEND one or two lines explaining why to
+$DECLINED_REL (start the first line with "$method:" so the entry names its own
+target, and never truncate what is already there), create no file, and stop. That file is the worklist for the later
 event-driven phase.
 
 Finally, write a single-line imperative commit subject (<=72 chars, no trailing

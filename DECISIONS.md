@@ -4106,8 +4106,9 @@ directory name and nothing beneath it. Measured across four candidates: bare
 and `*src/main/java*` all catch. The guard now uses the explicit glob form, and
 also reverts main source itself — preflight proves the tree was clean, so
 anything there is the slice's, and stopping the run while leaving the library
-edited would be the worst of both outcomes. All five guards were then re-tested
-by deliberate violation and every one exits non-zero and leaves the tree clean.
+edited would be the worst of both outcomes. All five guards were then exercised by
+deliberate violation — seven cases, including a clean slice that must *pass* —
+and every one behaves: non-zero exit, a named reason, and a clean tree afterwards.
 **A guard that has never been fired is not a guard**; `loop-modernise`'s repair
 path has still never executed across six slices (D89), which is the same gap one
 step along.
