@@ -566,6 +566,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
 
     /**
      * Scroll tabs to make the selected one visible
+     * @param t the Thinlet instance
      * @param component a tabbedpane
      */
     static void checkOffset(Thinlet t, Object component) {
@@ -1320,6 +1321,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
     }
 
     /**
+     * @param t the Thinlet instance
      * @param component a container
      * @return null for zero visible subcomponent, otherwise an array contains the following lists:
      * <ul><li>columnwidths, preferred width of grid columns</li>
@@ -2721,6 +2723,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
     }
 
     /**
+     * @param t the Thinlet instance
      * @param component a :popup or a menubar
      * @param part the currently selected item, return the first/last if null
      * @param forward find the next item if true, the previous otherwise
@@ -2977,6 +2980,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
     /**
      * Search for the next/first appropriate item starting with the collected string
      * or the given single character
+     * @param t the Thinlet instance
      * @param keychar the last typed character
      * @param component a list, tree, table, or combobox
      * @param leadowner the list, tree, table, or the combobox's drop down list
@@ -3059,6 +3063,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
 
     /**
      * Select all the items
+     * @param t the Thinlet instance
      * @param component a list/tree/table
      * @param selected selects or deselects items
      * @param recursive true for tree
@@ -3079,6 +3084,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
 
     /**
      * Select a single given item, deselect others
+     * @param t the Thinlet instance
      * @param component a list/tree/table
      * @param row the item/node/row to select
      * @param recursive true for tree
@@ -3122,6 +3128,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
 
     /**
      * Update the lead item of a list/tree/table, repaint, and scroll
+     * @param t the Thinlet instance
      * @param component a list, tree, or table
      * @param oldlead the current lead item
      * @param lead the new lead item
@@ -3637,6 +3644,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
 
     /**
      * Find the next item after the given
+     * @param t the Thinlet instance
      * @param component a list/tree/table widget
      * @param item the next item after this, or the first if null
      * @param recursive true if tree
@@ -4108,6 +4116,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
     }
 
     /**
+     * @param t the Thinlet instance
      * @param component a scrollable widget
      * @param x point x location
      * @param y point y location
@@ -4133,6 +4142,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
     }
 
     /**
+     * @param t the Thinlet instance
      * @param p x or y relative to the scrollbar begin
      * @param size scrollbar width or height
      * @param portsize viewport width or height
@@ -5420,6 +5430,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
     }
 
     /**
+     * @param t the Thinlet instance
      * @param methods methods and label's 'for' widgets are stored in this
      * vector because these may reference to widgets which are not parsed
      * at that time
