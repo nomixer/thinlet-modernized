@@ -3826,3 +3826,96 @@ pins the pattern for `colspan` and `mnemonic` only.
 repair path, D7 the tolerance model this entry stresses, D34 the curation that
 inherited the gap, D65 the Drafts playthrough that turned out to be the only
 teeth on `putProperty` and the constant-argument binding.)
+
+## D90 — the build measures coverage; the blind-spot hunt gets an exhaustive answer for one of its three tiers
+
+**Date:** 2026-09-05. **Status:** accepted. **Phase:** 3c (build tooling +
+findings; no library, behavior or golden change).
+
+**Why now.** Two runs of `loop-modernise` produced four net gaps between them
+(D86, D88, D89 × 2) and every one was found by accident — by a slice happening to
+land on unwatched code, or by an audit prompted after the fact. The build carried
+no coverage instrumentation at all, so "does anything execute this?" had no cheap
+answer and was repeatedly answered by shipping a change and seeing what happened.
+That is the wrong order.
+
+**What was added.** JaCoCo behind an opt-in `coverage` profile, plus
+`scripts/coverage.sh` (run the net under the agent, then report) and
+`scripts/coverage-summary.py` (per-class table, worst first; `--uncovered` lists
+every method with zero covered instructions). It **reports and does not
+threshold**: no gating row runs it, and choosing a coverage floor is a separate
+decision that would need its own entry. The exec file is one shared file at the
+reactor root with the agent's default `append`, so the `thinlet-drafts`
+playthrough counts towards `thinlet-core`'s numbers — D89 found lines whose only
+teeth are in that module, and a per-module report would have scored them dead.
+
+**One build trap, recorded because it fails silently.** Both test modules set an
+explicit surefire `<argLine>`, which shadows the agent's default `argLine`
+property, so the agent is exported as `jacocoArgLine` and each `argLine` prepends
+it. It must be prepended with surefire's **late-binding `@{jacocoArgLine}`**, not
+`${jacocoArgLine}`: the `${}` form is interpolated against the model before
+`prepare-agent` runs, expands to the empty default, and the build then succeeds,
+runs every test green, and writes **no exec file at all**. The first run here did
+exactly that.
+
+**The baseline, over the whole net.** `thinlet-core` is at **85.9 % instructions,
+74.0 % branches, 89.2 % methods** — 27 methods never entered, 1 103 branches never
+taken. Per class: `FrameLauncher` **0.0 %** (262 instructions, 52 branches — the
+entire class), `Thinlet` 84.2 % / 74.1 %, `Renderer` 90.1 % / 78.1 %, and every
+other class 100 %.
+
+**Tier 1 — code nothing executes — is now answered exhaustively.**
+`FrameLauncher` is a `public` class with a `public` constructor in the published
+jar, gated by japicmp, and no test has ever instantiated it; its ten methods are
+the largest single block of dead coverage. In `Thinlet` the never-entered methods
+include three user-facing behaviors, not just accessors: `findText` (100
+instructions — the type-ahead that jumps a list, tree or combobox to the item
+starting with the key just pressed), `selectAll`, and `hasAccelerator` — so
+**pressing a menu accelerator has never been exercised**, although the corpus
+declares accelerators and the golden net paints their labels. The public
+`getItems`, the `setFont`/`getFont`/`setComponent`/`getComponent` pairs,
+`getPreferredSize`, `update(Graphics)`, `handleException` and `destroy` are also
+never entered. The three SAX callback bodies show as dead only because the base
+implementations are empty and `ParserSaxModeTest` overrides them (D86); that is
+not a gap. Among partially covered methods the worst ratios are `changeCheck`
+(2 branches covered, 14 missed), `getListItem` (15/27), `processList` (15/25),
+`getChars` (14/22) and both `popup` methods.
+
+**Coverage does not answer the other two tiers, and the D89 findings prove it.**
+Every gap D89 recorded sits on a line JaCoCo scores as covered: the gradient blit
+runs on nearly every paint, `getSelectedItems` is called by `InputListTest`, and
+the `evm` terms execute constantly. Coverage answers *"did this line run?"*;
+neither of the other two questions — *"was its effect recorded?"* and *"was the
+recorded difference larger than the tolerance?"* — is visible to it. A green
+coverage number is therefore not a regression net, and the mutation probe stays
+the only instrument that settles the other two.
+
+**Tier 2 gains a second confirmed instance: the trace records image geometry, not
+image identity.** `recImage` stores position and size, so painting entirely
+different pixels at the same place and size is invisible. Proven by swapping
+`hgradient` and `vgradient` at their two call sites in `Thinlet.fill` — same
+dimensions, opposite pixel content, every gradient in the UI then running the
+wrong way: **94 of 94 golden tests pass**. This is not a defect in the recorder's
+design (hashing pixels would be JDK-variable and would defeat D7's whole
+tolerance model) but it is a boundary worth stating, and it bears directly on
+KNOWN-QUIRKS Q3 step 2 — a supplied missing-image placeholder drawn at the size
+of the icon it replaces would not move a single golden.
+
+**Tier 3's band is now measured rather than inferred.** D89 showed the whole
+Insignia workaround hides inside the tolerance. The boundary is exactly where
+`defaultPx: 2.0` puts it: shifting every text label in the UI by **+2 px passes**
+all 41 static golden tests, and by **+3 px fails 39 of them**. So the net's
+guarantee on any single coordinate is "within two pixels of 2005", and a change
+that stays inside that band is unreviewable by the goldens however many of them
+there are.
+
+**What this entry does not do.** It fixes nothing. `FrameLauncher`, `findText`,
+`selectAll` and accelerator dispatch are recorded as uncovered, not scheduled;
+recording the `drawImage` source rectangle (D89) still costs a re-record of every
+golden carrying the op; and no coverage threshold is set. The living inventory is
+the report itself — `scripts/coverage.sh` regenerates it — so these numbers are a
+dated baseline here, not a document to maintain.
+(Cross-ref D89 the two gaps that motivated this and the mutation discipline it
+cannot replace, D86 and D88 the two before them, D65 the playthrough the shared
+exec file exists to include, D7 the tolerance model tier 3 measures, D31 the
+cross-JDK model this profile deliberately stays out of.)

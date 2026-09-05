@@ -22,6 +22,9 @@
   </description>
 
   <properties>
+    <!-- Empty unless the `coverage` profile exports the JaCoCo agent (D90);
+         the explicit argLine below would otherwise shadow it. -->
+    <jacocoArgLine></jacocoArgLine>
     <!-- Reactor module only; never deployed (see DECISIONS.md D4). -->
     <maven.deploy.skip>true</maven.deploy.skip>
     <!-- Mirrors thinlet-core's tripwire knob (D43) so a -DstrictIntern=false
@@ -71,7 +74,7 @@
           </environmentVariables>
           <!-- D25 charset pin + D43 tripwire only. No trace.* knobs: the
                playthrough commits no goldens (D37 getter-first doctrine). -->
-          <argLine>-Dfile.encoding=UTF-8 -Dthinlet.strictIntern=${strictIntern}</argLine>
+          <argLine>@{jacocoArgLine} -Dfile.encoding=UTF-8 -Dthinlet.strictIntern=${strictIntern}</argLine>
         </configuration>
       </plugin>
     </plugins>

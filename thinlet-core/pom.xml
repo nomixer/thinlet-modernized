@@ -29,6 +29,9 @@
        @EnabledIfSystemProperty(".+") dump/diff modes stay inert in a normal
        build; CI passes -DtraceDumpDir=… etc. to enable them. -->
   <properties>
+    <!-- Empty unless the `coverage` profile exports the JaCoCo agent (D90);
+         the explicit argLine below would otherwise shadow it. -->
+    <jacocoArgLine></jacocoArgLine>
     <traceDumpDir></traceDumpDir>
     <traceRecord></traceRecord>
     <traceDiffInputDir></traceDiffInputDir>
@@ -82,7 +85,7 @@
                systemPropertyVariables refuses to forward a name that collides
                with a CLI user property. The ${traceDumpDir} knobs default empty
                (above) ⇒ -Dtrace.dump.dir= ⇒ inert; CI sets -DtraceDumpDir=… etc. -->
-          <argLine>-Dfile.encoding=UTF-8 -Dthinlet.strictIntern=${strictIntern} -Dtrace.dump.dir=${traceDumpDir} -Dtrace.record=${traceRecord} -Dtrace.diff.inputDir=${traceDiffInputDir} -Dtrace.diff.out=${traceDiffOut}</argLine>
+          <argLine>@{jacocoArgLine} -Dfile.encoding=UTF-8 -Dthinlet.strictIntern=${strictIntern} -Dtrace.dump.dir=${traceDumpDir} -Dtrace.record=${traceRecord} -Dtrace.diff.inputDir=${traceDiffInputDir} -Dtrace.diff.out=${traceDiffOut}</argLine>
         </configuration>
       </plugin>
       <!-- Attach the test classes as a tests-classifier jar: the thinlet-testkit

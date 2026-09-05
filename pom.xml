@@ -50,6 +50,7 @@
     <version.checkstyle.tool>14.1.0</version.checkstyle.tool>
     <version.spotbugs.plugin>4.10.4.0</version.spotbugs.plugin>
     <version.japicmp.plugin>0.26.1</version.japicmp.plugin>
+    <version.jacoco.plugin>0.8.13</version.jacoco.plugin>
 
     <!-- japicmp is INACTIVE during Phase 0; activated from v0.1.0 (Phase 1). -->
     <japicmp.skip>true</japicmp.skip>
@@ -121,6 +122,17 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-toolchains-plugin</artifactId>
           <version>${version.toolchains.plugin}</version>
+        </plugin>
+
+        <!-- Coverage instrumentation, activated only by the `coverage` profile
+             below. Both test modules set an explicit surefire argLine, which would
+             shadow the agent's default `argLine` property, so the agent is exported
+             under `jacocoArgLine` and each argLine prepends it (empty by default —
+             the same idiom the trace toggles use). See DECISIONS.md D90. -->
+        <plugin>
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>${version.jacoco.plugin}</version>
         </plugin>
 
         <!-- japicmp: configured here, INACTIVE in Phase 0 (japicmp.skip=true). -->
@@ -298,6 +310,38 @@
                 </jdk>
               </toolchains>
             </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- Coverage measurement (DECISIONS.md D90). Opt-in, never part of a gating
+         row: it reports, it does not threshold. One shared exec file at the
+         reactor root with the agent's default append=true, so thinlet-drafts'
+         playthrough counts towards thinlet-core's coverage — which matters,
+         because D89 found lines whose only teeth are in that module. The report
+         is NOT bound to a phase: thinlet-core builds before thinlet-drafts runs,
+         so a bound report would miss half its data. `scripts/coverage.sh` runs
+         the build and then the report, in that order. -->
+    <profile>
+      <id>coverage</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>jacoco-agent</id>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+                <configuration>
+                  <propertyName>jacocoArgLine</propertyName>
+                  <destFile>${session.executionRootDirectory}/target/jacoco.exec</destFile>
+                </configuration>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
