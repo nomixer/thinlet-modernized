@@ -1560,10 +1560,12 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * Paints the components inside the graphics clip area
      */
     public void paint(Graphics g) {
-        // RenderingHints is 1.4+, below the Java-8 floor, so the 2005 reflective lookup
-        // of the two antialiasing hints is dead weight. AWT always paints through a
-        // Graphics2D; the guard keeps a hand-rolled Graphics working, as the reflective
-        // NoSuchMethodException used to.
+        // The 2005 reflective lookup was not merely dead weight at the Java-8 floor: it
+        // cached one Method in a static keyed to the first Graphics class, so a second
+        // implementation threw and the catch latched antialiasing off for the whole JVM
+        // (Q15, D88). The guard is retained, not vestigial — it gives a non-Graphics2D
+        // Graphics the same skip the reflective NoSuchMethodException gave it, for that
+        // paint only. Pinned by AntialiasingPersistenceTest.
         if (g instanceof Graphics2D) {
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
