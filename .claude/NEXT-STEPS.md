@@ -128,7 +128,7 @@
   `+2/-0` with exactly two distinct lines added and none removed; dropping one hint
   now fails 93 of 94 golden tests. Second instance of the loop finding code the net
   did not watch (after D86). Base row: 383 (core) + 13 (drafts).
-- **Run-2 landed (D89, 2026-09-05)**: the loop committed 3 of 3 again — the
+- **Run-2 landed (D89, 2026-09-05, PR #137)**: the loop committed 3 of 3 again — the
   deprecated `Integer`/`Long` constructors, `getSelectedItems`' quadratic regrow,
   and the four `new String(…)` copies outside the fenced parser that D86 predicted
   a later run would find. Reviewed by **14 mutation runs**, not by inspection: the
