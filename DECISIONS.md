@@ -4074,3 +4074,70 @@ of the D86/D88/D89 pattern, found in the first five minutes the instrument exist
 (Cross-ref D90 the coverage baseline and the tier model this completes, D89 the
 hand-mutation discipline it automates, D86 the parser net whose survivors it just
 measured, D44 the container discipline, D22 the display the headless trap broke.)
+
+## D93 — `loop-characterise.sh`: the test-writing loop, and the guard bug a deliberate-violation test caught
+
+**Date:** 2026-09-05. **Status:** accepted. **Phase:** 3c — tooling. No library,
+behavior or golden change.
+
+**What it is.** `scripts/loop-characterise.sh` is `loop-modernise.sh`'s mirror
+image: same skeleton (whole body in `main()`, per-worktree `flock` on the resolved
+`--git-dir`, `run_logged`, scoped rollback, resumed session, `[N]` / `--new` /
+`--dry-run`), **scope inverted**.
+
+| | `loop-modernise` | `loop-characterise` |
+|---|---|---|
+| Writable tree | `thinlet-core/src/main/java` | `thinlet-core/src/test/java` (+ `KNOWN-QUIRKS.md`, append-only) |
+| New files | forbidden | **required** — exactly one per slice |
+| Existing files | edited in place | **never modified** |
+| `japicmp` | every pass | dropped — `guard_no_main` already proves it |
+
+**Why `guard_no_main` is the load-bearing one.** A loop that can edit both the
+code and its tests can make a test pass by changing the code, and **no gate in
+this design would catch that** — the mutation gate grades the test, not the
+diff. D91 exists so this guard can be absolute rather than negotiable.
+
+**The guard bug, and why the plan insisted on testing guards by deliberate
+violation.** `guard_no_main` was written with the pathspec `'*/src/main/java'`
+and **silently passed a modified `Renderer.java`**. A git pathspec containing a
+wildcard is a wildmatch against the *whole path*, so that pattern matches the
+directory name and nothing beneath it. Measured across four candidates: bare
+`*/src/main/java` **misses**; `*/src/main/java/*`, `:(glob)*/src/main/java/**`
+and `*src/main/java*` all catch. The guard now uses the explicit glob form, and
+also reverts main source itself — preflight proves the tree was clean, so
+anything there is the slice's, and stopping the run while leaving the library
+edited would be the worst of both outcomes. All five guards were then exercised by
+deliberate violation — seven cases, including a clean slice that must *pass* —
+and every one behaves: non-zero exit, a named reason, and a clean tree afterwards.
+**A guard that has never been fired is not a guard**; `loop-modernise`'s repair
+path has still never executed across six slices (D89), which is the same gap one
+step along.
+
+**Target selection is data, not judgment.** `coverage-summary.py` gains a
+`WORKLIST=true` mode (and `coverage.sh --worklist`) emitting, per partially
+covered method, the exact source lines JaCoCo still records as missed —
+attributed by method line-range, cross-checked against JaCoCo's own per-method
+counters for all **125** methods with **zero mismatches**. The loop intersects
+that with a curated pure-logic allowlist: **29 targets today**, worst branch
+coverage first, `parse` and `getListItem` and `processList` and `findText` and
+`getChars` and `changeCheck` at the top. The allowlist decides what is in scope;
+coverage decides the order and supplies the lines handed to the slice. A pass
+that cannot reach its target without an AWT event writes its reason to
+`.characterise-declined` and the loop moves on — that file becomes the worklist
+for the later event-driven phase rather than being guessed at now.
+
+**The gate, and its honest limit.** Per D92 the condition is scoped to the
+slice's assigned method: **at least one mutant killed, and zero survivors.** That
+is a statement about the *quality* of what the test covers, not the *quantity* —
+a test reaching one line of a large method can pass it. Quantity is measured
+separately by the coverage delta the loop reports at the end of a run. Splitting
+the two is deliberate and follows D90: coverage answers *"did it run?"*, mutation
+answers *"was it watched?"*, and neither substitutes for the other.
+
+**Not yet run end to end.** The guards, the worklist, the gate and the summariser
+are each tested; no slice has been generated. `--dry-run` produces one, verified
+and uncommitted, for review before anything is committed.
+(Cross-ref D92 the gate and the measurement that shaped it, D91 the extraction
+that makes `guard_no_main` affordable, D90 the coverage instrument the worklist
+reads, D87 the loop this mirrors, D44/D52 the frozen-fixture rule the
+new-files-only guard enforces.)
