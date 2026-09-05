@@ -5504,7 +5504,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
         AttributeDescriptor definition = getDefinition(getClass(component), key, null);
         key = definition.name;
         if (is(definition.type, "string")) {
-            value = (encoding == null) ? new String(value) : new String(value.getBytes(), 0, value.length(), encoding);
+            if (encoding != null) {
+                value = new String(value.getBytes(), 0, value.length(), encoding);
+            }
             set(component, key, value);
             if (is(key, "text")) {
                 spinValueFromText(component); // D83
@@ -5551,7 +5553,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 if (equals == -1) {
                     throw new IllegalArgumentException(token);
                 }
-                putProperty(component, new String(token.substring(0, equals)), new String(token.substring(equals + 1)));
+                putProperty(component, token.substring(0, equals), token.substring(equals + 1));
             }
         } else if (is(definition.type, "font")) {
             String name = null;
@@ -5569,7 +5571,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     try {
                         size = Integer.parseInt(token);
                     } catch (NumberFormatException nfe) {
-                        name = (name == null) ? new String(token) : (name + " " + token);
+                        name = (name == null) ? token : (name + " " + token);
                     }
                 }
             }
@@ -5938,7 +5940,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     (arg.charAt(0) == '\'')
                     && (arg.charAt(arg.length() - 1) == '\'')) {
                 data[2 + 3 * i] = "constant";
-                data[2 + 3 * i + 1] = new String(arg.substring(1, arg.length() - 1));
+                data[2 + 3 * i + 1] = arg.substring(1, arg.length() - 1);
                 parametertypes[i] = String.class;
             } else {
                 int dot = arg.indexOf('.');
