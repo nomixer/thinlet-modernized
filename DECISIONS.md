@@ -3667,49 +3667,72 @@ authorizes the loop's output onto `main`.
 change-control protocol any observable change would still go through, D44 the
 container-only golden rule the loop's verification rests on.)
 
-## D88 — the golden traces record `setRenderingHint`; 93 goldens re-recorded to gain it
+## D88 — the trace records `setRenderingHint`, which immediately exposed Q15: a JVM-wide antialiasing latch
 
-**Date:** 2026-09-05. **Status:** accepted. **Phase:** 3c (test-harness only; no
-library, build or behavior change — `Thinlet.java` is untouched).
+**Date:** 2026-09-05. **Status:** accepted. **Phase:** 3c — **behavior change**
+(D69 protocol: recorded disposition, the pinning test lands in the same PR),
+plus the harness change that found it.
 
-**The gap.** `Thinlet.paint` sets two antialiasing hints on every paint, and
-nothing observed them. `TracingGraphics2D.setRenderingHint` delegated to the real
-`Graphics2D` without calling `rec(...)` — unlike `fillRect` and its neighbours —
-and no golden mentioned the op. The trace was therefore byte-identical whether
-both hints were set or dropped entirely, so the strongest net this project has
-was silent on that code.
+**The gap that started it.** `Thinlet.paint` sets two antialiasing hints on every
+paint and nothing observed them. `TracingGraphics2D.setRenderingHint` delegated to
+the real `Graphics2D` without calling `rec(...)` — unlike `fillRect` and its
+neighbours — and no golden mentioned the op. The trace was byte-identical whether
+both hints were set or dropped entirely.
 
 **Found by using the loop, not by auditing the harness.** This is the second time
-`loop-modernise` has modified code the net does not watch and reported green: the
-first was the DOM/SAX parser branches (D86), the second was its slice retiring the
-1.4 reflection behind these very hints. Two occurrences in two runs is a pattern,
-not a coincidence — dead 2005 compatibility scaffolding is exactly the code least
-likely to be covered, and exactly what an automated modernizer reaches for first.
+`loop-modernise` modified code the net does not watch and reported green: first the
+DOM/SAX parser branches (D86), then its run-1 slice retiring the 1.4 reflection
+behind these hints. Dead 2005 compatibility scaffolding is simultaneously the code
+least likely to be covered and the first thing an automated modernizer reaches for,
+so two occurrences in two runs is a pattern rather than a coincidence.
 
-**Decision.** `setRenderingHint` records `op` plus the key and value as
-categorical args. The two Map-taking setters stay **unrecorded**, and the reason
-is written where the code is: `Map` iteration order is unspecified, so recording
-one would vary run to run, and no caller in `thinlet-core/src/main/java` invokes
-either — so nothing Thinlet can reach goes unrecorded by that choice.
+**What recording the hints revealed within one CI run: Q15.** The 2005 code cached
+the reflectively-resolved `setRenderingHint` `Method` in a **static**, keyed to the
+first `Graphics` class the process ever painted with. A second implementation made
+`invoke` throw `IllegalArgumentException`, and the catch set `TXT_AA = null` — the
+flag guarding the whole block. Antialiasing then stayed off for every later paint,
+in every instance, for the life of the JVM: a one-way latch, not per-paint
+degradation.
 
-**The key/value strings are JDK-internal, and were checked rather than assumed.**
-The recording uses `toString`, which the JDK does not specify. All four strings
-were compared on the JDK rows this project tests — 8, 11, 17 and 21 — and are
-identical on every one, so the D7 categorical-exact rule holds across the matrix.
-A future JDK changing them would surface as a cross-JDK trace divergence, which is
-what that job exists to report.
+It surfaced as the base row failing what the JDK 8/11/17 rows passed, and what the
+same suite passed locally — because the trigger is test *order*, whichever suite
+paints through a raw `Graphics2D` first. Rather than infer, the mechanism was
+isolated directly: a probe painting one `Thinlet` through `TracingGraphics2D`,
+then a raw `Graphics2D`, then `TracingGraphics2D` again, recorded **2 hints, then
+0**. That probe is now `AntialiasingPersistenceTest`.
 
-**The re-record, and why it is auditable rather than trusted.** 93 paint goldens
-(41 static + 52 interaction) each gained the two calls; the 59 layout-state
-sidecars record layout, not paint calls, and are untouched. D44 and D52 forbid
-re-recording to make an unexplained diff go away, so the diff was proved to be
-exactly the explained one: **every one of the 93 files is `+2/-0`, the added lines
-across all of them reduce to exactly two distinct strings, and not one line was
-removed.** A re-record that laundered anything else could not produce that shape.
+**Decision on the behavior (D69).** Q15 is fixed, not documented: an application
+painting through a printer or image `Graphics` alongside the screen one is
+ordinary, and silent permanent loss of antialiasing is not a contract worth
+keeping. `paint` now tests `g instanceof Graphics2D` and calls `setRenderingHint`
+directly — no cached `Method`, no static flag, nothing to latch. The guard is kept
+deliberately: it preserves what the reflective `NoSuchMethodException` gave a
+non-`Graphics2D` `Graphics`, which is to skip the hints for *that paint only*.
 
-**Proven to have teeth.** Dropping a single hint from `Thinlet.paint` now fails
-**93 of 94** golden tests, where before it failed none. And the loop's slice — the
-one whose correctness was previously an argument from reading — passes the
-hint-aware goldens unchanged, which is what that slice needed and could not have.
+**The fix is the loop's own slice**, unaltered. It was proposed as retiring dead
+weight at the Java 8 floor, and turned out to repair a defect neither the loop nor
+its reviewer knew existed — the review had called it "correct by inspection, but
+unverified". Both halves of that were true and neither was the whole story.
+
+**Recording details.** Key and value go in by `toString`, which the JDK does not
+specify; all four strings were compared on rows 8, 11, 17 and 21 and are identical
+on every one, so D7's categorical-exact rule holds across the matrix, and later
+drift surfaces as a cross-JDK divergence. The two `Map`-taking setters stay
+unrecorded: `Map` iteration order is unspecified, and nothing under
+`thinlet-core/src/main/java` calls either today.
+
+**The re-record is auditable rather than trusted.** 93 paint goldens (41 static +
+52 interaction) each gained the two calls; the 59 layout-state sidecars record
+layout, not paint calls, and are untouched. D44 and D52 forbid re-recording to make
+an unexplained diff go away, so the diff was proved to be exactly the explained
+one: **every one of the 93 files is `+2/-0`, the added lines across all of them
+reduce to exactly two distinct strings, and not one line was removed.** A
+re-record that laundered anything else could not produce that shape.
+
+**Proven to have teeth.** Dropping a single hint from `paint` now fails **93 of 94**
+golden tests, where before it failed none. `AntialiasingPersistenceTest` fails on
+the 2005 code (2 hints, then 0) and passes on the fix, which is the D69 requirement
+that the pinned test move to the new behavior in the same change.
 (Cross-ref D86 the first instance of this blind spot, D87 the loop that found both,
-D7 the trace-tolerance model, D44/D52 the re-record discipline this diff satisfies.)
+D69 the change-control protocol this behavior change follows, D7 the tolerance
+model, D44/D52 the re-record discipline this diff satisfies.)
