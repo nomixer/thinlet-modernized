@@ -2279,6 +2279,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 Rectangle bounds = getRectangle(mouseinside, "bounds");
                 // The catch stays load-bearing: it absorbed the reflective lookup's failure on a
                 // non-wheel event posted with this id, and now absorbs the cast's, unchanged.
+                // The dropped static Method cache was NOT Q15's latch (D88): getWheelRotation is
+                // declared on MouseWheelEvent and not overridden, so one cached Method invoked on
+                // any instance — where setRenderingHint is overridden by every Graphics2D.
                 try {
                     int rotation = ((MouseWheelEvent) e).getWheelRotation();
 
