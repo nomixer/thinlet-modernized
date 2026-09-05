@@ -2871,7 +2871,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @param multiline
      * @return
      */
-    private static String filter(String text, boolean multiline) {
+    static String filter(String text, boolean multiline) {
         StringBuffer filtered = new StringBuffer(text.length());
         for (int i = 0; i < text.length(); i++) {
             char ckey = text.charAt(i);
@@ -4482,11 +4482,11 @@ public class Thinlet extends Container implements Runnable, Serializable {
     // ":vertical" (scrollbar Rectangles), ":tooltipbounds", ":titleheight".
     // The dialog resize hit-tokens ":n"/":s"/":e"/":w"/":nw"/":ne"/":sw"/":se"
     // reuse the ":" namespace as part tokens (insidepart values), not model keys.
-    private static Object createImpl(String classname) {
+    static Object createImpl(String classname) {
         return new Object[] {":class", classname, null};
     }
 
-    private static boolean set(Object component, Object key, Object value) {
+    static boolean set(Object component, Object key, Object value) {
         Object[] previous = (Object[]) component;
         for (Object[] entry = previous; entry != null; entry = (Object[]) entry[2]) {
             if (entry[0] == key) {
@@ -4654,7 +4654,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         }
     }
 
-    private static int getItemCountImpl(Object component, String key) {
+    static int getItemCountImpl(Object component, String key) {
         int i = 0;
         for (Object comp = get(component, key); comp != null; comp = get(comp, ":next")) {
             i++;
@@ -4692,7 +4692,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
     /**
      * Referenced by DOM, replace by getItem for others
      */
-    private static Object getItemImpl(Object component, Object key, int index) {
+    static Object getItemImpl(Object component, Object key, int index) {
         int i = 0;
         for (Object item = get(component, key); item != null; item = get(item, ":next")) {
             if (i == index) {
@@ -5620,7 +5620,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      *
      * @throws java.lang.IllegalArgumentException
      */
-    private static AttributeDescriptor getDefinition(Object classname, String key, String type) {
+    static AttributeDescriptor getDefinition(Object classname, String key, String type) {
         Object currentname = classname;
         // 2005 quirk, preserved: a classname absent from the table never nulls the
         // walk variable, so this loops forever; unreachable (":class" is always a
@@ -5894,7 +5894,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         } else throw new IllegalArgumentException(key);
     }
 
-    private static Object get(Object component, String key, String type) {
+    static Object get(Object component, String key, String type) {
         AttributeDescriptor definition = getDefinition(getClass(component), key, type);
         Object value = get(component, definition.name);
         return (value != null) ? value : definition.defaultValue;
@@ -6248,7 +6248,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * fallback as the {@code MalformedURLException} of a protocol-less path, so the throwable
      * is the routine shape of a miss, not a distinct fault. The WARNING is the headline.
      */
-    private static void logIconAttempt(String path, Throwable e) {
+    static void logIconAttempt(String path, Throwable e) {
         if (LOG.isLoggable(Level.FINE)) {
             LOG.log(Level.FINE, "icon resolution attempt failed for " + path, e);
         }
