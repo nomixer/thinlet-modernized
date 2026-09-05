@@ -13,32 +13,42 @@ import sys
 import xml.etree.ElementTree as ET
 
 
-def verdict(muts, gate):
-    """The loop's gate, scoped to the method a slice was assigned.
+def verdict(muts, gate, lines=None):
+    """The loop's gate, scoped to the lines a slice was assigned.
 
     A flat score threshold cannot work: D92 measured an assertion-free test at
-    50%, because PIT counts a thrown exception as a kill. Scoped to the assigned
-    method, that floor buys nothing — a survivor there is a line the slice
-    claimed and does not watch.
+    50%, because PIT counts a thrown exception as a kill.
+
+    Scoping to the whole method does not work either, which the first dry run
+    proved (D94): `parse` carries equivalent mutants — line 5276's negated
+    conditional is covered by every start tag and unkillable, because the `<!`
+    opener is taken by the doctype branch above it — so "no survivor in the
+    method" is unreachable however good the test is. GATE_LINES narrows the
+    verdict to the missed lines the worklist actually handed this slice; an
+    already-covered line like 5276 was never its job.
     """
     here = [m for m in muts if m.findtext("mutatedMethod") == gate]
+    if lines:
+        here = [m for m in here if int(m.findtext("lineNumber", "-1")) in lines]
     killed = [m for m in here if m.get("status") in ("KILLED", "TIMED_OUT")]
     survived = [m for m in here if m.get("status") == "SURVIVED"]
     none = [m for m in here if m.get("status") == "NO_COVERAGE"]
-    print(f"gate {gate}: killed {len(killed)}   survived {len(survived)}"
+    scope = f"{gate}" + (f" lines {min(lines)}-{max(lines)}" if lines else "")
+    print(f"gate {scope}: killed {len(killed)}   survived {len(survived)}"
           f"   not reached {len(none)}")
     if not here:
-        print(f"FAIL: no mutant exists for {gate} — check the method name.")
+        print(f"FAIL: no mutant exists in scope ({scope}) — check the method name"
+              " and whether those lines carry mutable code.")
         return 1
     for m in survived:
         print(f"  SURVIVED :{m.findtext('lineNumber')}  {m.findtext('description')}")
     if not killed:
-        print(f"FAIL: the test kills no mutant in {gate} — it does not watch it at all.")
+        print(f"FAIL: the test kills no mutant in {scope} — it does not watch it at all.")
         return 1
     if survived:
-        print(f"FAIL: {len(survived)} mutant(s) in {gate} run without being detected.")
+        print(f"FAIL: {len(survived)} mutant(s) in {scope} run without being detected.")
         return 1
-    print(f"PASS: every mutant reached in {gate} was detected.")
+    print(f"PASS: every mutant reached in {scope} was detected.")
     return 0
 
 
@@ -60,7 +70,11 @@ def main(path):
 
     gate = os.environ.get("GATE_METHOD")
     if gate:
-        return verdict(muts, gate)
+        raw = os.environ.get("GATE_LINES", "")
+        # The worklist truncates a long line list with a trailing "+N"; drop it
+        # rather than crash, and gate on the lines actually named.
+        lines = {int(x) for x in raw.replace(" ", "").split(",") if x.isdigit()}
+        return verdict(muts, gate, lines or None)
 
     weak = [m for m in muts if m.get("status") == "SURVIVED"]
     if not weak:

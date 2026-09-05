@@ -38,6 +38,15 @@ readonly WORKLIST_REL=".characterise-worklist"
 readonly COAUTHOR="${CHARACTERISE_COAUTHOR:-Claude Opus 5}"
 readonly JACOCO_XML="thinlet-core/target/site/jacoco/jacoco.xml"
 
+# The pass is graded by the mutation gate, so it must be able to run it. The
+# first dry run had to reason about surviving mutants from source alone because
+# acceptEdits permits edits but not bash — it happened to be right, which is not
+# a property to rely on (D94). Narrow by design: the two harness scripts only.
+readonly PASS_TOOLS=(
+    "Bash(scripts/mutation.sh:*)"
+    "Bash(.devcontainer/ci/local-ci.sh:*)"
+)
+
 root="$(git rev-parse --show-toplevel)"
 msg_file="$root/$MSG_REL"
 log="$root/$LOG_REL"
@@ -163,11 +172,11 @@ main() {
         if [ "$fresh" = true ] || [ "$first" = true ]; then
             first=false
             [ "$fresh" = true ] && session="$(uuidgen 2> /dev/null || cat /proc/sys/kernel/random/uuid)"
-            claude --print --permission-mode acceptEdits --session-id "$session" \
-                "$(slice_prompt "$target_method" "$target_lines")"
+            claude --print --permission-mode acceptEdits --allowed-tools "${PASS_TOOLS[@]}" \
+                --session-id "$session" "$(slice_prompt "$target_method" "$target_lines")"
         else
-            claude --print --permission-mode acceptEdits --resume "$session" \
-                "$(slice_prompt "$target_method" "$target_lines")"
+            claude --print --permission-mode acceptEdits --allowed-tools "${PASS_TOOLS[@]}" \
+                --resume "$session" "$(slice_prompt "$target_method" "$target_lines")"
         fi
 
         if [ -z "$(changed_paths)" ]; then
@@ -190,7 +199,7 @@ main() {
 
         (cd "$root" && ./mvnw -q -B spotless:apply)
 
-        if verify_all "$target_method"; then
+        if verify_all "$target_method" "$target_lines"; then
             if [ "$dry_run" = true ]; then
                 echo "loop-characterise: slice $step verified; left uncommitted (--dry-run)"
                 return 0
@@ -201,7 +210,8 @@ main() {
         fi
 
         echo "loop-characterise: slice $step failed verification — one repair attempt"
-        claude --print --permission-mode acceptEdits --resume "$session" "$(repair_prompt)"
+        claude --print --permission-mode acceptEdits --allowed-tools "${PASS_TOOLS[@]}" \
+            --resume "$session" "$(repair_prompt)"
 
         if [ -z "$(changed_paths)" ]; then
             echo "loop-characterise: repair withdrew the slice; stopping" >&2
@@ -214,7 +224,7 @@ main() {
         guard_quirk_pairing
         (cd "$root" && ./mvnw -q -B spotless:apply)
 
-        if ! verify_all "$target_method"; then
+        if ! verify_all "$target_method" "$target_lines"; then
             echo "loop-characterise: repair failed verification; rolling back and stopping" >&2
             echo "  full log: $LOG_REL" >&2
             rollback
@@ -292,11 +302,11 @@ next_target() {
 # absent by construction: guard_no_main has already proved main source is
 # untouched, so the published API cannot have moved.
 verify_all() {
-    local target_method="$1" cls
+    local target_method="$1" target_lines="$2" cls
     cls="$(new_test_class)" || { echo "loop-characterise: no new test class found" >&2; return 1; }
 
     run_logged "$root/.devcontainer/ci/local-ci.sh" -t "$cls" || return 1
-    run_logged "$root/scripts/mutation.sh" "$cls" --gate "$target_method" || return 1
+    run_logged "$root/scripts/mutation.sh" "$cls" --gate "$target_method" --lines "$target_lines" || return 1
     run_logged "$root/.devcontainer/ci/local-ci.sh" || return 1
     local jdk
     for jdk in 8 11 17; do
@@ -384,12 +394,14 @@ guard_quirk_pairing() {
     fi
 }
 
-# Declined targets are a finding, not litter: they are the input to the later
-# event-driven phase, so print them rather than leaving them in an ignored file.
+# Declined targets are a finding, not litter, so print them rather than leaving
+# them in an ignored file. The reason is the pass's to give and is not always
+# "needs an AWT event" — the first dry run declined `parse` because its assigned
+# lines are unreachable dead code (D94), so this header states no reason.
 declined_summary() {
     if [ -s "$declined" ]; then
         echo
-        echo "loop-characterise: targets declined this run (need an AWT event):"
+        echo "loop-characterise: targets declined this run, with the reason given:"
         sed 's/^/  /' "$declined"
     fi
 }
@@ -457,9 +469,13 @@ Hard rules. A violation fails the pass and the slice is rolled back:
 5. Style: package thinlet, @ExtendWith(XvfbDisplayExtension.class), AssertJ,
    sentence-named test methods. Follow ParserSaxModeTest as the exemplar —
    one-line file header, <=3-line class javadoc with a DECISIONS.md pointer.
-6. Your test must have TEETH. It is checked by mutation testing scoped to
-   $method: every mutant of that method your test reaches must be detected, and
-   it must detect at least one. Asserting that a call merely does not throw will
+6. Your test must have TEETH. It is checked by mutation testing scoped to the
+   lines listed above: every mutant your test reaches on THOSE lines must be
+   detected, and it must detect at least one. Check your own work before you
+   finish — you may run:
+     scripts/mutation.sh <your.test.Class> --gate $method --lines $lines
+   and .devcontainer/ci/local-ci.sh -t <your.test.Class>. Iterate until it says
+   PASS. Do not report success without having run it. Asserting that a call merely does not throw will
    not pass — PIT scores a thrown exception as a kill, so an assertion-free test
    already scores about 50% and that floor earns nothing here. Assert on returned
    values and on model state read back through the getters.

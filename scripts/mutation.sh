@@ -5,7 +5,8 @@
 # separate question from "did the line run?".
 #
 #   scripts/mutation.sh <TestClass>      # PIT scoped to that class; list survivors
-#   scripts/mutation.sh <TestClass> --gate <Method>   # …and pass/fail on that method
+#   scripts/mutation.sh <TestClass> --gate <Method> [--lines 12,34]
+#                                        # …and pass/fail on those lines of it
 #   scripts/mutation.sh --report-only    # re-report from the last run
 #
 # Scoped by targetTests so PIT only runs mutants on lines the named test covers;
@@ -24,16 +25,23 @@ xml="$root/thinlet-core/target/pit-reports/mutations.xml"
 report_only=false
 target=""
 gate=""
-want_gate=false
+gate_lines=""
+want=""
 for a in "$@"; do
-    if [ "$want_gate" = true ]; then gate="$a"; want_gate=false; continue; fi
+    if [ -n "$want" ]; then
+        case "$want" in gate) gate="$a" ;; lines) gate_lines="$a" ;; esac
+        want=""
+        continue
+    fi
     case "$a" in
         --report-only) report_only=true ;;
-        --gate) want_gate=true ;;
+        --gate) want=gate ;;
+        --lines) want=lines ;;
         -*)
             echo "usage: mutation.sh <TestClass> [--gate <Method>] | --report-only" >&2
             echo "  <TestClass>     run PIT with targetTests scoped to this class" >&2
-            echo "  --gate <Method> exit non-zero unless that method has kills and no survivors" >&2
+            echo "  --gate <Method> exit non-zero unless that scope has kills and no survivors" >&2
+            echo "  --lines <csv>   narrow the gate to these source lines of that method" >&2
             echo "  --report-only   skip the run; report from the existing mutations.xml" >&2
             exit 2
             ;;
@@ -47,7 +55,7 @@ if [ "$report_only" = false ] && [ -z "$target" ]; then
 fi
 
 echo "mutation: image=$IMAGE target=${target:-<report-only>}"
-echo "  options: <TestClass> scope the run | --gate <Method> pass/fail one method | --report-only reuse the last run"
+echo "  options: <TestClass> scope the run | --gate <Method> [--lines <csv>] pass/fail | --report-only reuse the last run"
 
 if [ "$report_only" = false ]; then
     rm -f "$xml"
@@ -65,6 +73,6 @@ if [ "$report_only" = false ]; then
 fi
 
 [ -f "$xml" ] || { echo "mutation: no report at $xml" >&2; exit 1; }
-GATE_METHOD="$gate" python3 "$root/scripts/mutation-summary.py" "$xml"
+GATE_METHOD="$gate" GATE_LINES="$gate_lines" python3 "$root/scripts/mutation-summary.py" "$xml"
 echo
 echo "mutation: HTML at thinlet-core/target/pit-reports/index.html"
