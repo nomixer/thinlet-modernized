@@ -115,6 +115,18 @@
   against them passes and stays stashed, uncommitted. Test net only; no library
   change. Base row: 382 (core) + 13 (drafts).
 
+- **Rendering hints netted, Q15 found and fixed (D88, 2026-09-05)**:
+  `TracingGraphics2D.setRenderingHint` delegated without recording, so the trace was
+  identical whether `Thinlet.paint` set both antialiasing hints or neither. Making it
+  observable exposed **Q15** within one CI run: the 2005 code cached the reflective
+  `setRenderingHint` `Method` in a static keyed to the first `Graphics` class, so a
+  second implementation latched antialiasing **off for the whole JVM**. Fixed under
+  D69 with `loop-modernise`'s own slice (`instanceof Graphics2D` + direct calls),
+  pinned by `AntialiasingPersistenceTest`. 93 paint goldens re-recorded, every file
+  `+2/-0` with exactly two distinct lines added and none removed; dropping one hint
+  now fails 93 of 94 golden tests. Second instance of the loop finding code the net
+  did not watch (after D86). Base row: 383 (core) + 13 (drafts).
+
 ## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 
 1. **Q14 (inert table column header) — parked, not open** — held deliberately until

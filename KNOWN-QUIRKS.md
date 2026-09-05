@@ -318,6 +318,38 @@ Either way:
   binds to), and the maintainer's own fork may already answer it. Revisit when
   the fork sources land; keep either way until then.
 
+### Q15 — one paint through a second `Graphics2D` class killed antialiasing for the whole JVM — **fixed in 0.2.x (D88)**
+- **What happened:** `Thinlet.paint` resolved `setRenderingHint` reflectively and
+  cached the `Method` in a **static**, keyed to the first `Graphics` class the
+  process ever painted with. Painting through a second implementation made
+  `invoke` throw `IllegalArgumentException`, and the catch set `TXT_AA = null` —
+  which is the flag guarding the whole block. Antialiasing then stayed off for
+  every later paint, in every `Thinlet` instance, for the life of the JVM. It was
+  never per-paint degradation; it was a one-way latch.
+- **Why it went unnoticed for so long:** nothing observed the hints.
+  `TracingGraphics2D.setRenderingHint` delegated without recording, so the golden
+  traces were byte-identical whether the hints were set or not. The defect was
+  invisible to the strongest net this project has until D88 made the calls
+  observable — and then it appeared immediately, as an order-dependent CI failure
+  the same suite passed locally.
+- **Who could hit it:** any application painting one `Thinlet` through two
+  `Graphics2D` implementations — a printer or image `Graphics` alongside the
+  screen one is the ordinary case. Order decided the outcome, so it presented as
+  antialiasing that mysteriously stopped working.
+- **Fix:** `if (g instanceof Graphics2D)` and two direct `setRenderingHint` calls.
+  No cached `Method`, no static flag, nothing to latch. The guard is retained
+  deliberately: it preserves the behavior the reflective `NoSuchMethodException`
+  used to give a non-`Graphics2D` `Graphics`, which is to skip the hints for
+  *that* paint only.
+- **Where:** `Thinlet.java` — `paint(Graphics)`.
+- **Locked by:** `thinlet.trace.AntialiasingPersistenceTest`
+  `#antialiasingSurvivesAPaintThroughADifferentGraphicsImplementation`, which
+  fails on the 2005 code (2 hints, then 0) and passes on the fix.
+- **Provenance:** the fix is `loop-modernise`'s own slice, retiring the 1.4
+  reflection as dead weight at the Java 8 floor. It was proposed as a tidy-up; it
+  turned out to repair a defect neither the loop nor its reviewer knew was there.
+
+
 ## Triaged for Enhanced Thinlet (not behavior-locked)
 
 Findings investigated but *not* pinned by behavior tests, with reasons — the

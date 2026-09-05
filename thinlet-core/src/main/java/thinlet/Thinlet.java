@@ -85,24 +85,13 @@ public class Thinlet extends Container implements Runnable, Serializable {
 
     private static long WHEEL_MASK = 0;
     private static int MOUSE_WHEEL = 0;
-    private static Method wheelrotation, renderinghint;
-    private static Object[] TXT_AA, G_AA;
+    private static Method wheelrotation;
     static int evm = 0; // package-private for Renderer (D48 seam; japicmp-invisible)
 
     static {
         try { // for mousewheel events
             WHEEL_MASK = AWTEvent.class.getField("MOUSE_WHEEL_EVENT_MASK").getLong(null);
             MOUSE_WHEEL = MouseEvent.class.getField("MOUSE_WHEEL").getInt(null);
-            // for antialiased texts and drawings
-            Class hintsclass = Class.forName("java.awt.RenderingHints");
-            TXT_AA = new Object[] {
-                hintsclass.getField("KEY_TEXT_ANTIALIASING").get(null),
-                hintsclass.getField("VALUE_TEXT_ANTIALIAS_ON").get(null)
-            };
-            G_AA = new Object[] {
-                hintsclass.getField("KEY_ANTIALIASING").get(null),
-                hintsclass.getField("VALUE_ANTIALIAS_ON").get(null)
-            };
         } catch (Exception exc) {
             /* not 1.4 */
         }
@@ -1571,19 +1560,16 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * Paints the components inside the graphics clip area
      */
     public void paint(Graphics g) {
-        if (TXT_AA != null) { // set antialiasing
-            try {
-                if (renderinghint == null) {
-                    renderinghint = g.getClass().getMethod("setRenderingHint", new Class[] {
-                        TXT_AA[0].getClass().getSuperclass(), Object.class
-                    });
-                }
-                renderinghint.invoke(g, TXT_AA); // text rendering with antialiasing
-                renderinghint.invoke(g, G_AA); // rendering with antialiasing
-            } catch (Exception exc) {
-                /* never */
-                TXT_AA = null;
-            }
+        // The 2005 reflective lookup was not merely dead weight at the Java-8 floor: it
+        // cached one Method in a static keyed to the first Graphics class, so a second
+        // implementation threw and the catch latched antialiasing off for the whole JVM
+        // (Q15, D88). The guard is retained, not vestigial — it gives a non-Graphics2D
+        // Graphics the same skip the reflective NoSuchMethodException gave it, for that
+        // paint only. Pinned by AntialiasingPersistenceTest.
+        if (g instanceof Graphics2D) {
+            Graphics2D g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         }
 
         g.setFont(font);
