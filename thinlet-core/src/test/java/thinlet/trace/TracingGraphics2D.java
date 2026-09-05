@@ -405,8 +405,13 @@ public final class TracingGraphics2D extends Graphics2D {
         d.setStroke(s);
     }
 
+    // Recorded because Thinlet.paint sets the two antialiasing hints on every paint,
+    // and nothing else observed them: the trace was byte-identical whether they were
+    // set or dropped entirely (D88). Key/value are recorded by toString, which is
+    // JDK-internal but verified identical on the 8/11/17/21 rows this project tests.
     @Override
     public void setRenderingHint(RenderingHints.Key hintKey, Object hintValue) {
+        rec("setRenderingHint", cat(String.valueOf(hintKey), String.valueOf(hintValue)));
         d.setRenderingHint(hintKey, hintValue);
     }
 
@@ -415,6 +420,9 @@ public final class TracingGraphics2D extends Graphics2D {
         return d.getRenderingHint(hintKey);
     }
 
+    // Deliberately unrecorded: Map iteration order is unspecified, so a recording
+    // here would vary run to run. No caller in thinlet-core/src/main/java invokes
+    // either Map-taking setter, so this records nothing that Thinlet can reach.
     @Override
     public void setRenderingHints(Map<?, ?> hints) {
         d.setRenderingHints(hints);

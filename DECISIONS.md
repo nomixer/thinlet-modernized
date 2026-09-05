@@ -3666,3 +3666,50 @@ authorizes the loop's output onto `main`.
 (Cross-ref D85 the record this closes out, D86 the parser net, D69 the
 change-control protocol any observable change would still go through, D44 the
 container-only golden rule the loop's verification rests on.)
+
+## D88 — the golden traces record `setRenderingHint`; 93 goldens re-recorded to gain it
+
+**Date:** 2026-09-05. **Status:** accepted. **Phase:** 3c (test-harness only; no
+library, build or behavior change — `Thinlet.java` is untouched).
+
+**The gap.** `Thinlet.paint` sets two antialiasing hints on every paint, and
+nothing observed them. `TracingGraphics2D.setRenderingHint` delegated to the real
+`Graphics2D` without calling `rec(...)` — unlike `fillRect` and its neighbours —
+and no golden mentioned the op. The trace was therefore byte-identical whether
+both hints were set or dropped entirely, so the strongest net this project has
+was silent on that code.
+
+**Found by using the loop, not by auditing the harness.** This is the second time
+`loop-modernise` has modified code the net does not watch and reported green: the
+first was the DOM/SAX parser branches (D86), the second was its slice retiring the
+1.4 reflection behind these very hints. Two occurrences in two runs is a pattern,
+not a coincidence — dead 2005 compatibility scaffolding is exactly the code least
+likely to be covered, and exactly what an automated modernizer reaches for first.
+
+**Decision.** `setRenderingHint` records `op` plus the key and value as
+categorical args. The two Map-taking setters stay **unrecorded**, and the reason
+is written where the code is: `Map` iteration order is unspecified, so recording
+one would vary run to run, and no caller in `thinlet-core/src/main/java` invokes
+either — so nothing Thinlet can reach goes unrecorded by that choice.
+
+**The key/value strings are JDK-internal, and were checked rather than assumed.**
+The recording uses `toString`, which the JDK does not specify. All four strings
+were compared on the JDK rows this project tests — 8, 11, 17 and 21 — and are
+identical on every one, so the D7 categorical-exact rule holds across the matrix.
+A future JDK changing them would surface as a cross-JDK trace divergence, which is
+what that job exists to report.
+
+**The re-record, and why it is auditable rather than trusted.** 93 paint goldens
+(41 static + 52 interaction) each gained the two calls; the 59 layout-state
+sidecars record layout, not paint calls, and are untouched. D44 and D52 forbid
+re-recording to make an unexplained diff go away, so the diff was proved to be
+exactly the explained one: **every one of the 93 files is `+2/-0`, the added lines
+across all of them reduce to exactly two distinct strings, and not one line was
+removed.** A re-record that laundered anything else could not produce that shape.
+
+**Proven to have teeth.** Dropping a single hint from `Thinlet.paint` now fails
+**93 of 94** golden tests, where before it failed none. And the loop's slice — the
+one whose correctness was previously an argument from reading — passes the
+hint-aware goldens unchanged, which is what that slice needed and could not have.
+(Cross-ref D86 the first instance of this blind spot, D87 the loop that found both,
+D7 the trace-tolerance model, D44/D52 the re-record discipline this diff satisfies.)

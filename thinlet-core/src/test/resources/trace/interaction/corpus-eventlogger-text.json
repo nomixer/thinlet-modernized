@@ -1,5 +1,7 @@
 {
   "calls": [
+    {"op": "setRenderingHint", "cat": ["Text-specific antialiasing enable key", "Antialiased text mode"], "num": []},
+    {"op": "setRenderingHint", "cat": ["Global antialiasing enable key", "Antialiased rendering mode"], "num": []},
     {"op": "setFont", "cat": ["SansSerif|0|12"], "num": []},
     {"op": "translate", "cat": [], "num": [0, 0]},
     {"op": "setColor", "cat": ["#909090FF"], "num": []},
