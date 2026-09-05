@@ -51,6 +51,8 @@
     <version.spotbugs.plugin>4.10.4.0</version.spotbugs.plugin>
     <version.japicmp.plugin>0.26.1</version.japicmp.plugin>
     <version.jacoco.plugin>0.8.13</version.jacoco.plugin>
+    <version.pitest.plugin>1.19.1</version.pitest.plugin>
+    <version.pitest.junit5>1.2.2</version.pitest.junit5>
 
     <!-- japicmp is INACTIVE during Phase 0; activated from v0.1.0 (Phase 1). -->
     <japicmp.skip>true</japicmp.skip>
@@ -342,6 +344,55 @@
                 </configuration>
               </execution>
             </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- Mutation testing, opt-in and never gating (DECISIONS.md D92). Scoped by
+         -Dpit.targetTests=<class> so PIT only runs mutants on lines that test
+         covers; unscoped it would mutate the whole 6 000-line class. -->
+    <profile>
+      <id>mutation</id>
+      <properties>
+        <pit.targetTests>thinlet.*Test</pit.targetTests>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.pitest</groupId>
+            <artifactId>pitest-maven</artifactId>
+            <version>${version.pitest.plugin}</version>
+            <dependencies>
+              <dependency>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-junit5-plugin</artifactId>
+                <version>${version.pitest.junit5}</version>
+              </dependency>
+            </dependencies>
+            <configuration>
+              <targetClasses>
+                <param>thinlet.*</param>
+              </targetClasses>
+              <targetTests>
+                <param>${pit.targetTests}</param>
+              </targetTests>
+              <!-- The harness JVM contract, mirrored from surefire: the D43
+                   interning tripwire and the D25 charset pin. PIT forks its own
+                   minions, so they inherit neither. DISPLAY comes from the
+                   environment (scripts/mutation.sh exports :99). -->
+              <jvmArgs>
+                <param>-Djava.awt.headless=false</param>
+                <param>-Dthinlet.strictIntern=true</param>
+                <param>-Dfile.encoding=UTF-8</param>
+              </jvmArgs>
+              <outputFormats>
+                <param>XML</param>
+                <param>HTML</param>
+              </outputFormats>
+              <timestampedReports>false</timestampedReports>
+              <failWhenNoMutations>false</failWhenNoMutations>
+            </configuration>
           </plugin>
         </plugins>
       </build>

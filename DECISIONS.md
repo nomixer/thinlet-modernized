@@ -4007,3 +4007,70 @@ so it can never make a test pass by editing the code under test.
 and the two forks that validate it, D52/D56 the regression this avoids and the
 audit discipline, D86 the parser net and the fence, D43 the visibility discipline
 that keeps these package-private, D69 the enhanced-line protocol.)
+
+## D92 — mutation testing becomes the teeth gate; the spike found two silent-success traps and corrected the gate's design
+
+**Date:** 2026-09-05. **Status:** accepted. **Phase:** 3c — build tooling. No
+library, behavior or golden change.
+
+**Why.** D90 established that coverage answers only *"did this line run?"* and
+that the two questions it cannot reach — *"was the effect recorded?"* and *"was
+the difference larger than the tolerance?"* — are settled only by mutation. D89
+did exactly that by hand, fourteen runs, and called the four green probes the
+finding. This makes the instrument routine.
+
+**Why PIT rather than automating D89's hand-mutant discipline.** The obvious move
+is to have each pass emit a mutant manifest alongside its test and check the test
+fails against each. That is the wrong instrument for an autonomous loop: **a pass
+that authors both the test and the mutants grades its own homework** — it can pick
+mutants its shallow test happens to catch, and catching a shallow test is the
+gate's entire purpose. PIT derives mutants mechanically from bytecode and cannot
+be gamed.
+
+**What was added.** `pitest-maven` 1.19.1 + `pitest-junit5-plugin` 1.2.2 behind an
+opt-in `mutation` profile, `scripts/mutation.sh` (scoped to one test class) and
+`scripts/mutation-summary.py`. It **reports and never gates**: no CI row runs it,
+and the default build is unchanged (383 core + 13 drafts still green). The script
+mirrors `coverage.sh` — image read out of `local-ci.sh` so the two cannot drift,
+container-only for the pinned fonts and Xvfb (D44), writes only under `target/`.
+
+**Trap 1: `targetTests` matches fully-qualified names.** `ParserSaxModeTest`
+matched nothing. PIT reported **4 426 mutants, 0 killed, every one NO_COVERAGE,
+score 0.0 %** — and the build succeeded.
+
+**Trap 2: PIT auto-adds `java.awt.headless=true`.** Its own log names the plugin —
+*"Auto add java.awt.headless=true to keep keyboard focus on Mac OS"*. Every test
+that touches `Thinlet` needs the real Xvfb `:99` display (D22), so the coverage
+minion collected nothing, PIT reported *"Calculated coverage in 0 seconds"*, and
+**the build succeeded again**. Fixed with an explicit `-Djava.awt.headless=false`
+ahead of the harness JVM args.
+
+Both traps produce a green run that measured nothing — the same shape as D90's
+`${jacocoArgLine}` trap, and the third time this repo has been handed a passing
+build with no data behind it. `mutation-summary.py` therefore **exits non-zero
+when no mutant ran at all**, and says so in words rather than printing 0 %.
+
+**The measured correction to the gate's design.** With PIT working, an A/B on the
+same parser paths:
+
+| Test | Covered mutants | Killed | Survived | Score |
+|---|---|---|---|---|
+| `ParserSaxModeTest` (9 assertions) | 95 | 67 | 28 | **70.5 %** |
+| A probe asserting **nothing** | 92 | 46 | 46 | **50.0 %** |
+
+An assertion-free test still kills **half** the mutants, because PIT scores a
+thrown exception as a kill and many parser mutations simply crash. **An
+assertion-free test is a crash test, not a no-op** — so roughly 50 % is the floor
+for merely executing the code, and a flat "score ≥ N %" threshold is a weak gate
+that a toothless test can clear. The gate the loop will use instead is scoped to
+the slice's assigned target: **within the target method's mutants, require killed
+> 0 and survived == 0.** The crash floor buys nothing there, because a surviving
+mutant in the assigned method is by definition an unwatched line the slice claimed.
+
+**One incidental finding, recorded and not scheduled.** `ParserSaxModeTest` leaves
+**28 survivors**, of which 8 are negated conditionals inside `parse` itself — the
+D86 net executes those branches without watching them. That is a fourth instance
+of the D86/D88/D89 pattern, found in the first five minutes the instrument existed.
+(Cross-ref D90 the coverage baseline and the tier model this completes, D89 the
+hand-mutation discipline it automates, D86 the parser net whose survivors it just
+measured, D44 the container discipline, D22 the display the headless trap broke.)
