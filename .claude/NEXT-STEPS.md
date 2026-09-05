@@ -183,10 +183,16 @@
    scope inverted (test tree writable, `guard_no_main` absolute, new files only),
    taking targets from a curated pure-logic allowlist ordered by coverage data, and
    gated on **mutation testing rather than coverage delta** — D90 proved a covered
-   line proves nothing. Remaining, in order: (1) a `mutation` profile +
-   `scripts/mutation.sh` running PIT scoped to one test class, **proven against
-   `ParserSaxModeTest` before anything depends on it**; (2) a `WORKLIST=true` mode
-   in `coverage-summary.py` emitting per-method missed-line rows; (3) the loop
+   line proves nothing. **Step 1 done (D92)**: the `mutation` profile,
+   `scripts/mutation.sh` and `scripts/mutation-summary.py` are in and proven
+   against `ParserSaxModeTest` — 70.5 %, 28 survivors, 8 of them negated
+   conditionals inside `parse` that the D86 net runs without watching. Two
+   silent-success traps are recorded, and the gate was **redesigned from the
+   measurement**: an assertion-free test still scores 50 % (PIT counts a thrown
+   exception as a kill), so a flat score threshold is weak. The gate is "killed > 0
+   and **survived == 0 within the slice's assigned target method**". Remaining:
+   (2) a `WORKLIST=true` mode in `coverage-summary.py` emitting per-method
+   missed-line rows; (3) the loop
    script itself, own D-entry. PIT is chosen over automating D89's hand-mutant
    discipline because a pass that authors both the test and the mutants grades its
    own homework. Still uncovered and unscheduled: `FrameLauncher` (0 %, published
