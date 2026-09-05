@@ -177,7 +177,9 @@ items first:
   placeholder asset — an Outlook-style blocked-image indicator — where an icon
   fails to resolve. Q3's step 1 (the diagnostic) landed with D81; step 2 waits on
   the asset and on the API call it forces (whether public `getIcon` returns the
-  placeholder, ending `null` as the missing-icon signal).
+  placeholder, ending `null` as the missing-icon signal). Note the golden net
+  cannot verify the paint half: the trace records image geometry, not identity, so
+  a placeholder drawn at the size of the icon it replaces moves nothing (D90).
 - **Whether the hand-rolled XML parser should survive at all** — raised
   2026-09-02, undecided, recorded so the analysis is not re-derived. `parse` is
   ~207 lines serving three modes ('T' GUI, 'S' SAX-like, 'D' DOM-like), all now

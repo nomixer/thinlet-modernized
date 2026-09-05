@@ -149,8 +149,27 @@
   (#134) — both fixed; a linked worktree's `.git` is a file, so any script writing
   beneath it breaks. Check new helper scripts for the same assumption.
 
+- **Coverage instrumented, tier 1 answered (D90, 2026-09-05)**: JaCoCo behind an
+  opt-in `coverage` profile + `scripts/coverage.sh`; reports, never thresholds, and
+  no gating row runs it. One shared exec file so the `thinlet-drafts` playthrough
+  counts towards `thinlet-core`. Baseline **85.9 % instructions / 74.0 % branches /
+  89.2 % methods**; `FrameLauncher` **0 %** (whole public class), `Thinlet` 84.2 %,
+  `Renderer` 90.1 %, everything else 100 %. 27 methods never entered — including
+  `findText` (type-ahead), `selectAll`, `hasAccelerator` (**accelerator dispatch has
+  never been exercised**) and the public `getItems`. Coverage answers only "did this
+  line run?": every D89 gap sits on a covered line, so the mutation probe stays the
+  instrument for the other two tiers. Tier 2 gained a second confirmed instance —
+  the trace records image geometry, not identity (swapping `hgradient`/`vgradient`
+  passes 94/94) — and tier 3's band is now measured: text at **+2 px passes, +3 px
+  fails 39 of 41**.
+
 ## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
 
+0. **Nothing from D90 is scheduled** — the coverage findings are recorded, not
+   queued. The candidates, cheapest first: pin `FrameLauncher` (0 %, and it is
+   published API); drive an accelerator key press so `hasAccelerator` runs; cover
+   `findText`'s type-ahead. Each is ordinary characterization work under the D69
+   protocol, and none is a prerequisite for anything else.
 1. **Q14 (inert table column header) — parked, not open** — held deliberately until
    the fork sources land, because wiring a header click adds *new* public behavior
    the maintainer's own fork may already define (D78). Q6/Q10 stay kept (D75), and
