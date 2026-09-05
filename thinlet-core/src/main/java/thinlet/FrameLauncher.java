@@ -70,6 +70,7 @@ public class FrameLauncher extends Frame implements WindowListener {
      * Call the paint method to redraw this component without painting a
      * background rectangle
      */
+    @Override
     public void update(Graphics g) {
         paint(g);
     }
@@ -78,6 +79,7 @@ public class FrameLauncher extends Frame implements WindowListener {
      * Create a double buffer if needed,
      * the <i>thinlet</i> component paints the content
      */
+    @Override
     public void paint(Graphics g) {
         if (doublebuffer == null) {
             Dimension d = getSize();
@@ -95,6 +97,7 @@ public class FrameLauncher extends Frame implements WindowListener {
      * the overriden method lays out its components
      * (centers the <i>thinlet</i> component)
      */
+    @Override
     public void doLayout() {
         if (doublebuffer != null) {
             doublebuffer.flush();
@@ -109,6 +112,7 @@ public class FrameLauncher extends Frame implements WindowListener {
      * <code>destroy</code> method (true by default,
      * thus terminates the VM if not overriden)
      */
+    @Override
     public void windowClosing(WindowEvent e) {
         if (content.destroy()) {
             System.exit(0);
@@ -116,15 +120,21 @@ public class FrameLauncher extends Frame implements WindowListener {
         setVisible(true);
     }
 
+    @Override
     public void windowOpened(WindowEvent e) {}
 
+    @Override
     public void windowClosed(WindowEvent e) {}
 
+    @Override
     public void windowIconified(WindowEvent e) {}
 
+    @Override
     public void windowDeiconified(WindowEvent e) {}
 
+    @Override
     public void windowActivated(WindowEvent e) {}
 
+    @Override
     public void windowDeactivated(WindowEvent e) {}
 }
