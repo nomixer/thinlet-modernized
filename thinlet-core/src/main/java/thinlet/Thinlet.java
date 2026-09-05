@@ -301,10 +301,10 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     doLayout(comp);
                 }
             }
-            checkOffset(component);
+            checkOffset(this, component);
         } else if ((is(classname, "panel")) || (is(classname, "dialog"))) {
             int gap = getInteger(component, "gap", 0);
-            int[][] grid = getGrid(component);
+            int[][] grid = getGrid(this, component);
             int top = 0;
             int left = 0;
             int contentwidth = 0;
@@ -568,32 +568,32 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * Scroll tabs to make the selected one visible
      * @param component a tabbedpane
      */
-    private void checkOffset(Object component) {
-        String placement = getString(component, "placement", "top");
-        int selected = getInteger(component, "selected", 0);
+    static void checkOffset(Thinlet t, Object component) {
+        String placement = t.getString(component, "placement", "top");
+        int selected = t.getInteger(component, "selected", 0);
         int i = 0;
         if (is(placement, "stacked")) {
             int dy = 0;
             for (Object tab = get(component, ":comp"); tab != null; tab = get(tab, ":next")) {
-                Rectangle r = getRectangle(tab, "bounds");
+                Rectangle r = t.getRectangle(tab, "bounds");
                 r.y = dy;
                 dy += r.height;
                 if (i == selected) {
-                    dy += getRectangle(get(tab, ":comp"), "bounds").height + 2;
+                    dy += t.getRectangle(get(tab, ":comp"), "bounds").height + 2;
                 }
                 i++;
             }
-            checkLocation(component); // layout changed, check the hovered tab
+            t.checkLocation(component); // layout changed, check the hovered tab
             return;
         }
         boolean horizontal = ((is(placement, "top")) || (is(placement, "bottom")));
-        Rectangle bounds = getRectangle(component, "bounds");
+        Rectangle bounds = t.getRectangle(component, "bounds");
         int panesize = horizontal ? bounds.width : bounds.height;
         int first = 0;
         int last = 0;
         int d = 0;
         for (Object tab = get(component, ":comp"); tab != null; tab = get(tab, ":next")) {
-            Rectangle r = getRectangle(tab, "bounds");
+            Rectangle r = t.getRectangle(tab, "bounds");
             if (i == 0) {
                 first = (horizontal ? r.x : r.y);
             }
@@ -612,15 +612,15 @@ public class Thinlet extends Container implements Runnable, Serializable {
         d = Math.min(-first, Math.max(d, panesize - last));
         if (d != 0) {
             for (Object tab = get(component, ":comp"); tab != null; tab = get(tab, ":next")) {
-                Rectangle r = getRectangle(tab, "bounds");
+                Rectangle r = t.getRectangle(tab, "bounds");
                 if (horizontal) {
                     r.x += d;
                 } else {
                     r.y += d;
                 }
                 Object comp = get(tab, ":comp"); // relative to the tab location
-                if ((comp != null) && getBoolean(comp, "visible", true)) {
-                    Rectangle rc = getRectangle(comp, "bounds");
+                if ((comp != null) && t.getBoolean(comp, "visible", true)) {
+                    Rectangle rc = t.getRectangle(comp, "bounds");
                     if (horizontal) {
                         rc.x -= d;
                     } else {
@@ -628,7 +628,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     }
                 }
             }
-            checkLocation(component); // layout changed, check the hovered tab
+            t.checkLocation(component); // layout changed, check the hovered tab
         }
     }
 
@@ -1168,7 +1168,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         }
         if (is(classname, "combobox")) {
             if (getBoolean(component, "editable", true)) {
-                Dimension size = getFieldSize(component);
+                Dimension size = getFieldSize(this, component);
                 Image icon = getIcon(component, "icon", null);
                 if (icon != null) {
                     size.width += icon.getWidth(this);
@@ -1194,7 +1194,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
             }
         }
         if ((is(classname, "textfield")) || (is(classname, "passwordfield"))) {
-            return getFieldSize(component);
+            return getFieldSize(this, component);
         }
         if (is(classname, "textarea")) {
             int columns = getInteger(component, "columns", 0);
@@ -1248,7 +1248,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
             size.height += getInteger(component, "top", 0) + getInteger(component, "bottom", 0);
             // add content preferred size
             int gap = getInteger(component, "gap", 0);
-            int[][] grid = getGrid(component);
+            int[][] grid = getGrid(this, component);
             if (grid != null) { // has components
                 size.width += getSum(grid[0], 0, grid[0].length, gap, false);
                 size.height += getSum(grid[1], 0, grid[1].length, gap, false);
@@ -1267,7 +1267,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
             return size;
         }
         if (is(classname, "spinbox")) {
-            Dimension size = getFieldSize(component);
+            Dimension size = getFieldSize(this, component);
             size.width += block;
             return size;
         }
@@ -1331,17 +1331,17 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * <li>gridwidth, column spans</li>
      * <li>gridheight, row spans</li></ul>
      */
-    private int[][] getGrid(Object component) {
+    static int[][] getGrid(Thinlet t, Object component) {
         int count = 0; // count of the visible subcomponents
         for (Object comp = get(component, ":comp"); comp != null; comp = get(comp, ":next")) {
-            if (getBoolean(comp, "visible", true)) {
+            if (t.getBoolean(comp, "visible", true)) {
                 count++;
             }
         }
         if (count == 0) {
             return null;
         } // zero subcomponent
-        int columns = getInteger(component, "columns", 0);
+        int columns = t.getInteger(component, "columns", 0);
         int icols = (columns != 0) ? columns : count;
         int irows = (columns != 0) ? ((count + columns - 1) / columns) : 1;
         int[][] grid = {
@@ -1358,11 +1358,12 @@ public class Thinlet extends Container implements Runnable, Serializable {
         int y = 0;
         int nextsize = 0;
         for (Object comp = get(component, ":comp"); comp != null; comp = get(comp, ":next")) {
-            if (!getBoolean(comp, "visible", true)) {
+            if (!t.getBoolean(comp, "visible", true)) {
                 continue;
             }
-            int colspan = ((columns != 0) && (columns < count)) ? Math.min(getInteger(comp, "colspan", 1), columns) : 1;
-            int rowspan = (columns != 1) ? getInteger(comp, "rowspan", 1) : 1;
+            int colspan =
+                    ((columns != 0) && (columns < count)) ? Math.min(t.getInteger(comp, "colspan", 1), columns) : 1;
+            int rowspan = (columns != 1) ? t.getInteger(comp, "rowspan", 1) : 1;
 
             for (int j = 0; j < colspan; j++) {
                 if ((columns != 0) && (x + colspan > columns)) {
@@ -1386,9 +1387,9 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 columnheight[x + j] = y + rowspan;
             }
 
-            int weightx = getInteger(comp, "weightx", 0);
-            int weighty = getInteger(comp, "weighty", 0);
-            Dimension d = getPreferredSize(comp);
+            int weightx = t.getInteger(comp, "weightx", 0);
+            int weighty = t.getInteger(comp, "weighty", 0);
+            Dimension d = t.getPreferredSize(comp);
 
             if (colspan == 1) {
                 grid[0][x] = Math.max(grid[0][x], d.width); // columnwidths
@@ -1489,10 +1490,10 @@ public class Thinlet extends Container implements Runnable, Serializable {
         return value + (length - (last ? 0 : 1)) * gap;
     }
 
-    private Dimension getFieldSize(Object component) {
-        int columns = getInteger(component, "columns", 0);
+    static Dimension getFieldSize(Thinlet t, Object component) {
+        int columns = t.getInteger(component, "columns", 0);
         Font currentfont = (Font) get(component, "font");
-        FontMetrics fm = getFontMetrics((currentfont != null) ? currentfont : font);
+        FontMetrics fm = t.getFontMetrics((currentfont != null) ? currentfont : t.font);
         return new Dimension(
                 ((columns > 0) ? (columns * fm.charWidth('e')) : 76) + 4,
                 fm.getAscent() + fm.getDescent() + 4); // fm.stringWidth(text)
@@ -2497,7 +2498,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     y += (keycode == KeyEvent.VK_PAGE_UP) ? -dy : dy; // VK_PAGE_DOWN
                 }
                 int x = fm.charsWidth(chars, linestart, iend - linestart);
-                iend = getCaretLocation(component, x, y, true, false);
+                iend = getCaretLocation(this, component, x, y, true, false);
                 if (!shiftdown) {
                     istart = iend;
                 }
@@ -2522,7 +2523,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 }
                 if (newvalue != selected) {
                     setInteger(component, "selected", newvalue, 0);
-                    checkOffset(component);
+                    checkOffset(this, component);
                     repaint(component);
                     invoke(component, getItem(component, newvalue), "action");
                 }
@@ -2904,7 +2905,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         if (insert != null) {
             int min = Math.min(movestart, moveend);
             set(component, "text", text.substring(0, min) + insert + text.substring(Math.max(movestart, moveend)));
-            spinValueFromText(component); // D83: typed digits move the spinbox's "value" too
+            spinValueFromText(this, component); // D83: typed digits move the spinbox's "value" too
             movestart = moveend = min + insert.length();
             invoke(component, null, "action"); // deprecated
         }
@@ -3329,7 +3330,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     } else {
                         setFocus(component);
                     }
-                    checkOffset(component);
+                    checkOffset(this, component);
                     repaint(component);
                     invoke(component, part, "action");
                 }
@@ -3676,7 +3677,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 mx += port.x - 1;
                 my = y - referencey + port.y - 1;
             }
-            int caretstart = getCaretLocation(component, mx, my, multiline, hidden);
+            int caretstart = getCaretLocation(this, component, mx, my, multiline, hidden);
             if (popuptrigger) {
                 int start = getInteger(component, "start", 0);
                 int end = getInteger(component, "end", 0);
@@ -3714,7 +3715,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 mx += port.x - 1;
                 my = y - referencey + port.y - 1;
             }
-            int dragcaret = getCaretLocation(component, mx, my, multiline, hidden);
+            int dragcaret = getCaretLocation(this, component, mx, my, multiline, hidden);
             if (dragcaret != getInteger(component, "end", 0)) {
                 setInteger(component, "end", dragcaret, 0);
                 validate(component); // caret check only
@@ -3727,12 +3728,12 @@ public class Thinlet extends Container implements Runnable, Serializable {
         }
     }
 
-    private int getCaretLocation(Object component, int x, int y, boolean multiline, boolean hidden) {
+    static int getCaretLocation(Thinlet t, Object component, int x, int y, boolean multiline, boolean hidden) {
         Font currentfont = (Font) get(component, "font");
-        FontMetrics fm = getFontMetrics((currentfont != null) ? currentfont : font);
+        FontMetrics fm = t.getFontMetrics((currentfont != null) ? currentfont : t.font);
         char[] chars = multiline
                 ? ((char[]) get(component, ":text"))
-                : getString(component, "text", "").toCharArray(); // update it
+                : t.getString(component, "text", "").toCharArray(); // update it
         int linestart = 0;
         if (multiline) {
             int height = fm.getHeight(); // find the line start by y value
@@ -3893,7 +3894,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     : (itext - step >= getInteger(component, "minimum", Integer.MIN_VALUE))) {
                 String value = String.valueOf((is(part, "up")) ? (itext + step) : (itext - step));
                 set(component, "text", value);
-                spinValueFromText(component); // D83: the integer "value" tracks the spin
+                spinValueFromText(this, component); // D83: the integer "value" tracks the spin
                 setInteger(component, "start", value.length(), 0);
                 setInteger(component, "end", 0, 0);
                 repaint(component, "spinbox", "text");
@@ -3993,7 +3994,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 insidepart = "down";
             }
         } else if (is(classname, ":combolist")) {
-            if (!findScroll(component, x, y)) {
+            if (!findScroll(this, component, x, y)) {
                 y += getRectangle(component, ":view").y;
                 for (Object choice = get(get(component, "combobox"), ":comp");
                         choice != null;
@@ -4006,7 +4007,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 }
             }
         } else if (is(classname, "textarea")) {
-            findScroll(component, x, y);
+            findScroll(this, component, x, y);
         } else if (is(classname, "tabbedpane")) {
             int selected = getInteger(component, "selected", 0);
             int i = 0;
@@ -4051,7 +4052,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                     }
                 }
             }
-            if ((insidepart == null) && !findScroll(component, x, y)) {
+            if ((insidepart == null) && !findScroll(this, component, x, y)) {
                 Rectangle port = getRectangle(component, ":port");
                 if (port != null) { // content scrolled
                     Rectangle view = getRectangle(component, ":view");
@@ -4081,11 +4082,11 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 }
             }
         } else if (is(classname, "list")) {
-            findScroll(component, x, y);
+            findScroll(this, component, x, y);
         } else if (is(classname, "table")) {
-            if (!findScroll(component, x, y)) {}
+            if (!findScroll(this, component, x, y)) {}
         } else if (is(classname, "tree")) {
-            findScroll(component, x, y);
+            findScroll(this, component, x, y);
         } else if (is(classname, "menubar")) {
             for (Object menu = get(component, ":comp"); menu != null; menu = get(menu, ":next")) {
                 Rectangle r = getRectangle(menu, "bounds");
@@ -4113,20 +4114,20 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @return true if the point (x, y) is inside scroll-control area
      * (scrollbars, corners, borders), false otherwise (vievport, header, or no scrollpane)
      */
-    private boolean findScroll(Object component, int x, int y) {
-        Rectangle port = getRectangle(component, ":port");
+    static boolean findScroll(Thinlet t, Object component, int x, int y) {
+        Rectangle port = t.getRectangle(component, ":port");
         if ((port == null) || port.contains(x, y)) {
             return false;
         }
-        Rectangle view = getRectangle(component, ":view");
-        Rectangle horizontal = getRectangle(component, ":horizontal");
-        Rectangle vertical = getRectangle(component, ":vertical");
+        Rectangle view = t.getRectangle(component, ":view");
+        Rectangle horizontal = t.getRectangle(component, ":horizontal");
+        Rectangle vertical = t.getRectangle(component, ":vertical");
         if ((horizontal != null) && horizontal.contains(x, y)) {
-            findScroll(x - horizontal.x, horizontal.width, port.width, view.x, view.width, true);
+            findScroll(t, x - horizontal.x, horizontal.width, port.width, view.x, view.width, true);
         } else if ((vertical != null) && vertical.contains(x, y)) {
-            findScroll(y - vertical.y, vertical.height, port.height, view.y, view.height, false);
+            findScroll(t, y - vertical.y, vertical.height, port.height, view.y, view.height, false);
         } else {
-            insidepart = "corner";
+            t.insidepart = "corner";
         }
         return true;
     }
@@ -4139,25 +4140,25 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @param viewsize view width or height
      * @param horizontal if true horizontal, vertical otherwise
      */
-    private void findScroll(int p, int size, int portsize, int viewp, int viewsize, boolean horizontal) {
-        if (p < block) {
-            insidepart = horizontal ? "left" : "up";
-        } else if (p > size - block) {
-            insidepart = horizontal ? "right" : "down";
+    static void findScroll(Thinlet t, int p, int size, int portsize, int viewp, int viewsize, boolean horizontal) {
+        if (p < t.block) {
+            t.insidepart = horizontal ? "left" : "up";
+        } else if (p > size - t.block) {
+            t.insidepart = horizontal ? "right" : "down";
         } else {
-            int track = size - 2 * block;
+            int track = size - 2 * t.block;
             if (track < 10) {
-                insidepart = "corner";
+                t.insidepart = "corner";
                 return;
             } // too small
             int knob = Math.max(track * portsize / viewsize, 10);
             int decrease = viewp * (track - knob) / (viewsize - portsize);
-            if (p < block + decrease) {
-                insidepart = horizontal ? "lefttrack" : "uptrack";
-            } else if (p < block + decrease + knob) {
-                insidepart = horizontal ? "hknob" : "vknob";
+            if (p < t.block + decrease) {
+                t.insidepart = horizontal ? "lefttrack" : "uptrack";
+            } else if (p < t.block + decrease + knob) {
+                t.insidepart = horizontal ? "hknob" : "vknob";
             } else {
-                insidepart = horizontal ? "righttrack" : "downtrack";
+                t.insidepart = horizontal ? "righttrack" : "downtrack";
             }
         }
     }
@@ -5526,7 +5527,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
             }
             set(component, key, value);
             if (is(key, "text")) {
-                spinValueFromText(component); // D83
+                spinValueFromText(this, component); // D83
             }
         } else if (is(definition.type, "choice")) {
             String[] values = (String[]) definition.defaultValue;
@@ -5550,7 +5551,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 if (get(component, "text") == null) {
                     spinTextFromValue(component, Integer.parseInt(value));
                 } else {
-                    spinValueFromText(component);
+                    spinValueFromText(this, component);
                 }
             }
         } else if (is(definition.type, "icon")) {
@@ -5669,7 +5670,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         AttributeDescriptor definition = getDefinition(getClass(component), key, "string");
         if (set(component, definition.name, value)) {
             if (is(definition.name, "text")) {
-                spinValueFromText(component); // D83
+                spinValueFromText(this, component); // D83
             }
             update(component, definition.invalidate);
         }
@@ -5738,10 +5739,10 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * Non-spinbox components are untouched, and both write the model directly (never the
      * public setters) so the mirror cannot recurse. Pinned by {@code InputSpinBoxTest}.
      */
-    private void spinValueFromText(Object component) {
+    static void spinValueFromText(Thinlet t, Object component) {
         if (is(getClass(component), "spinbox")) {
             try {
-                setInteger(component, "value", Integer.parseInt(getString(component, "text", "")), 0);
+                t.setInteger(component, "value", Integer.parseInt(t.getString(component, "text", "")), 0);
             } catch (NumberFormatException nfe) {
                 // Non-numeric text is legal and inert here, as it is for spinning: the 2005
                 // corpus ships <spinbox text="SpinBox">. Leave the last numeric value
