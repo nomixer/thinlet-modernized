@@ -5248,7 +5248,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                         } // SAX parser
                         if (parentlist[0] == null) {
                             reader.close();
-                            finishParse(methods, current, handler);
+                            finishParse(this, methods, current, handler);
                             return current;
                         }
                         c = reader.read();
@@ -5291,7 +5291,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                         if (!pi) { // tagname is available
                             parentlist = new Object[] {current, parentlist, tagname};
                             if (mode == 'T') { // GUI parser
-                                current = (current != null) ? addElement(current, tagname) : create(tagname);
+                                current = (current != null) ? addElement(this, current, tagname) : create(tagname);
                             } else if (mode == 'D') { // DOM parser
                                 Object parent = current;
                                 current = createImpl(tagname = tagname.intern());
@@ -5329,7 +5329,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                                 }
                                 if (parentlist[0] == null) {
                                     reader.close();
-                                    finishParse(methods, current, handler);
+                                    finishParse(this, methods, current, handler);
                                     return current;
                                 }
                                 current = parentlist[0];
@@ -5382,7 +5382,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                                         }
                                     }
                                 } else if (mode == 'T') { // GUI parser
-                                    methods = addAttribute(current, key, text.toString(), encoding, methods);
+                                    methods = addAttribute(this, current, key, text.toString(), encoding, methods);
                                 } else if (mode == 'D') { // DOM parser
                                     set(current, key.intern(), new String(text.toString()));
                                 } else { // SAX parser
@@ -5424,7 +5424,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * vector because these may reference to widgets which are not parsed
      * at that time
      */
-    private void finishParse(Vector methods, Object root, Object handler) {
+    static void finishParse(Thinlet t, Vector methods, Object root, Object handler) {
         if (methods != null)
             for (int i = 0; i < methods.size(); i += 3) {
                 Object component = methods.elementAt(i);
@@ -5432,14 +5432,14 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 String value = (String) methods.elementAt(i + 2);
 
                 if (is(definition.type, "method")) {
-                    Object[] method = getMethod(component, value, root, handler);
+                    Object[] method = getMethod(t, component, value, root, handler);
                     if (is(definition.name, "init")) {
-                        invokeImpl(method, null);
+                        t.invokeImpl(method, null);
                     } else {
                         set(component, definition.name, method);
                     }
                 } else { // (is(definition.type, "component"))
-                    Object reference = find(root, value); // +start find from the component
+                    Object reference = t.find(root, value); // +start find from the component
                     if (reference == null) throw new IllegalArgumentException(value + " not found");
                     set(component, definition.name, reference);
                 }
@@ -5497,7 +5497,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
         return false;
     }
 
-    private Object addElement(Object parent, String name) {
+    static Object addElement(Thinlet t, Object parent, String name) {
         Object component = create(name);
         addImpl(parent, component, -1);
         return component;
@@ -5508,11 +5508,11 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * @throws UnsupportedEncodingException
      * @throws java.lang.IllegalArgumentException
      */
-    private Vector addAttribute(Object component, String key, String value, String encoding, Vector lasts)
+    static Vector addAttribute(Thinlet t, Object component, String key, String value, String encoding, Vector lasts)
             throws UnsupportedEncodingException {
         // replace value found in the bundle
-        if ((resourcebundle != null) && value.startsWith("i18n.")) {
-            value = resourcebundle.getString(value.substring(5));
+        if ((t.resourcebundle != null) && value.startsWith("i18n.")) {
+            value = t.resourcebundle.getString(value.substring(5));
         }
 
         AttributeDescriptor definition = getDefinition(getClass(component), key, null);
@@ -5527,11 +5527,11 @@ public class Thinlet extends Container implements Runnable, Serializable {
             }
             set(component, key, value);
             if (is(key, "text")) {
-                spinValueFromText(this, component); // D83
+                spinValueFromText(t, component); // D83
             }
         } else if (is(definition.type, "choice")) {
             String[] values = (String[]) definition.defaultValue;
-            setChoice(component, key, value, values, values[0]);
+            t.setChoice(component, key, value, values, values[0]);
         } else if (is(definition.type, "boolean")) {
             if ("true".equals(value)) {
                 if (definition.defaultValue == Boolean.FALSE) {
@@ -5551,11 +5551,11 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 if (get(component, "text") == null) {
                     spinTextFromValue(component, Integer.parseInt(value));
                 } else {
-                    spinValueFromText(this, component);
+                    spinValueFromText(t, component);
                 }
             }
         } else if (is(definition.type, "icon")) {
-            set(component, key, getIcon(value));
+            set(component, key, t.getIcon(value));
         } else if ((is(definition.type, "method")) || (is(definition.type, "component"))) {
             if (lasts == null) {
                 lasts = new Vector();
@@ -5574,7 +5574,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 // substring has returned an independent String since Java 7, and putProperty
                 // stores into a Hashtable keyed by equals/hashCode — not the identity-compared
                 // ':' model keys — so neither 2005 copy was load-bearing.
-                putProperty(component, token.substring(0, equals), token.substring(equals + 1));
+                t.putProperty(component, token.substring(0, equals), token.substring(equals + 1));
             }
         } else if (is(definition.type, "font")) {
             String name = null;
@@ -5597,10 +5597,10 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 }
             }
             if (name == null) {
-                name = font.getName();
+                name = t.font.getName();
             }
             if (size == 0) {
-                size = font.getSize();
+                size = t.font.getSize();
             }
             set(component, key, new Font(name, (bold ? Font.BOLD : 0) | (italic ? Font.ITALIC : 0), size));
         } else if (is(definition.type, "color")) {
@@ -5928,7 +5928,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      */
     public void setMethod(Object component, String key, String value, Object root, Object handler) {
         key = getDefinition(getClass(component), key, "method").name;
-        Object[] method = getMethod(component, value, root, handler);
+        Object[] method = getMethod(this, component, value, root, handler);
         set(component, key, method);
     }
 
@@ -5945,7 +5945,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
      * - ("constant", string object, null) for constant number
      * (int, long, double, float) or string given as 'text'.
      */
-    private Object[] getMethod(Object component, String value, Object root, Object handler) {
+    static Object[] getMethod(Thinlet t, Object component, String value, Object root, Object handler) {
         StringTokenizer st = new StringTokenizer(value, "(, \r\n\t)");
         String methodname = st.nextToken();
         int n = st.countTokens();
@@ -5985,7 +5985,7 @@ public class Thinlet extends Container implements Runnable, Serializable {
                 } else if ("this".equals(compname)) {
                     comp = component;
                     classname = getClass(comp);
-                } else if ((comp = find(root, compname)) != null) { // a widget's name
+                } else if ((comp = t.find(root, compname)) != null) { // a widget's name
                     classname = getClass(comp);
                 } else {
                     try { // maybe constant number
