@@ -4291,3 +4291,125 @@ excluded a target that now works.
 (Cross-ref D94 the rescoping this run vindicates, D93 the loop, D92 the gate, D86
 the parser net Q16 sits beside, D78 the last characterization run that found a
 quirk by driving a widget.)
+
+## D96 — the 2005 XML dialect is written down: a generated grammar, a corpus conformance run, and four DTD defects
+
+**Date:** 2026-09-06. **Status:** accepted. **Phase:** 3c — characterization and
+documentation. No library change, no behavior change, no golden re-record.
+
+**Why now.** Q16 and Q17 arrived from D95 with `disposition: undecided`, and the
+steer for this stretch is to *modernize*, not to change observable behavior. That
+makes the useful artifact a specification rather than a fix: Thinlet's XML is the
+library's entire public authoring surface, and the only written account of it was
+`thinlet.dtd` — a file **shipped in the jar and never read by the library**.
+Nothing ever forced it to agree with the parser, and it does not.
+
+**What landed.**
+
+| Deliverable | Where |
+|---|---|
+| the prose specification | `project-docs/backend-portability/XML-DIALECT.md` |
+| a faithful structural grammar, generated from the code | `thinlet-core/src/test/resources/dialect/thinlet-dialect.dtd` (test resource, never shipped) |
+| the grammar/DTD/corpus pins | `thinlet.XmlDialectGrammarTest` (10 tests) |
+| the lexical and mixed-content pins | `thinlet.ParserDialectTest` (28 tests) |
+
+The dialect grammar is **generated, not authored**:
+`XmlDialectGrammarTest.DialectGrammar.render()` walks `DescriptorTable.WIDGETS`
+for names and calls `Thinlet.addImpl` over all 35 × 35 parent/child pairs for the
+content models, and a test regenerates it every run and fails on any drift. That
+is the structural difference from the artifact it describes — the shipped DTD
+drifted because nothing compared it to anything.
+
+**The corpus conforms; one file is not XML.** All 42 vendored documents were
+validated against the generated grammar with a validating `DocumentBuilder`
+(they carry no `DOCTYPE`, so the test injects one). **41 of 42 validate clean.**
+The 42nd, `corpus/drafts/lists.xml`, is not well-formed XML at all, for exactly
+one reason: two buttons carry `text="<"` and `text=">"`. Escaping those two
+occurrences makes it well-formed *and* valid. Thinlet reads it either way.
+
+**Four defects in the shipped DTD, each pinned.**
+
+1. `<!ENTITY gt "&#61;">` — decimal 61 is `=`, not `>`. The parser is right and
+   the DTD is wrong. (`lt` and `amp` are also invalidly declared: XML requires
+   doubly-escaped replacement text.)
+2. **Zero `#PCDATA`**, so body text was never valid by the DTD — while the parser
+   accepts it in every element and discards it in GUI mode (Q16).
+3. `desktop` carries the **panel** attribute list; the definition table makes
+   `desktop` a direct child of `component`, so the parser rejects all ten of
+   `columns`/`top`/`left`/`bottom`/`right`/`gap`/`text`/`icon`/`border`/`scrollable`.
+4. `button` is missing `for`, which it inherits from `label` and the parser
+   accepts.
+
+Points 3 and 4 are the **complete** set of attribute-name disagreements across all
+35 elements, not a spot check — the comparison is exhaustive and test-driven. A
+fifth, harmless authoring error: `dialog` declares `text` and `icon` twice, and is
+the only element that declares anything twice.
+
+**`thinlet.dtd` is not corrected.** It is a verbatim 2005 artifact (D8) with no
+runtime effect; changing it would be a behavior decision needing its own entry.
+The divergences are findings.
+
+**Four new quirks, all `undecided`** — `KNOWN-QUIRKS.md` Q18–Q21: a markup
+declaration ends at its first `>` (so a comment containing `>` leaks its tail, and
+a leaked tag is *built*); a declared `encoding` re-encodes string attributes using
+the character count as a byte count (and never reaches the reader, which always
+uses the platform default); a stray end tag throws `NullPointerException`; text
+preceding a child element is discarded in every mode, which is a second and
+independent mixed-content loss beside Q16.
+
+**Two findings recorded but deliberately not pinned**, in the triage section:
+truncated input **hangs** — five loops in `parse` never terminate at end of
+stream, four of them allocating as they spin, and no bounded input demonstrates
+it without hanging or OOM-ing the shared Surefire JVM; and `parse`'s inner comment
+reader — the one that would implement the correct `-->` rule — is **unreachable**,
+because the `c == '!'` branch precedes the start-tag branch. That dead code is the
+seven `NO_COVERAGE` mutants D95 saw in `parse` and the reason Q18 exists.
+
+**Base row: 425 → 463 (core) + 13 (drafts).**
+(Cross-ref D8 the frozen DTD, D86 the parser's SAX/DOM net, D95 the run that
+produced Q16/Q17, D57 the single-home rule that keeps the value layer in
+`DescriptorContractTest` and out of this grammar, D74 the public choice enums.)
+
+## D97 — parser behavior is frozen while its future is open; D69 continues to govern everything else
+
+**Date:** 2026-09-06. **Status:** accepted. **Phase:** 3c. No code change.
+
+**The question.** D69 makes `main` the enhanced line, where behavior changes
+deliberately, and D70–D88 did exactly that. The 2026-09-06 working steer —
+modernize, do not change observable behavior — narrowed it, and D96 then added
+four more quirks with no disposition. Left unrecorded, a later session would read
+D69 and conclude the opposite.
+
+**The decision.** D69 continues to govern `main` **except inside
+`Thinlet.parse` and the XML dialect it implements**, where behavior changes are
+suspended. Quirks in that surface stay `disposition: undecided` **by policy**,
+not by neglect: Q16, Q18, Q19, Q20, Q21. Q17 (`End` on a list with no lead) is
+outside `parse` and is schedulable under the ordinary D69 protocol whenever it is
+wanted.
+
+**Why the parser specifically.** The ROADMAP's open 3c question — whether the
+hand-rolled parser survives at all — is unanswered, and five of the six undecided
+quirks live inside it. Fixing them now is wasted work if the code is replaced,
+and each fix would be a behavior change that a replacement then has to reproduce
+deliberately. The freeze lifts when that question is settled; nothing else
+triggers it.
+
+**The maintainer's stated direction, recorded as direction and not as the
+decision** (in session, 2026-09-06): the expectation is that the parser code is
+ultimately dropped entirely and replaced by the JRE's own XML parser(s) plus a
+DTD matching what D96 confirmed and documented. That is a lean, not a settled
+answer — the ROADMAP item stays open, and the three blockers it already records
+still have to be answered by whatever replaces `parse`: the whitespace collapsing
+that is pinned behavior, the protected callback surface japicmp gates, and DOM
+mode's live consumer in `AmazonExplorer`.
+
+**What D96's grammar is and is not, for that future.**
+`test/resources/dialect/thinlet-dialect.dtd` already carries the element set, the
+parent/child rules and the attribute names a replacement would have to honour,
+generated from the code rather than authored. It is deliberately **permissive** —
+mixed content everywhere, `CDATA #IMPLIED` throughout — because it describes what
+the current parser *accepts*, not what a successor *should enforce*. A shipped
+replacement DTD would be a stricter document derived from it, and a separate
+decision; it would not be `thinlet.dtd`, which stays frozen (D8).
+(Cross-ref D69 the enhanced-line protocol this scopes, D96 the dialect it freezes,
+D95 the run that produced Q16/Q17, D86 the parser net.)

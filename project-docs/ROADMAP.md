@@ -181,7 +181,9 @@ items first:
   cannot verify the paint half: the trace records image geometry, not identity, so
   a placeholder drawn at the size of the icon it replaces moves nothing (D90).
 - **Whether the hand-rolled XML parser should survive at all** — raised
-  2026-09-02, undecided, recorded so the analysis is not re-derived. `parse` is
+  2026-09-02, still open, recorded so the analysis is not re-derived. **Parser
+  behavior is frozen while it is open (D97)**, and the maintainer's stated
+  direction is replacement by the JRE's parser(s) plus a DTD derived from D96. `parse` is
   ~207 lines serving three modes ('T' GUI, 'S' SAX-like, 'D' DOM-like), all now
   pinned (goldens for 'T'; D86 for 'S'/'D'). The obvious move is to delegate to
   JAXP, and the obvious argument for it does not survive checking:
@@ -205,10 +207,13 @@ items first:
     callback *sequence* is the contract, not just the signatures. DOM mode has a
     live consumer in `AmazonExplorer` (`thinlet-demos`).
 
-  The genuine wins are maintenance and conformance (namespaces, CDATA and
-  non-predefined entities are unsupported today), not safety. Deciding this is
-  prerequisite to modernising `parse` by hand or by loop — there is no sense
-  polishing code that may be deleted, which is why `loop-modernise` skips it.
+  The genuine wins are maintenance and conformance, not safety. What the dialect
+  actually accepts — and the full list of what it does not — is written up in
+  `project-docs/backend-portability/XML-DIALECT.md` (D96); any replacement has to
+  reproduce each of those rules deliberately or diverge from it deliberately.
+  Deciding this is prerequisite to modernising `parse` by hand or by loop — there
+  is no sense polishing code that may be deleted, which is why `loop-modernise`
+  skips it.
 - **Whether the Insignia EVM workaround survives** — raised 2026-09-05 (D89),
   undecided. `Thinlet.evm` is `0` except on the Insignia Jeode JVM off Windows CE,
   where it is `-1`; 26 sites add it to `fillRect`/`fillOval` sizes and to the

@@ -364,7 +364,8 @@ Either way:
   branch's `mode == 'D'` / `mode == 'S'` pair with no `'T'` arm.
 - **Locked by:** `thinlet.ParserSyntaxTest#parseInGuiModeSilentlyDropsTextBetweenTagsUnlikeDomAndSaxMode`
   (tagged `documents-current-behavior`).
-- **Enhanced Thinlet disposition:** undecided.
+- **Enhanced Thinlet disposition:** undecided — frozen by **D97** while the
+  parser's future is open (it lives inside `parse`).
 
 ### Q17 — `End` does nothing on a list/tree with no current lead item            (unfixed)
 - **What happens:** pressing `End` on a list, tree, or table with no row
@@ -383,7 +384,88 @@ Either way:
 - **Where:** `Thinlet.java` — `getListItem`'s `VK_END` arm.
 - **Locked by:** `thinlet.ListNavigationTest#endWithNoCurrentLeadReturnsNullInsteadOfTheLastItem`
   (tagged `documents-current-behavior`).
-- **Enhanced Thinlet disposition:** undecided.
+- **Enhanced Thinlet disposition:** undecided, but **not** frozen — `getListItem`
+  is outside `parse`, so D97 does not hold it; schedulable under D69 whenever
+  wanted. The fix (`End` mirrors `Home`) is agreed to be correct.
+
+
+### Q18 — a markup declaration ends at its first `>`, leaking the tail into the document   (unfixed)
+- **What happens:** every `<!…>` construct — comment, doctype, `CDATA` section
+  alike — is skipped by reading forward to the **first** `>` and resuming there.
+  A comment that contains a `>` therefore leaks everything after it:
+  `<label>x <!-- a > b --> y</label>` yields the element text `x b --> y`. If the
+  leaked tail contains a tag, that tag is *built*: the same comment holding
+  `<button/>` inside a `<label>` aborts the parse with `button add label`. A
+  `CDATA` section is skipped whole and its content lost.
+- **Why it's a quirk:** XML terminates a comment at `-->`, a `CDATA` section at
+  `]]>`, and allows `>` inside a quoted system identifier. The parser tracks none
+  of that, so a legal document is silently misread rather than rejected. `parse`
+  does contain a correct comment reader (the `!--` check inside the tag-name
+  loop), but it is unreachable — the `<!` branch is an `else if` ahead of the
+  start-tag branch, so the name buffer never begins with `!`. In GUI mode a
+  leaked *text* tail is invisible because GUI mode discards text anyway (Q16),
+  which is why the corpus never trips this.
+- **Where:** `Thinlet.java` — `parse(InputStream, char, Object)`, the `c == '!'`
+  branch (`while ((c = reader.read()) != '>');`).
+- **Locked by:** `thinlet.ParserDialectTest#aMarkupDeclarationEndsAtItsFirstAngleBracketSoTheTailBecomesElementText`,
+  `#aMarkupDeclarationTailContainingATagIsParsedAsMarkup`,
+  `#aCdataSectionIsSkippedAsAMarkupDeclarationAndItsContentIsLost` (tagged
+  `documents-current-behavior`).
+- **Enhanced Thinlet disposition:** undecided — frozen by **D97** while the
+  parser's future is open (it lives inside `parse`).
+
+### Q19 — a declared encoding re-encodes string attributes with the character count as the byte count   (unfixed)
+- **What happens:** when the XML declaration carries an `encoding`, every
+  `string`-typed attribute value is rewritten as
+  `new String(value.getBytes(), 0, value.length(), encoding)`. `getBytes()` uses
+  the platform default charset while `length()` counts **characters**, so every
+  byte past the first of a multi-byte character is dropped before the
+  reinterpretation. On a UTF-8 platform, `encoding="ISO-8859-1"` turns `é` into
+  the single character `Ã`. Separately, the declaration never reaches the reader:
+  the stream is decoded by `new InputStreamReader(inputstream)` with the platform
+  default, whatever was declared.
+- **Why it's a quirk:** the declaration is meant to select the decoding of the
+  byte stream. Here it selects nothing, and instead triggers a lossy re-encode of
+  values that were already decoded. The 2005 corpus is pure ASCII, so byte count
+  equals character count and the round trip is the identity — which is why the
+  defect survived.
+- **Where:** `Thinlet.java` — `addAttribute`'s `encoding != null` arm, and the
+  `Reader` constructed at the top of `parse(InputStream, char, Object)`.
+- **Locked by:** `thinlet.ParserDialectTest#aDeclaredEncodingReEncodesStringAttributesUsingTheCharacterCountAsAByteCount`
+  (tagged `documents-current-behavior`; skipped where the platform default charset
+  is single-byte) and `#theDeclaredEncodingDoesNotSelectTheCharsetTheStreamIsDecodedWith`.
+- **Enhanced Thinlet disposition:** undecided — frozen by **D97** while the
+  parser's future is open (it lives inside `parse`).
+
+### Q20 — an end tag with nothing open throws `NullPointerException`   (unfixed)
+- **What happens:** parsing a document that begins with an end tag — `</panel>` —
+  dereferences the null `parentlist` and throws `NullPointerException` instead of
+  the `IllegalArgumentException` every other malformed input produces.
+- **Why it's a quirk:** the end-tag branch reads `parentlist[2]` for the open
+  element's name without checking that anything is open. A caller cannot
+  distinguish "malformed document" from a defect in Thinlet.
+- **Where:** `Thinlet.java` — `parse(InputStream, char, Object)`, the endtag
+  branch's `String tagname = (String) parentlist[2];`.
+- **Locked by:** `thinlet.ParserDialectTest#anEndTagWithNoOpenElementThrowsNullPointerException`
+  (tagged `documents-current-behavior`).
+- **Enhanced Thinlet disposition:** undecided — frozen by **D97** while the
+  parser's future is open (it lives inside `parse`).
+
+### Q21 — text preceding a child element is discarded in every parse mode   (unfixed)
+- **What happens:** the text buffer is cleared at every **start** tag, so only the
+  run immediately before an end tag can survive. `<panel>alpha<label/>omega</panel>`
+  reports `omega` and never `alpha` — in DOM mode as `":text"`, in SAX mode as the
+  one `characters` call.
+- **Why it's a quirk:** this is a second, independent loss of mixed content on top
+  of Q16. Q16 costs GUI mode *all* body text; Q21 costs DOM and SAX modes the text
+  of every element that has children, which is exactly the mixed content those
+  modes exist to report. Both are silent.
+- **Where:** `Thinlet.java` — `parse(InputStream, char, Object)`, the
+  `text.setLength(0)` at the head of the start-or-standalone-tag branch.
+- **Locked by:** `thinlet.ParserDialectTest#textPrecedingAChildElementIsDiscardedInEveryMode`
+  (tagged `documents-current-behavior`).
+- **Enhanced Thinlet disposition:** undecided — frozen by **D97** while the
+  parser's future is open (it lives inside `parse`).
 
 
 ## Triaged for Enhanced Thinlet (not behavior-locked)
@@ -418,3 +500,21 @@ Enhanced Thinlet's to address.
   `thinlet.trace.InputQuirkPinsTest#closingTheDropDownUnderTheCursorCommitsAndStaysConsistent`,
   which drives the path with differing x/y and fails if a change ever makes
   the parameter live-and-wrong.
+- **Truncated XML input hangs instead of failing (D96).** `BufferedReader.read()`
+  returns `-1` at end of stream and `(char) -1` is `\uFFFF`, which matches none of
+  the parser's terminator sets. Five loops in
+  `parse(InputStream, char, Object)` therefore never end when the document is cut
+  short inside a markup declaration, a tag name, an attribute name, an attribute
+  value, or an entity reference; only the outermost loop tests for `-1`. Four of
+  the five append to a `StringBuffer` as they spin, so they exhaust the heap
+  rather than merely burning a core. **Deliberately not pinned:** a test would
+  either hang the suite or `OutOfMemoryError` the shared Surefire JVM, and no
+  bounded input demonstrates it. Read from the code; the reasoning is written up
+  in `project-docs/backend-portability/XML-DIALECT.md`.
+- **`parse`'s inner comment reader is unreachable (D96).** The tag-name loop
+  checks whether the accumulated name has reached `!--` and, if so, scans for
+  `-->` — the correct comment rule. It can never run: the `c == '!'` branch is an
+  `else if` ahead of the start-tag branch, so the name buffer never begins with
+  `!`. This is the dead code behind the seven `NO_COVERAGE` mutants D95 recorded
+  in `parse`, and the reason Q18 exists. Removing it is a modernization decision,
+  not a behavior one.

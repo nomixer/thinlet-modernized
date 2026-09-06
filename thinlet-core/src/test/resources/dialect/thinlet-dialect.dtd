@@ -1,0 +1,840 @@
+<!-- Thinlet (modernized) — the GUI-mode XML dialect, as a DTD. TEST RESOURCE.
+
+     Generated from DescriptorTable.WIDGETS and Thinlet.addImpl and regenerated
+     on every run by XmlDialectGrammarTest, which fails when this file and the
+     code disagree. Never shipped: the published artifact is the byte-identical
+     2005 src/main/resources/thinlet.dtd (DECISIONS.md D8), which this file
+     deliberately does not match. The divergences are catalogued in
+     project-docs/backend-portability/XML-DIALECT.md (DECISIONS.md D96).
+
+     Content models are mixed and unordered because the parser is: it checks
+     each parent/child pair on its own (Thinlet.addImpl) and enforces neither
+     order nor cardinality, and it tolerates text anywhere (discarding it in
+     GUI mode — KNOWN-QUIRKS Q16).
+
+     Attributes are CDATA #IMPLIED throughout: this grammar pins element
+     structure and attribute NAMES only. The value layer — types, enumerated
+     tokens, defaults — is single-homed in DescriptorTable and pinned by
+     DescriptorContractTest and PublicVocabularyContractTest (D57).
+     Attribute order is the resolution order of Thinlet.getDefinition: an
+     element's own rows first, then each ancestor's, deduplicated so that a
+     shadowing row (button's own `alignment`) appears once, where it wins.
+
+     The five predefined XML entities are deliberately NOT declared here.
+     -->
+
+<!ELEMENT component (#PCDATA | popupmenu)*>
+<!ATTLIST component
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT label (#PCDATA | popupmenu)*>
+<!ATTLIST label
+        text CDATA #IMPLIED
+        icon CDATA #IMPLIED
+        alignment CDATA #IMPLIED
+        mnemonic CDATA #IMPLIED
+        for CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT button (#PCDATA | popupmenu)*>
+<!ATTLIST button
+        alignment CDATA #IMPLIED
+        action CDATA #IMPLIED
+        type CDATA #IMPLIED
+        text CDATA #IMPLIED
+        icon CDATA #IMPLIED
+        mnemonic CDATA #IMPLIED
+        for CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT checkbox (#PCDATA | popupmenu)*>
+<!ATTLIST checkbox
+        selected CDATA #IMPLIED
+        group CDATA #IMPLIED
+        action CDATA #IMPLIED
+        text CDATA #IMPLIED
+        icon CDATA #IMPLIED
+        alignment CDATA #IMPLIED
+        mnemonic CDATA #IMPLIED
+        for CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT togglebutton (#PCDATA | popupmenu)*>
+<!ATTLIST togglebutton
+        selected CDATA #IMPLIED
+        group CDATA #IMPLIED
+        action CDATA #IMPLIED
+        text CDATA #IMPLIED
+        icon CDATA #IMPLIED
+        alignment CDATA #IMPLIED
+        mnemonic CDATA #IMPLIED
+        for CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT combobox (#PCDATA | choice | popupmenu)*>
+<!ATTLIST combobox
+        icon CDATA #IMPLIED
+        selected CDATA #IMPLIED
+        text CDATA #IMPLIED
+        columns CDATA #IMPLIED
+        editable CDATA #IMPLIED
+        alignment CDATA #IMPLIED
+        start CDATA #IMPLIED
+        end CDATA #IMPLIED
+        action CDATA #IMPLIED
+        insert CDATA #IMPLIED
+        remove CDATA #IMPLIED
+        caret CDATA #IMPLIED
+        perform CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT choice (#PCDATA)>
+<!ATTLIST choice
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        text CDATA #IMPLIED
+        icon CDATA #IMPLIED
+        alignment CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        property CDATA #IMPLIED>
+
+<!ELEMENT textfield (#PCDATA | popupmenu)*>
+<!ATTLIST textfield
+        text CDATA #IMPLIED
+        columns CDATA #IMPLIED
+        editable CDATA #IMPLIED
+        alignment CDATA #IMPLIED
+        start CDATA #IMPLIED
+        end CDATA #IMPLIED
+        action CDATA #IMPLIED
+        insert CDATA #IMPLIED
+        remove CDATA #IMPLIED
+        caret CDATA #IMPLIED
+        perform CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT passwordfield (#PCDATA | popupmenu)*>
+<!ATTLIST passwordfield
+        text CDATA #IMPLIED
+        columns CDATA #IMPLIED
+        editable CDATA #IMPLIED
+        alignment CDATA #IMPLIED
+        start CDATA #IMPLIED
+        end CDATA #IMPLIED
+        action CDATA #IMPLIED
+        insert CDATA #IMPLIED
+        remove CDATA #IMPLIED
+        caret CDATA #IMPLIED
+        perform CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT textarea (#PCDATA | popupmenu)*>
+<!ATTLIST textarea
+        rows CDATA #IMPLIED
+        border CDATA #IMPLIED
+        wrap CDATA #IMPLIED
+        text CDATA #IMPLIED
+        columns CDATA #IMPLIED
+        editable CDATA #IMPLIED
+        alignment CDATA #IMPLIED
+        start CDATA #IMPLIED
+        end CDATA #IMPLIED
+        action CDATA #IMPLIED
+        insert CDATA #IMPLIED
+        remove CDATA #IMPLIED
+        caret CDATA #IMPLIED
+        perform CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT tabbedpane (#PCDATA | tab | popupmenu)*>
+<!ATTLIST tabbedpane
+        placement CDATA #IMPLIED
+        selected CDATA #IMPLIED
+        action CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT tab (#PCDATA | component | label | button | checkbox | togglebutton | combobox | textfield | passwordfield | textarea | tabbedpane | panel | desktop | dialog | spinbox | progressbar | slider | splitpane | list | table | tree | separator | menubar | bean)*>
+<!ATTLIST tab
+        mnemonic CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        text CDATA #IMPLIED
+        icon CDATA #IMPLIED
+        alignment CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        property CDATA #IMPLIED>
+
+<!ELEMENT panel (#PCDATA | component | label | button | checkbox | togglebutton | combobox | textfield | passwordfield | textarea | tabbedpane | panel | desktop | dialog | spinbox | progressbar | slider | splitpane | list | table | tree | separator | menubar | popupmenu | bean)*>
+<!ATTLIST panel
+        columns CDATA #IMPLIED
+        top CDATA #IMPLIED
+        left CDATA #IMPLIED
+        bottom CDATA #IMPLIED
+        right CDATA #IMPLIED
+        gap CDATA #IMPLIED
+        text CDATA #IMPLIED
+        icon CDATA #IMPLIED
+        border CDATA #IMPLIED
+        scrollable CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT desktop (#PCDATA | component | label | button | checkbox | togglebutton | combobox | textfield | passwordfield | textarea | tabbedpane | panel | desktop | dialog | spinbox | progressbar | slider | splitpane | list | table | tree | separator | menubar | popupmenu | bean)*>
+<!ATTLIST desktop
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT dialog (#PCDATA | component | label | button | checkbox | togglebutton | combobox | textfield | passwordfield | textarea | tabbedpane | panel | desktop | dialog | spinbox | progressbar | slider | splitpane | list | table | tree | separator | menubar | popupmenu | bean)*>
+<!ATTLIST dialog
+        modal CDATA #IMPLIED
+        resizable CDATA #IMPLIED
+        closable CDATA #IMPLIED
+        maximizable CDATA #IMPLIED
+        iconifiable CDATA #IMPLIED
+        columns CDATA #IMPLIED
+        top CDATA #IMPLIED
+        left CDATA #IMPLIED
+        bottom CDATA #IMPLIED
+        right CDATA #IMPLIED
+        gap CDATA #IMPLIED
+        text CDATA #IMPLIED
+        icon CDATA #IMPLIED
+        border CDATA #IMPLIED
+        scrollable CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT spinbox (#PCDATA | popupmenu)*>
+<!ATTLIST spinbox
+        minimum CDATA #IMPLIED
+        maximum CDATA #IMPLIED
+        step CDATA #IMPLIED
+        value CDATA #IMPLIED
+        text CDATA #IMPLIED
+        columns CDATA #IMPLIED
+        editable CDATA #IMPLIED
+        alignment CDATA #IMPLIED
+        start CDATA #IMPLIED
+        end CDATA #IMPLIED
+        action CDATA #IMPLIED
+        insert CDATA #IMPLIED
+        remove CDATA #IMPLIED
+        caret CDATA #IMPLIED
+        perform CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT progressbar (#PCDATA | popupmenu)*>
+<!ATTLIST progressbar
+        orientation CDATA #IMPLIED
+        minimum CDATA #IMPLIED
+        maximum CDATA #IMPLIED
+        value CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT slider (#PCDATA | popupmenu)*>
+<!ATTLIST slider
+        unit CDATA #IMPLIED
+        block CDATA #IMPLIED
+        action CDATA #IMPLIED
+        orientation CDATA #IMPLIED
+        minimum CDATA #IMPLIED
+        maximum CDATA #IMPLIED
+        value CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT splitpane (#PCDATA | component | label | button | checkbox | togglebutton | combobox | textfield | passwordfield | textarea | tabbedpane | panel | desktop | dialog | spinbox | progressbar | slider | splitpane | list | table | tree | separator | menubar | popupmenu | bean)*>
+<!ATTLIST splitpane
+        orientation CDATA #IMPLIED
+        divider CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT list (#PCDATA | item | popupmenu)*>
+<!ATTLIST list
+        selection CDATA #IMPLIED
+        action CDATA #IMPLIED
+        perform CDATA #IMPLIED
+        line CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT item (#PCDATA)>
+<!ATTLIST item
+        selected CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        text CDATA #IMPLIED
+        icon CDATA #IMPLIED
+        alignment CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        property CDATA #IMPLIED>
+
+<!ELEMENT table (#PCDATA | header | row | popupmenu)*>
+<!ATTLIST table
+        selection CDATA #IMPLIED
+        action CDATA #IMPLIED
+        perform CDATA #IMPLIED
+        line CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT header (#PCDATA | column)*>
+
+<!ELEMENT column (#PCDATA)>
+<!ATTLIST column
+        width CDATA #IMPLIED
+        sort CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        text CDATA #IMPLIED
+        icon CDATA #IMPLIED
+        alignment CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        property CDATA #IMPLIED>
+
+<!ELEMENT row (#PCDATA | cell)*>
+<!ATTLIST row
+        selected CDATA #IMPLIED>
+
+<!ELEMENT cell (#PCDATA)>
+<!ATTLIST cell
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        text CDATA #IMPLIED
+        icon CDATA #IMPLIED
+        alignment CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        property CDATA #IMPLIED>
+
+<!ELEMENT tree (#PCDATA | node | popupmenu)*>
+<!ATTLIST tree
+        angle CDATA #IMPLIED
+        expand CDATA #IMPLIED
+        collapse CDATA #IMPLIED
+        selection CDATA #IMPLIED
+        action CDATA #IMPLIED
+        perform CDATA #IMPLIED
+        line CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT node (#PCDATA | node)*>
+<!ATTLIST node
+        selected CDATA #IMPLIED
+        expanded CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        text CDATA #IMPLIED
+        icon CDATA #IMPLIED
+        alignment CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        property CDATA #IMPLIED>
+
+<!ELEMENT separator (#PCDATA | popupmenu)*>
+<!ATTLIST separator
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT menubar (#PCDATA | menu | popupmenu)*>
+<!ATTLIST menubar
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT menu (#PCDATA | separator | menu | menuitem | checkboxmenuitem)*>
+<!ATTLIST menu
+        mnemonic CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        text CDATA #IMPLIED
+        icon CDATA #IMPLIED
+        alignment CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        property CDATA #IMPLIED>
+
+<!ELEMENT menuitem (#PCDATA)>
+<!ATTLIST menuitem
+        accelerator CDATA #IMPLIED
+        action CDATA #IMPLIED
+        mnemonic CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        text CDATA #IMPLIED
+        icon CDATA #IMPLIED
+        alignment CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        property CDATA #IMPLIED>
+
+<!ELEMENT checkboxmenuitem (#PCDATA)>
+<!ATTLIST checkboxmenuitem
+        selected CDATA #IMPLIED
+        group CDATA #IMPLIED
+        accelerator CDATA #IMPLIED
+        action CDATA #IMPLIED
+        mnemonic CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        text CDATA #IMPLIED
+        icon CDATA #IMPLIED
+        alignment CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        property CDATA #IMPLIED>
+
+<!ELEMENT popupmenu (#PCDATA | separator | menu | menuitem | checkboxmenuitem | popupmenu)*>
+<!ATTLIST popupmenu
+        menushown CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
+
+<!ELEMENT bean (#PCDATA | popupmenu)*>
+<!ATTLIST bean
+        bean CDATA #IMPLIED
+        name CDATA #IMPLIED
+        enabled CDATA #IMPLIED
+        visible CDATA #IMPLIED
+        tooltip CDATA #IMPLIED
+        font CDATA #IMPLIED
+        foreground CDATA #IMPLIED
+        background CDATA #IMPLIED
+        width CDATA #IMPLIED
+        height CDATA #IMPLIED
+        colspan CDATA #IMPLIED
+        rowspan CDATA #IMPLIED
+        weightx CDATA #IMPLIED
+        weighty CDATA #IMPLIED
+        halign CDATA #IMPLIED
+        valign CDATA #IMPLIED
+        property CDATA #IMPLIED
+        init CDATA #IMPLIED
+        focuslost CDATA #IMPLIED
+        focusgained CDATA #IMPLIED>
