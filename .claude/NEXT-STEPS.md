@@ -1,4 +1,4 @@
-# Next steps — session handoff (2026-09-05)
+# Next steps — session handoff (2026-09-06)
 
 > State pointers + ordered work only; rationale lives in `DECISIONS.md`
 > (single-home rule + comment rules: **D57**). Charter:
@@ -175,82 +175,82 @@
   green, zero golden re-records, japicmp clean. `parse` deliberately untouched
   (already reachable via three public entry points, D86). Base row unchanged
   (383 core + 13 drafts).
+- **Mutation testing landed (D92, 2026-09-05)**: `pitest` behind an opt-in
+  `mutation` profile, plus `scripts/mutation.sh` and `scripts/mutation-summary.py`.
+  Reports, never gates. Two traps recorded, both of which produce a green build that
+  measured nothing: `targetTests` matches fully-qualified names only, and PIT
+  auto-adds `java.awt.headless=true`, which kills every Xvfb-dependent test.
+- **The characterization loop landed (D93, 2026-09-05)**:
+  `scripts/loop-characterise.sh`, `loop-modernise`'s mirror image — test tree
+  writable, `guard_no_main` absolute, one new file per slice, targets from a
+  pure-logic allowlist ordered by `coverage.sh --worklist`. Firing the guards
+  deliberately caught the load-bearing one silently passing a modified
+  `Renderer.java` (a wildcard git pathspec matches the whole path, so
+  `*/src/main/java` matches the directory and nothing beneath it).
+- **The gate is scoped to assigned lines, not whole methods (D94, 2026-09-05)**:
+  the first `--dry-run` declined `parse`, correctly — a whole-method
+  "zero survivors" rule is unreachable wherever equivalent mutants live. Scoping to
+  the slice's assigned missed lines fixed it. D94 also corrects D92's survivor count
+  (16 in `parse`, not 8) and withdraws an inference that a comment containing `>`
+  mis-parses; it does not.
+- **Loop run 1 (D95, 2026-09-05)**: 3 of 3 committed, no decline, no repair —
+  `parse`, `getListItem`, `processList`, zero surviving mutants on every slice.
+  Found **Q16** (GUI-mode `parse` silently discards a tag's body text) and **Q17**
+  (`End` is a no-op on a list with no lead, while `Home` works), both
+  `disposition: undecided`. Coverage **85.9 → 87.4 %** instructions, **74.0 →
+  76.3 %** branches, 27 → 25 never-entered methods. Base row: **425** core + 13
+  drafts.
 
-## Next work, in order (3c open per D69 — the enhanced line is `main`/0.2.x)
+## Next work, in order
 
-0. **The characterization loop — Step 0 done (D91), Steps 1-3 open.** The agreed
-   shape: a `scripts/loop-characterise.sh` mirroring `loop-modernise.sh` with its
-   scope inverted (test tree writable, `guard_no_main` absolute, new files only),
-   taking targets from a curated pure-logic allowlist ordered by coverage data, and
-   gated on **mutation testing rather than coverage delta** — D90 proved a covered
-   line proves nothing. **Step 1 done (D92)**: the `mutation` profile,
-   `scripts/mutation.sh` and `scripts/mutation-summary.py` are in and proven
-   against `ParserSaxModeTest` — 70.5 %, 28 survivors, 8 of them negated
-   conditionals inside `parse` that the D86 net runs without watching. Two
-   silent-success traps are recorded, and the gate was **redesigned from the
-   measurement**: an assertion-free test still scores 50 % (PIT counts a thrown
-   exception as a kill), so a flat score threshold is weak. The gate is "killed > 0
-   and **survived == 0 within the slice's assigned target method**". **Steps 2 and 3 done (D93)**:
-   `coverage.sh --worklist` emits per-method missed-line rows (cross-checked
-   against JaCoCo's own counters, 125 methods, zero mismatches) and
-   `scripts/loop-characterise.sh` is in, with 29 allowlisted targets on today's
-   worklist. Testing the guards by deliberate violation caught `guard_no_main` —
-   the load-bearing one — **silently passing a modified `Renderer.java`**: a git
-   pathspec with a wildcard matches the whole path, so `*/src/main/java` matches
-   the directory and nothing under it. Fixed and all five guards re-tested. **First `--dry-run` done (D94)**: preflight
-   green, 29 targets, the worklist put `parse` first and the pass **declined** —
-   correctly. Its reasoning (line 5276's negated conditional is covered but
-   equivalent, because the `<!` opener is taken by the doctype branch above, making
-   the comment block dead code) was confirmed by measurement afterwards. The decline
-   path therefore ran on its first outing, unlike `loop-modernise`'s repair path
-   across six slices. The run exposed three defects, all fixed: the gate was scoped
-   to the whole method (unreachable wherever equivalent mutants live) and is now
-   scoped to the slice's **assigned lines**; the pass could not run the gate it is
-   graded by and now can; and the decline summary hard-coded a reason it did not
-   know. D94 also corrects D92's survivor count (16 in `parse`, not 8) and withdraws
-   an inference that a comment containing `>` mis-parses — tested, it does not.
-   **Run 1 done (D95)**: `loop-characterise.sh 3` committed **3 of 3**, no decline,
-   no repair — `parse`, `getListItem`, `processList`, gates 21/26/33 killed with
-   **zero survivors** each. The first slice passed the very target the dry run had
-   declined, which vindicates the D94 rescoping. Two quirks found and pinned: **Q16**
-   (GUI-mode `parse` silently discards a tag's inline body text — no `'T'` arm in the
-   end-tag flush) and **Q17** (`End` is a no-op on a list with no lead, while `Home`
-   works), both `disposition: undecided`. Coverage **85.9 → 87.4 %** instructions,
-   **74.0 → 76.3 %** branches, 27 → 25 never-entered methods; base row **425** core
-   (was 383) + 13 drafts. Rejected on evidence: remembering declines to skip targets
-   in later runs — a decline is a judgement about the target *and the current gate*,
-   and this run passed one the dry run declined. Superseded: (3) the loop
-   script's own D-entry. PIT is chosen over automating D89's hand-mutant
-   discipline because a pass that authors both the test and the mutants grades its
-   own homework. Still uncovered and unscheduled: `FrameLauncher` (0 %, published
-   API), and the four methods D91 left alone (`getSize`, `setRectangle`, `update`,
-   `findComponent`).
-1. **Q14 (inert table column header) — parked, not open** — held deliberately until
-   the fork sources land, because wiring a header click adds *new* public behavior
-   the maintainer's own fork may already define (D78). Q6/Q10 stay kept (D75), and
-   Q2's non-proportional half stays 2005 by choice (D82).
-2. **No other open dispositions** — the three authorized on 2026-08-15 are done
-   (D81/D82/D83). Further 3c work starts from fresh recording (drive a widget, assert
-   what it does today, then decide) rather than a queue.
+0. **Write down what the 2005 XML parser actually accepts — the active work.**
+   Agreed 2026-09-06: the point of this stretch is to *modernize*, not to change
+   behavior, so Q16/Q17 are documented rather than fixed and the useful artifact is
+   a specification of the real dialect. Three findings already motivate it: the
+   shipped `thinlet.dtd` declares **zero `#PCDATA`** (so body text was never valid
+   and the parser simply fails to say so); the DTD is **never loaded at runtime**;
+   and it is **wrong about `&gt;`** — `<!ENTITY gt "&#61;">` is `=`, not `>`, while
+   the parser appends `'>'` correctly. Deliverables: (a)
+   `project-docs/backend-portability/XML-DIALECT.md`, prose beside
+   `INPUT-SURFACE.md`, every claim citing the test that pins it; (b) a faithful
+   structural grammar as a **test resource** (never shipped, never confused with the
+   frozen D8 artifact) plus a test validating all 42 corpus files against it; (c)
+   tests for whatever the writing cannot pin. `thinlet.dtd` stays byte-identical —
+   the divergences are findings, not fixes.
+1. **Q16 and Q17 — documented, fixes deferred.** Both are pinned and catalogued
+   `undecided`. Q17's fix (`End` mirrors `Home`) is agreed to be *correct* but
+   deliberately not now and not on the current branch; it gets its own branch under
+   the D69 protocol when wanted. Q16 stays documented only.
+2. **Q14 (inert table column header) — parked, not open** — held until the fork
+   sources land, because wiring a header click adds *new* public behavior the
+   maintainer's own fork may already define (D78). Q6/Q10 stay kept (D75), and Q2's
+   non-proportional half stays 2005 by choice (D82).
 3. **Fork mapping (arrival-triggered; no expectations built on it)** — sources still
    pending (2026-08-15: not arrived, a month past the expected window). The gate
    covers **only** the Cut 4/5/6 seam commitments (D48/D50/D61/D69), never net or
    preparatory work. When they land: fork files → subsystems; boundaries vs Cut 2–6
    seams; enhancement backlog; then Cut 4+ seam commitments unblock (3a resumes).
-4. **`loop-modernise` — runs 1 and 2 done; the tool is proven, the net is the
-   constraint** — the script is trunk tooling (D87). Runs happen in a linked
-   worktree on their own branch off `main`; the primary checkout is never the
-   target. **Six slices across two runs, every one committed, none repaired**: the
-   commit path is well exercised and the **repair path has still never executed**.
-   Both runs' most valuable output was a net gap rather than a diff — D86 and D88
-   in run-1, D89's two in run-2 — and run-2's were found by deliberate mutation
-   probing of the lines each slice touched, not by the loop stumbling into them.
-   Before a run-3, settle whether the loop is still the right instrument: the gaps
-   it keeps exposing are findable directly, sooner, and without committing code to
-   get at them. The XML parser stays fenced (D86 + the ROADMAP 3c question),
-   enforced by `guard_fenced`. Review any output sceptically — run-1's
-   antialiasing slice was reviewed as a behavior-preserving tidy-up and was in
-   fact repairing a live defect (D88).
+4. **`loop-characterise` — proven, 26 allowlisted targets left.** Run it with
+   `scripts/loop-characterise.sh <N>`; roughly 15 minutes per slice, unattended.
+   Next on the worklist: `findText`, `getChars`, `changeCheck`. Its **repair path
+   has never executed** — no slice has yet failed verification.
+5. **`loop-modernise` — runs 1 and 2 done (D87/D89); the tool is proven, the net is
+   the constraint.** Both runs' most valuable output was a net gap rather than a
+   diff. Before a run-3, settle whether the loop is still the right instrument: the
+   gaps it exposes are findable directly, sooner, and without committing code to get
+   at them. The XML parser stays fenced for *modernisation* (D86 + the ROADMAP 3c
+   question) — note that fence does **not** apply to tests. Its repair path has also
+   never executed across six slices.
+6. **Recorded, unscheduled**: `FrameLauncher` (0 % covered, and it is published
+   API); the four methods D91 left alone (`getSize`, `setRectangle`, `update`,
+   `findComponent`); teaching `loop-characterise` to reach event-driven code (menus,
+   dialogs, focus), which is where most remaining branch coverage lives.
+
+> **Posture check (raised 2026-09-06, undecided).** D69 and `CLAUDE.md` say `main`
+> **is** the enhanced line, where behavior changes deliberately, and D70–D83 did
+> exactly that. The 2026-09-06 steer — "modernize now, not change observable
+> behaviour" — narrows it. If that is a lasting change of intent it needs its own
+> `DECISIONS.md` entry, or a later session will read D69 and conclude the opposite.
 
 ## Discipline (one-liners; the D-entries carry the why)
 
