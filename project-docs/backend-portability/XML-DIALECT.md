@@ -131,8 +131,8 @@ end-of-stream; everything below is what happens once a `<` is seen.
    declaration specifically (`?xml`), an `encoding` pseudo-attribute is captured
    — see below.
 4. **anything else** — a start or standalone tag. The name runs to the first
-   `>`, `/`, or whitespace; there is no character-class check, so any byte that
-   is not one of those four is part of the name. Attributes follow, each
+   character in `">/ \t\n\r"`; there is no character-class check, so any byte
+   outside that set of six is part of the name. Attributes follow, each
    requiring preceding whitespace, a `=`, and a `"`- or `'`-quoted value. Inside
    the value only `&` is special.
 5. **anything not after a `<`** — text. Whitespace runs collapse to one space,
@@ -168,9 +168,8 @@ forever on a truncated document rather than reporting an error:
 
 Four of the five append to a `StringBuffer` as they go, so they exhaust the heap
 rather than merely burning a core; the markup-declaration loop has an empty body
-and simply spins. Truncation anywhere else — between tags, or in
-text — reaches the outer loop's `c != -1` test and ends in
-`IllegalArgumentException`.
+and simply spins. Truncation anywhere else — between tags, or in text — reaches
+the outer loop's `c != -1` test and ends in `IllegalArgumentException`.
 
 **Deliberately not pinned by a test.** A test would either hang the suite or
 `OutOfMemoryError` the shared Surefire JVM; there is no bounded input that
