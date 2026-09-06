@@ -223,13 +223,18 @@
 
 ## Next work, in order
 
-0. **Six quirks sit `undecided` and need dispositions — Q16, Q17, Q18–Q21.**
-   All are pinned and catalogued; none is scheduled. Q17's fix (`End` mirrors
-   `Home`) is agreed to be *correct* but deliberately not now and not on the
-   branch that found it; it gets its own branch under the D69 protocol when
-   wanted. The D96 four are documentation-only findings so far. Nothing here
-   changes until the posture question below is settled, because every one of them
-   is a behavior change.
+0. **Parser behavior is frozen (D97); everything else stays D69.** Q16, Q18, Q19,
+   Q20 and Q21 all live inside `parse`, so they stay `undecided` **by policy**
+   until the ROADMAP's open question — whether the hand-rolled parser survives at
+   all — is settled. Nothing else triggers the thaw. **Q17 (`End`) is outside
+   `parse`** and is schedulable under the ordinary D69 protocol whenever wanted;
+   its fix (`End` mirrors `Home`) is agreed to be correct, just not scheduled.
+   The maintainer's stated direction (2026-09-06, recorded in D97 as direction,
+   not decision): drop the parser code entirely and replace it with the JRE's XML
+   parser(s) plus a DTD matching what D96 documented. D96's generated
+   `thinlet-dialect.dtd` is where that DTD starts — but it is deliberately
+   permissive, describing what the parser *accepts*, not what a successor should
+   *enforce*.
 1. **Q14 (inert table column header) — parked, not open** — held until the fork
    sources land, because wiring a header click adds *new* public behavior the
    maintainer's own fork may already define (D78). Q6/Q10 stay kept (D75), and Q2's
@@ -255,11 +260,10 @@
    `findComponent`); teaching `loop-characterise` to reach event-driven code (menus,
    dialogs, focus), which is where most remaining branch coverage lives.
 
-> **Posture check (raised 2026-09-06, undecided).** D69 and `CLAUDE.md` say `main`
-> **is** the enhanced line, where behavior changes deliberately, and D70–D83 did
-> exactly that. The 2026-09-06 steer — "modernize now, not change observable
-> behaviour" — narrows it. If that is a lasting change of intent it needs its own
-> `DECISIONS.md` entry, or a later session will read D69 and conclude the opposite.
+> **Posture: settled 2026-09-06 (D97).** D69 still governs `main` — it is the
+> enhanced line, and behavior changes deliberately — **except inside `Thinlet.parse`
+> and the XML dialect it implements**, where changes are suspended until the
+> parser's future is decided. Read D97 before proposing any parser behavior change.
 
 ## Discipline (one-liners; the D-entries carry the why)
 

@@ -364,7 +364,8 @@ Either way:
   branch's `mode == 'D'` / `mode == 'S'` pair with no `'T'` arm.
 - **Locked by:** `thinlet.ParserSyntaxTest#parseInGuiModeSilentlyDropsTextBetweenTagsUnlikeDomAndSaxMode`
   (tagged `documents-current-behavior`).
-- **Enhanced Thinlet disposition:** undecided.
+- **Enhanced Thinlet disposition:** undecided — frozen by **D97** while the
+  parser's future is open (it lives inside `parse`).
 
 ### Q17 — `End` does nothing on a list/tree with no current lead item            (unfixed)
 - **What happens:** pressing `End` on a list, tree, or table with no row
@@ -383,7 +384,9 @@ Either way:
 - **Where:** `Thinlet.java` — `getListItem`'s `VK_END` arm.
 - **Locked by:** `thinlet.ListNavigationTest#endWithNoCurrentLeadReturnsNullInsteadOfTheLastItem`
   (tagged `documents-current-behavior`).
-- **Enhanced Thinlet disposition:** undecided.
+- **Enhanced Thinlet disposition:** undecided, but **not** frozen — `getListItem`
+  is outside `parse`, so D97 does not hold it; schedulable under D69 whenever
+  wanted. The fix (`End` mirrors `Home`) is agreed to be correct.
 
 
 ### Q18 — a markup declaration ends at its first `>`, leaking the tail into the document   (unfixed)
@@ -408,7 +411,8 @@ Either way:
   `#aMarkupDeclarationTailContainingATagIsParsedAsMarkup`,
   `#aCdataSectionIsSkippedAsAMarkupDeclarationAndItsContentIsLost` (tagged
   `documents-current-behavior`).
-- **Enhanced Thinlet disposition:** undecided.
+- **Enhanced Thinlet disposition:** undecided — frozen by **D97** while the
+  parser's future is open (it lives inside `parse`).
 
 ### Q19 — a declared encoding re-encodes string attributes with the character count as the byte count   (unfixed)
 - **What happens:** when the XML declaration carries an `encoding`, every
@@ -430,7 +434,8 @@ Either way:
 - **Locked by:** `thinlet.ParserDialectTest#aDeclaredEncodingReEncodesStringAttributesUsingTheCharacterCountAsAByteCount`
   (tagged `documents-current-behavior`; skipped where the platform default charset
   is single-byte) and `#theDeclaredEncodingDoesNotSelectTheCharsetTheStreamIsDecodedWith`.
-- **Enhanced Thinlet disposition:** undecided.
+- **Enhanced Thinlet disposition:** undecided — frozen by **D97** while the
+  parser's future is open (it lives inside `parse`).
 
 ### Q20 — an end tag with nothing open throws `NullPointerException`   (unfixed)
 - **What happens:** parsing a document that begins with an end tag — `</panel>` —
@@ -443,7 +448,8 @@ Either way:
   branch's `String tagname = (String) parentlist[2];`.
 - **Locked by:** `thinlet.ParserDialectTest#anEndTagWithNoOpenElementThrowsNullPointerException`
   (tagged `documents-current-behavior`).
-- **Enhanced Thinlet disposition:** undecided.
+- **Enhanced Thinlet disposition:** undecided — frozen by **D97** while the
+  parser's future is open (it lives inside `parse`).
 
 ### Q21 — text preceding a child element is discarded in every parse mode   (unfixed)
 - **What happens:** the text buffer is cleared at every **start** tag, so only the
@@ -458,7 +464,8 @@ Either way:
   `text.setLength(0)` at the head of the start-or-standalone-tag branch.
 - **Locked by:** `thinlet.ParserDialectTest#textPrecedingAChildElementIsDiscardedInEveryMode`
   (tagged `documents-current-behavior`).
-- **Enhanced Thinlet disposition:** undecided.
+- **Enhanced Thinlet disposition:** undecided — frozen by **D97** while the
+  parser's future is open (it lives inside `parse`).
 
 
 ## Triaged for Enhanced Thinlet (not behavior-locked)

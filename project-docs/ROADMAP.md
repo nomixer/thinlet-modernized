@@ -181,7 +181,9 @@ items first:
   cannot verify the paint half: the trace records image geometry, not identity, so
   a placeholder drawn at the size of the icon it replaces moves nothing (D90).
 - **Whether the hand-rolled XML parser should survive at all** — raised
-  2026-09-02, undecided, recorded so the analysis is not re-derived. `parse` is
+  2026-09-02, still open, recorded so the analysis is not re-derived. **Parser
+  behavior is frozen while it is open (D97)**, and the maintainer's stated
+  direction is replacement by the JRE's parser(s) plus a DTD derived from D96. `parse` is
   ~207 lines serving three modes ('T' GUI, 'S' SAX-like, 'D' DOM-like), all now
   pinned (goldens for 'T'; D86 for 'S'/'D'). The obvious move is to delegate to
   JAXP, and the obvious argument for it does not survive checking:

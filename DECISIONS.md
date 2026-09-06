@@ -4369,3 +4369,47 @@ seven `NO_COVERAGE` mutants D95 saw in `parse` and the reason Q18 exists.
 (Cross-ref D8 the frozen DTD, D86 the parser's SAX/DOM net, D95 the run that
 produced Q16/Q17, D57 the single-home rule that keeps the value layer in
 `DescriptorContractTest` and out of this grammar, D74 the public choice enums.)
+
+## D97 — parser behavior is frozen while its future is open; D69 continues to govern everything else
+
+**Date:** 2026-09-06. **Status:** accepted. **Phase:** 3c. No code change.
+
+**The question.** D69 makes `main` the enhanced line, where behavior changes
+deliberately, and D70–D88 did exactly that. The 2026-09-06 working steer —
+modernize, do not change observable behavior — narrowed it, and D96 then added
+four more quirks with no disposition. Left unrecorded, a later session would read
+D69 and conclude the opposite.
+
+**The decision.** D69 continues to govern `main` **except inside
+`Thinlet.parse` and the XML dialect it implements**, where behavior changes are
+suspended. Quirks in that surface stay `disposition: undecided` **by policy**,
+not by neglect: Q16, Q18, Q19, Q20, Q21. Q17 (`End` on a list with no lead) is
+outside `parse` and is schedulable under the ordinary D69 protocol whenever it is
+wanted.
+
+**Why the parser specifically.** The ROADMAP's open 3c question — whether the
+hand-rolled parser survives at all — is unanswered, and five of the six undecided
+quirks live inside it. Fixing them now is wasted work if the code is replaced,
+and each fix would be a behavior change that a replacement then has to reproduce
+deliberately. The freeze lifts when that question is settled; nothing else
+triggers it.
+
+**The maintainer's stated direction, recorded as direction and not as the
+decision** (in session, 2026-09-06): the expectation is that the parser code is
+ultimately dropped entirely and replaced by the JRE's own XML parser(s) plus a
+DTD matching what D96 confirmed and documented. That is a lean, not a settled
+answer — the ROADMAP item stays open, and the three blockers it already records
+still have to be answered by whatever replaces `parse`: the whitespace collapsing
+that is pinned behavior, the protected callback surface japicmp gates, and DOM
+mode's live consumer in `AmazonExplorer`.
+
+**What D96's grammar is and is not, for that future.**
+`test/resources/dialect/thinlet-dialect.dtd` already carries the element set, the
+parent/child rules and the attribute names a replacement would have to honour,
+generated from the code rather than authored. It is deliberately **permissive** —
+mixed content everywhere, `CDATA #IMPLIED` throughout — because it describes what
+the current parser *accepts*, not what a successor *should enforce*. A shipped
+replacement DTD would be a stricter document derived from it, and a separate
+decision; it would not be `thinlet.dtd`, which stays frozen (D8).
+(Cross-ref D69 the enhanced-line protocol this scopes, D96 the dialect it freezes,
+D95 the run that produced Q16/Q17, D86 the parser net.)
