@@ -200,48 +200,57 @@
   `disposition: undecided`. Coverage **85.9 → 87.4 %** instructions, **74.0 →
   76.3 %** branches, 27 → 25 never-entered methods. Base row: **425** core + 13
   drafts.
+- **XML dialect written down (D96, 2026-09-06)**:
+  `project-docs/backend-portability/XML-DIALECT.md` is the specification, with
+  every claim citing its pin — `ParserDialectTest` (28) for the lexical and
+  mixed-content rules, `XmlDialectGrammarTest` (10) for the grammar, the DTD
+  comparison and the corpus run. The structural grammar is a **generated** test
+  resource (`test/resources/dialect/thinlet-dialect.dtd`, from
+  `DescriptorTable` + 35 × 35 `addImpl` pairs), regenerated and compared every
+  run, so it cannot drift the way the shipped DTD did. **41 of 42 corpus files
+  validate clean**; the 42nd (`drafts/lists.xml`) is not well-formed XML at all —
+  two buttons carry `text="<"` / `text=">"`. Four DTD defects pinned (the `gt`
+  entity is `=`; zero `#PCDATA`; `desktop` carries the panel attribute list;
+  `button` omits `for`) — points 3 and 4 are the *complete* attribute-name
+  disagreement across all 35 elements, not a spot check. Four new quirks, all
+  `undecided`: **Q18** markup declarations end at the first `>`, **Q19** the
+  declared encoding re-encodes with the character count as a byte count, **Q20**
+  a stray end tag throws NPE, **Q21** text before a child is lost in every mode.
+  Two findings recorded but deliberately unpinned (triage section): truncated
+  input **hangs** in five loops, and `parse`'s inner comment reader is
+  **unreachable** — the dead code behind D95's seven `NO_COVERAGE` mutants. No
+  library change; `thinlet.dtd` untouched. Base row: **463** core + 13 drafts.
 
 ## Next work, in order
 
-0. **Write down what the 2005 XML parser actually accepts — the active work.**
-   Agreed 2026-09-06: the point of this stretch is to *modernize*, not to change
-   behavior, so Q16/Q17 are documented rather than fixed and the useful artifact is
-   a specification of the real dialect. Three findings already motivate it: the
-   shipped `thinlet.dtd` declares **zero `#PCDATA`** (so body text was never valid
-   and the parser simply fails to say so); the DTD is **never loaded at runtime**;
-   and it is **wrong about `&gt;`** — `<!ENTITY gt "&#61;">` is `=`, not `>`, while
-   the parser appends `'>'` correctly. Deliverables: (a)
-   `project-docs/backend-portability/XML-DIALECT.md`, prose beside
-   `INPUT-SURFACE.md`, every claim citing the test that pins it; (b) a faithful
-   structural grammar as a **test resource** (never shipped, never confused with the
-   frozen D8 artifact) plus a test validating all 42 corpus files against it; (c)
-   tests for whatever the writing cannot pin. `thinlet.dtd` stays byte-identical —
-   the divergences are findings, not fixes.
-1. **Q16 and Q17 — documented, fixes deferred.** Both are pinned and catalogued
-   `undecided`. Q17's fix (`End` mirrors `Home`) is agreed to be *correct* but
-   deliberately not now and not on the current branch; it gets its own branch under
-   the D69 protocol when wanted. Q16 stays documented only.
-2. **Q14 (inert table column header) — parked, not open** — held until the fork
+0. **Six quirks sit `undecided` and need dispositions — Q16, Q17, Q18–Q21.**
+   All are pinned and catalogued; none is scheduled. Q17's fix (`End` mirrors
+   `Home`) is agreed to be *correct* but deliberately not now and not on the
+   branch that found it; it gets its own branch under the D69 protocol when
+   wanted. The D96 four are documentation-only findings so far. Nothing here
+   changes until the posture question below is settled, because every one of them
+   is a behavior change.
+1. **Q14 (inert table column header) — parked, not open** — held until the fork
    sources land, because wiring a header click adds *new* public behavior the
    maintainer's own fork may already define (D78). Q6/Q10 stay kept (D75), and Q2's
    non-proportional half stays 2005 by choice (D82).
-3. **Fork mapping (arrival-triggered; no expectations built on it)** — sources still
+2. **Fork mapping (arrival-triggered; no expectations built on it)** — sources still
    pending (2026-08-15: not arrived, a month past the expected window). The gate
    covers **only** the Cut 4/5/6 seam commitments (D48/D50/D61/D69), never net or
    preparatory work. When they land: fork files → subsystems; boundaries vs Cut 2–6
    seams; enhancement backlog; then Cut 4+ seam commitments unblock (3a resumes).
-4. **`loop-characterise` — proven, 26 allowlisted targets left.** Run it with
+3. **`loop-characterise` — proven, 26 allowlisted targets left.** Run it with
    `scripts/loop-characterise.sh <N>`; roughly 15 minutes per slice, unattended.
    Next on the worklist: `findText`, `getChars`, `changeCheck`. Its **repair path
    has never executed** — no slice has yet failed verification.
-5. **`loop-modernise` — runs 1 and 2 done (D87/D89); the tool is proven, the net is
+4. **`loop-modernise` — runs 1 and 2 done (D87/D89); the tool is proven, the net is
    the constraint.** Both runs' most valuable output was a net gap rather than a
    diff. Before a run-3, settle whether the loop is still the right instrument: the
    gaps it exposes are findable directly, sooner, and without committing code to get
    at them. The XML parser stays fenced for *modernisation* (D86 + the ROADMAP 3c
    question) — note that fence does **not** apply to tests. Its repair path has also
    never executed across six slices.
-6. **Recorded, unscheduled**: `FrameLauncher` (0 % covered, and it is published
+5. **Recorded, unscheduled**: `FrameLauncher` (0 % covered, and it is published
    API); the four methods D91 left alone (`getSize`, `setRectangle`, `update`,
    `findComponent`); teaching `loop-characterise` to reach event-driven code (menus,
    dialogs, focus), which is where most remaining branch coverage lives.

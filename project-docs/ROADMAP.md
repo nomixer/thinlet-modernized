@@ -205,10 +205,13 @@ items first:
     callback *sequence* is the contract, not just the signatures. DOM mode has a
     live consumer in `AmazonExplorer` (`thinlet-demos`).
 
-  The genuine wins are maintenance and conformance (namespaces, CDATA and
-  non-predefined entities are unsupported today), not safety. Deciding this is
-  prerequisite to modernising `parse` by hand or by loop — there is no sense
-  polishing code that may be deleted, which is why `loop-modernise` skips it.
+  The genuine wins are maintenance and conformance, not safety. What the dialect
+  actually accepts — and the full list of what it does not — is written up in
+  `project-docs/backend-portability/XML-DIALECT.md` (D96); any replacement has to
+  reproduce each of those rules deliberately or diverge from it deliberately.
+  Deciding this is prerequisite to modernising `parse` by hand or by loop — there
+  is no sense polishing code that may be deleted, which is why `loop-modernise`
+  skips it.
 - **Whether the Insignia EVM workaround survives** — raised 2026-09-05 (D89),
   undecided. `Thinlet.evm` is `0` except on the Insignia Jeode JVM off Windows CE,
   where it is `-1`; 26 sites add it to `fillRect`/`fillOval` sizes and to the
