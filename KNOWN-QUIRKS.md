@@ -364,8 +364,10 @@ Either way:
   branch's `mode == 'D'` / `mode == 'S'` pair with no `'T'` arm.
 - **Locked by:** `thinlet.ParserSyntaxTest#parseInGuiModeSilentlyDropsTextBetweenTagsUnlikeDomAndSaxMode`
   (tagged `documents-current-behavior`).
-- **Enhanced Thinlet disposition:** undecided — frozen by **D97** while the
-  parser's future is open (it lives inside `parse`).
+- **Enhanced Thinlet disposition:** fixed on 0.2.x by the parser replacement
+  (**D98**) — not individually: the JAXP swap resolves it along with the other
+  four `parse` quirks, or none of them. The D97 freeze is lifted; the pins flip in
+  the swap PR. On the frozen v0.1.x line the behavior stands.
 
 ### Q17 — `End` does nothing on a list/tree with no current lead item            (unfixed)
 - **What happens:** pressing `End` on a list, tree, or table with no row
@@ -411,8 +413,10 @@ Either way:
   `#aMarkupDeclarationTailContainingATagIsParsedAsMarkup`,
   `#aCdataSectionIsSkippedAsAMarkupDeclarationAndItsContentIsLost` (tagged
   `documents-current-behavior`).
-- **Enhanced Thinlet disposition:** undecided — frozen by **D97** while the
-  parser's future is open (it lives inside `parse`).
+- **Enhanced Thinlet disposition:** fixed on 0.2.x by the parser replacement
+  (**D98**) — not individually: the JAXP swap resolves it along with the other
+  four `parse` quirks, or none of them. The D97 freeze is lifted; the pins flip in
+  the swap PR. On the frozen v0.1.x line the behavior stands.
 
 ### Q19 — a declared encoding re-encodes string attributes with the character count as the byte count   (unfixed)
 - **What happens:** when the XML declaration carries an `encoding`, every
@@ -426,16 +430,23 @@ Either way:
   default, whatever was declared.
 - **Why it's a quirk:** the declaration is meant to select the decoding of the
   byte stream. Here it selects nothing, and instead triggers a lossy re-encode of
-  values that were already decoded. The 2005 corpus is pure ASCII, so byte count
-  equals character count and the round trip is the identity — which is why the
-  defect survived.
+  values that were already decoded. **It corrupts two corpus documents, and their
+  goldens have recorded the corruption since Phase 1** (D98):
+  `drafts/internationalization.xml` declares `ISO-8859-2` and carries a Hungarian
+  pangram in those bytes, and its golden `drawString` is mangled and truncated;
+  `drafts/widgets.xml` is pure ASCII as bytes but writes `text="Label &#169;"`,
+  and its golden reads `Label Â` — the character reference decodes to `©` *before*
+  the re-encode runs. This entry once claimed the corpus was pure ASCII and the
+  round trip therefore the identity, which is how the defect survived unread.
 - **Where:** `Thinlet.java` — `addAttribute`'s `encoding != null` arm, and the
   `Reader` constructed at the top of `parse(InputStream, char, Object)`.
 - **Locked by:** `thinlet.ParserDialectTest#aDeclaredEncodingReEncodesStringAttributesUsingTheCharacterCountAsAByteCount`
   (tagged `documents-current-behavior`; skipped where the platform default charset
   is single-byte) and `#theDeclaredEncodingDoesNotSelectTheCharsetTheStreamIsDecodedWith`.
-- **Enhanced Thinlet disposition:** undecided — frozen by **D97** while the
-  parser's future is open (it lives inside `parse`).
+- **Enhanced Thinlet disposition:** fixed on 0.2.x by the parser replacement
+  (**D98**) — not individually: the JAXP swap resolves it along with the other
+  four `parse` quirks, or none of them. The D97 freeze is lifted; the pins flip in
+  the swap PR. On the frozen v0.1.x line the behavior stands.
 
 ### Q20 — an end tag with nothing open throws `NullPointerException`   (unfixed)
 - **What happens:** parsing a document that begins with an end tag — `</panel>` —
@@ -448,8 +459,10 @@ Either way:
   branch's `String tagname = (String) parentlist[2];`.
 - **Locked by:** `thinlet.ParserDialectTest#anEndTagWithNoOpenElementThrowsNullPointerException`
   (tagged `documents-current-behavior`).
-- **Enhanced Thinlet disposition:** undecided — frozen by **D97** while the
-  parser's future is open (it lives inside `parse`).
+- **Enhanced Thinlet disposition:** fixed on 0.2.x by the parser replacement
+  (**D98**) — not individually: the JAXP swap resolves it along with the other
+  four `parse` quirks, or none of them. The D97 freeze is lifted; the pins flip in
+  the swap PR. On the frozen v0.1.x line the behavior stands.
 
 ### Q21 — text preceding a child element is discarded in every parse mode   (unfixed)
 - **What happens:** the text buffer is cleared at every **start** tag, so only the
@@ -464,8 +477,10 @@ Either way:
   `text.setLength(0)` at the head of the start-or-standalone-tag branch.
 - **Locked by:** `thinlet.ParserDialectTest#textPrecedingAChildElementIsDiscardedInEveryMode`
   (tagged `documents-current-behavior`).
-- **Enhanced Thinlet disposition:** undecided — frozen by **D97** while the
-  parser's future is open (it lives inside `parse`).
+- **Enhanced Thinlet disposition:** fixed on 0.2.x by the parser replacement
+  (**D98**) — not individually: the JAXP swap resolves it along with the other
+  four `parse` quirks, or none of them. The D97 freeze is lifted; the pins flip in
+  the swap PR. On the frozen v0.1.x line the behavior stands.
 
 
 ## Triaged for Enhanced Thinlet (not behavior-locked)
@@ -510,11 +525,15 @@ Enhanced Thinlet's to address.
   rather than merely burning a core. **Deliberately not pinned:** a test would
   either hang the suite or `OutOfMemoryError` the shared Surefire JVM, and no
   bounded input demonstrates it. Read from the code; the reasoning is written up
-  in `project-docs/backend-portability/XML-DIALECT.md`.
+  in `project-docs/backend-portability/XML-DIALECT.md`. **Reachable over the
+  network today** — `AmazonExplorer` calls `parseDOM(new URL(url).openStream())`,
+  so a response cut short mid-element hangs the event thread. The 0.2.x parser
+  replacement (D98) removes it with the loops; on v0.1.x it stands.
 - **`parse`'s inner comment reader is unreachable (D96).** The tag-name loop
   checks whether the accumulated name has reached `!--` and, if so, scans for
   `-->` — the correct comment rule. It can never run: the `c == '!'` branch is an
   `else if` ahead of the start-tag branch, so the name buffer never begins with
   `!`. This is the dead code behind the seven `NO_COVERAGE` mutants D95 recorded
   in `parse`, and the reason Q18 exists. Removing it is a modernization decision,
-  not a behavior one.
+  not a behavior one — and the 0.2.x parser replacement (D98) removes it with the
+  rest of the body.

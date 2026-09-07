@@ -1,9 +1,17 @@
 # The Thinlet XML dialect
 
-**Status: characterized (2026-09-06).** What the 2005 parser in `Thinlet.java`
-actually accepts, and how that differs both from XML 1.0 and from the DTD the
-library ships. Rationale: `DECISIONS.md` **D96**. Documentation only — no
-behavior changed to produce it.
+**Status: characterized (2026-09-06); the parser it describes is being replaced
+(D98, 2026-09-07).** What the 2005 parser in `Thinlet.java` actually accepts, and
+how that differs both from XML 1.0 and from the DTD the library ships. Rationale:
+`DECISIONS.md` **D96**. Documentation only — no behavior changed to produce it.
+
+`main` (0.2.x) replaces this parser with a JAXP-backed one as a clean break: 0.2.x
+reads XML, and **v0.1.x stays the line that reads the dialect below** (D98). Until
+that swap lands, every rule here still describes `main`. Afterwards this file is
+the specification of the frozen line and of what a 2005 document must be migrated
+*from* — which is why the divergence tables are the migration list, and why the
+seventeen pins that fail under a conforming parser are catalogued in D98 rather
+than here.
 
 Every claim below cites the test that pins it. Two test classes carry them:
 
@@ -204,9 +212,26 @@ mis-reinterpretation alone would give
 (`ParserDialectTest#aDeclaredEncodingReEncodesStringAttributesUsingTheCharacterCountAsAByteCount`,
 skipped where the platform default is single-byte).
 
-The corpus never trips this: 21 of its 42 files declare `ISO-8859-1` and 10
-declare `UTF-8`, but **every file is pure ASCII**, so the byte count equals the
-character count and the round trip is the identity.
+**The corpus trips this in two documents, and their goldens have recorded the
+corruption since Phase 1.** 32 of the 42 files declare an encoding — 21
+`ISO-8859-1`, 10 `UTF-8` and one `ISO-8859-2` — and the other 10 declare none.
+
+| Document | What it carries | What the golden records |
+|---|---|---|
+| `drafts/internationalization.xml` | a Hungarian pangram in ISO-8859-2 bytes, declared `encoding="ISO-8859-2"` | `drawString` of `ďż˝RVďż˝ZTďż˝Rďż˝ …ďż˝r` — mangled *and* truncated |
+| `drafts/widgets.xml` | `text="Label &#169;"`, declared `encoding="ISO-8859-1"` | `drawString` of `Label Â` |
+
+The first is the plain case: the bytes are not ASCII, the platform default (UTF-8
+under D25's pinned test charset) cannot decode them, each character becomes
+U+FFFD, and the re-encode then reinterprets those replacement bytes and truncates
+at the character count.
+
+The second is the instructive one. `drafts/widgets.xml` **is** pure ASCII as
+bytes — and the defect fires anyway, because `&#169;` is decoded to `©` *before*
+the re-encode runs. A character reference is enough, so "the source is ASCII"
+never implied the round trip was the identity. This document once claimed the
+corpus never tripped the defect on exactly that reasoning; it was wrong on both
+halves (`DECISIONS.md` **D98**).
 
 An unsupported `encoding` value prints the `UnsupportedEncodingException`
 message on `System.err` and leaves `encoding` null, so the parse continues with

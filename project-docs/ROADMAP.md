@@ -180,40 +180,29 @@ items first:
   placeholder, ending `null` as the missing-icon signal). Note the golden net
   cannot verify the paint half: the trace records image geometry, not identity, so
   a placeholder drawn at the size of the icon it replaces moves nothing (D90).
-- **Whether the hand-rolled XML parser should survive at all** — raised
-  2026-09-02, still open, recorded so the analysis is not re-derived. **Parser
-  behavior is frozen while it is open (D97)**, and the maintainer's stated
-  direction is replacement by the JRE's parser(s) plus a DTD derived from D96. `parse` is
-  ~207 lines serving three modes ('T' GUI, 'S' SAX-like, 'D' DOM-like), all now
-  pinned (goldens for 'T'; D86 for 'S'/'D'). The obvious move is to delegate to
-  JAXP, and the obvious argument for it does not survive checking:
-
-  - **Security nets to roughly zero, and may favour the incumbent.** Thinlet
-    resolves five entities (`lt`/`gt`/`amp`/`quot`/`apos`) plus numeric character
-    references and throws on anything else. It has no mechanism to fetch an
-    external entity, load an external DTD, or expand a nested one, so XXE, entity
-    expansion and DTD-based SSRF are impossible by construction.
-    `DocumentBuilderFactory`/`SAXParserFactory` permit all three **by default**
-    and require explicit hardening. "Better tested" holds; "more secure" does not.
-  - **Whitespace is the real blocker.** `parse` collapses interior whitespace runs
-    to a single space and trims one trailing space — pinned by
-    `parseXmlCollapsesWhitespaceAndTrimsTheTrailingSpaceFromText`. A conforming
-    parser reports text verbatim, so a naive swap changes the text of every label
-    in every corpus file. Any replacement must reimplement the collapsing, or the
-    change goes through D69 as a deliberate, recorded behavior change.
-  - **The surface is public and consumed.** `parseXML`, `startElement`,
-    `characters`, `endElement`, `parseDOM` and the `getDOM*` accessors are
-    protected on a non-final public class, so japicmp gates them (D43); the
-    callback *sequence* is the contract, not just the signatures. DOM mode has a
-    live consumer in `AmazonExplorer` (`thinlet-demos`).
-
-  The genuine wins are maintenance and conformance, not safety. What the dialect
-  actually accepts — and the full list of what it does not — is written up in
-  `project-docs/backend-portability/XML-DIALECT.md` (D96); any replacement has to
-  reproduce each of those rules deliberately or diverge from it deliberately.
-  Deciding this is prerequisite to modernising `parse` by hand or by loop — there
-  is no sense polishing code that may be deleted, which is why `loop-modernise`
-  skips it.
+- **The hand-rolled XML parser does not survive — settled 2026-09-07 (D98).**
+  `Thinlet.parse`'s 207-line body is replaced by a JAXP-backed implementation on
+  `main` (0.2.x) as a **clean break**: 0.2.x reads XML, and v0.1.x stays the line
+  that reads the 2005 dialect. The lean was tested with a throwaway spike run
+  against the whole net on JDK 21 and JDK 8, not argued: **22 of 463 core tests
+  fail**, the identical set on both rows; 38 of 41 static paint goldens are
+  byte-identical; the whole input net and D86's 19 SAX/DOM-mode tests are green;
+  the compiled `protected`+ surface does not move, so japicmp sees nothing. Of the
+  three blockers this item used to record, only one was real. The whitespace rule
+  is 14 lines. The protected callback *sequence* survives intact. `AmazonExplorer`
+  works except `convertHTML`, which matches the literal `"&lt;P>"` and so depends
+  on entities *not* being decoded in element text — a three-line fix. The real
+  blocker is raw `<`/`>` in an attribute value, which costs `drafts/lists.xml` and
+  with it the Drafts Lists page. Two goldens change because the swap **repairs**
+  Q19 corrupting `drafts/internationalization.xml` and `drafts/widgets.xml`, which
+  the goldens have recorded since Phase 1. The security argument does run
+  backwards, as this item recorded — the swap's hardening is a cost, not a
+  benefit — but keeping has its own price nobody had put a number on: `parse`
+  hangs on truncated input, and `AmazonExplorer` parses an HTTP stream. Next: the
+  swap PR (pins flipped, two goldens re-recorded, a well-formed sibling for
+  `lists.xml` as a new corpus file — the imported one stays as-is per D9/D12).
+  A shipped replacement DTD derived from D96's generated grammar is a **separate**
+  decision after it; nothing in the swap needs one.
 - **Whether the Insignia EVM workaround survives** — raised 2026-09-05 (D89),
   undecided. `Thinlet.evm` is `0` except on the Insignia Jeode JVM off Windows CE,
   where it is `-1`; 26 sites add it to `fillRect`/`fillOval` sizes and to the
