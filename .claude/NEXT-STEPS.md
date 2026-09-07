@@ -1,4 +1,4 @@
-# Next steps — session handoff (2026-09-06)
+# Next steps — session handoff (2026-09-07)
 
 > State pointers + ordered work only; rationale lives in `DECISIONS.md`
 > (single-home rule + comment rules: **D57**). Charter:
@@ -220,21 +220,53 @@
   input **hangs** in five loops, and `parse`'s inner comment reader is
   **unreachable** — the dead code behind D95's seven `NO_COVERAGE` mutants. No
   library change; `thinlet.dtd` untouched. Base row: **463** core + 13 drafts.
+- **The parser question is settled: replace (D98, 2026-09-07).** A throwaway JAXP
+  spike — two variants, run against the whole net on JDK 21 **and** JDK 8 and then
+  reverted — measured the swap instead of arguing it. **22 of 463 core tests fail,
+  the identical set on both rows**; 38 of 41 static paint goldens are
+  byte-identical; the entire input net and D86's 19 SAX/DOM-mode tests are green;
+  the compiled `protected`+ surface does not move (71 members, `javap` both ways),
+  so japicmp sees nothing. Of the three blockers the ROADMAP recorded, only one was
+  real: whitespace collapsing is a **14-line** helper (worth exactly 4 tests), the
+  protected callback *sequence* survives intact, and `AmazonExplorer` works except
+  `convertHTML` — which matches the literal `"&lt;P>"` and so depends on entities
+  **not** being decoded in element text (3-line fix). The real blocker is raw
+  `<`/`>` in an attribute value: `drafts/lists.xml` becomes unreadable and the
+  Drafts Lists page dies silently (`Drafts.showDraft` only `printStackTrace`s).
+  Two goldens change because the swap **repairs** Q19 corrupting
+  `drafts/internationalization.xml` (not ASCII — ISO-8859-2 Hungarian pangram,
+  golden mangled *and* truncated) and `drafts/widgets.xml` (`text="Label &#169;"`
+  → golden `Label Â`); both have been recorded corrupt since PR #9, unread because
+  the docs asserted the corpus was pure ASCII. Costed the other way too: `parse`
+  hangs on truncated input and `AmazonExplorer` parses an HTTP stream. Posture
+  settled by the maintainer in session — **clean break, 0.2.x reads XML, v0.1.x
+  stays the line that reads the 2005 dialect**. Decision entry only; no library
+  change, no golden moved. Base row unchanged (463 core + 13 drafts).
 
 ## Next work, in order
 
-0. **Parser behavior is frozen (D97); everything else stays D69.** Q16, Q18, Q19,
-   Q20 and Q21 all live inside `parse`, so they stay `undecided` **by policy**
-   until the ROADMAP's open question — whether the hand-rolled parser survives at
-   all — is settled. Nothing else triggers the thaw. **Q17 (`End`) is outside
-   `parse`** and is schedulable under the ordinary D69 protocol whenever wanted;
-   its fix (`End` mirrors `Home`) is agreed to be correct, just not scheduled.
-   The maintainer's stated direction (2026-09-06, recorded in D97 as direction,
-   not decision): drop the parser code entirely and replace it with the JRE's XML
-   parser(s) plus a DTD matching what D96 documented. D96's generated
-   `thinlet-dialect.dtd` is where that DTD starts — but it is deliberately
-   permissive, describing what the parser *accepts*, not what a successor should
-   *enforce*.
+0. **The parser swap (D98) — the next code PR.** The D97 freeze is lifted and the
+   decision is made; what remains is the implementation, and it is fully scoped by
+   the spike's measurements. The PR: a JAXP `DefaultHandler` plus the 14-line
+   whitespace-collapse helper replacing `parse`'s 207-line body (the same
+   `addElement`/`addImpl`/`addAttribute`/`finishParse` calls, so the definition
+   table, the `i18n.` bundle lookup and every `IllegalArgumentException` message
+   are untouched); SAX hardening (secure processing, external general and parameter
+   entities off, no external DTD, no XInclude) — the 2005 parser could fetch
+   nothing, so this is a cost of the swap, not a benefit; `SAXParseException` →
+   `IllegalArgumentException` so malformedness keeps its 2005 type; **17 pins
+   flipped** (16 in `ParserDialectTest`, 1 in `ParserSyntaxTest`, and
+   `XmlDialectGrammarTest#theOneCorpusDocumentAStandardXmlParserRejectsIsStillParsedByThinlet`),
+   each `documents-current-behavior` tag off; `internationalization.json` and
+   `widgets.json` re-recorded citing D98 and nothing else; `convertHTML` fixed in
+   `AmazonExplorer`; and a **new** well-formed sibling for `drafts/lists.xml` —
+   the imported file stays exactly as it is (D9/D12), so the Drafts Lists page and
+   its playthrough scenario get a document that a conforming parser can read.
+   Q16, Q18, Q19, Q20 and Q21 are all retitled **fixed in 0.2.x (D98)** by that one
+   PR; none of them is fixable alone. A shipped replacement DTD derived from D96's
+   generated grammar is a **separate** decision afterwards — nothing in the swap
+   needs one. **Q17 (`End`) is outside `parse`** and remains schedulable on its own
+   under the ordinary D69 protocol.
 1. **Q14 (inert table column header) — parked, not open** — held until the fork
    sources land, because wiring a header click adds *new* public behavior the
    maintainer's own fork may already define (D78). Q6/Q10 stay kept (D75), and Q2's
@@ -260,10 +292,12 @@
    `findComponent`); teaching `loop-characterise` to reach event-driven code (menus,
    dialogs, focus), which is where most remaining branch coverage lives.
 
-> **Posture: settled 2026-09-06 (D97).** D69 still governs `main` — it is the
-> enhanced line, and behavior changes deliberately — **except inside `Thinlet.parse`
-> and the XML dialect it implements**, where changes are suspended until the
-> parser's future is decided. Read D97 before proposing any parser behavior change.
+> **Posture: D69 governs `main` throughout again.** D97's parser freeze is lifted
+> by **D98**, which settles the question it was waiting on: the hand-rolled parser
+> is replaced by JAXP on 0.2.x as a clean break, and v0.1.x stays the line that
+> reads the 2005 dialect. Parser behavior changes are once more ordinary D69 work —
+> but the five `parse` quirks are already dispositioned to that one swap, so do not
+> fix them individually.
 
 ## Discipline (one-liners; the D-entries carry the why)
 

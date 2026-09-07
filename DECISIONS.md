@@ -4413,3 +4413,206 @@ replacement DTD would be a stricter document derived from it, and a separate
 decision; it would not be `thinlet.dtd`, which stays frozen (D8).
 (Cross-ref D69 the enhanced-line protocol this scopes, D96 the dialect it freezes,
 D95 the run that produced Q16/Q17, D86 the parser net.)
+
+## D98 — the hand-rolled XML parser is replaced by JAXP on 0.2.x: a clean break, measured against the whole net
+
+**Date:** 2026-09-07. **Status:** accepted. **Phase:** 3c. This entry settles the
+ROADMAP's open question and lifts the D97 freeze. No library change lands with it;
+the swap is the next PR.
+
+**The question.** D97 froze `Thinlet.parse` because the ROADMAP's open item —
+whether the hand-rolled parser survives at all — was unanswered, and five of the
+six undecided quirks live inside it. The recorded lean was replacement by the
+JRE's parser. That lean is now tested rather than confirmed.
+
+**How it was measured.** A throwaway spike implemented
+`parse(InputStream, char, Object)` on `javax.xml.parsers.SAXParser` in two
+variants, selected by an environment variable so the same build ran both ways,
+and never committed:
+
+- **naive** — a `DefaultHandler` that does the obvious thing: per-element text
+  buffer cleared at each start tag, `addElement`/`createImpl`/`addAttribute`
+  called from `startElement`, `finishParse` at the end of the document;
+- **faithful** — naive plus a 14-line whitespace-collapse helper reproducing the
+  2005 rule exactly, SAX hardening (secure processing, external general and
+  parameter entities off, no external DTD, no XInclude, a stub `EntityResolver`),
+  and `SAXParseException` → `IllegalArgumentException` mapping so malformedness
+  keeps its 2005 exception *type*.
+
+`ParserDialectTest` (28) and `XmlDialectGrammarTest` (10) were used unmodified as
+the conformance harness D96 built them to be, alongside the rest of the net.
+
+| Suite | legacy | naive | faithful |
+|---|---|---|---|
+| `ParserDialectTest` (28) | 28 | 11 | 12 |
+| `XmlDialectGrammarTest` (10) | 10 | 9 | 9 |
+| `ParserSaxModeTest` + `ParserDomModeTest` (19, D86) | 19 | 16 | **19** |
+| static paint goldens (41 corpus documents) | 41 | — | **38** |
+| interaction goldens (53) + the whole input net | all | — | **all** |
+| `thinlet-core` total (463) | 463 | — | 441 |
+| `DraftsPlaythroughTest` (13) | 13 | — | 12 |
+
+**22 of 463 core tests fail under the faithful spike, and the JDK 8 row fails the
+identical 22** — the Java-8 floor is not a constraint. The compiled `protected`+
+surface is byte-identical with the spike in (71 members, `javap` both ways), so
+the japicmp gate sees nothing move.
+
+**1. What the swap changes, enumerated.** Seventeen of the 38 dialect pins fail,
+in three groups that cost very different things.
+
+*Seven are fixes — the pin documents a bug and JAXP is right:* `CDATA` sections
+are read instead of discarded; a comment containing `>` no longer leaks its tail
+into the document, and a leaked tag is no longer built (Q18, both pins); the
+declared `encoding` selects the decoding and the lossy re-encode is gone (Q19,
+both pins); a stray end tag reports a parse error instead of `NullPointerException`
+(Q20); `<?php echo 1; ?>` is skipped like any other processing instruction.
+
+*Five are error-contract changes:* `&#X41;` raises `IllegalArgumentException`
+rather than `NumberFormatException`; an unknown entity, a mismatched end tag
+(`ParserDialectTest` and `ParserSyntaxTest` both) and an empty entity name keep
+the type but carry Xerces' message with line and column instead of the 2005
+one-word message; an unsupported declared `encoding` becomes fatal where 2005
+printed to `System.err` and continued.
+
+*Five are genuine compatibility losses, and two of them are silent:*
+
+| Loss | Corpus instances | Failure mode |
+|---|---|---|
+| raw `<` / `>` in an attribute value | **2**, both in `drafts/lists.xml` | fatal, with line and column |
+| a repeated attribute | 0 | fatal |
+| content after the root element | 0 | fatal |
+| a literal newline or tab in an attribute value | 0 | **silent** — normalized to a space |
+| entity references in element text | 0 | **silent** — now decoded |
+
+**2. What must be reimplemented, and what comes free.** Only the whitespace rule.
+The 14-line collapse helper is worth exactly four tests — `ParserDialectTest`'s
+whitespace pin and three in D86's SAX/DOM suites — and with it those two suites go
+**19/19 green**, which is the measured answer to whether the callback contract
+survives. Everything else the ROADMAP worried about comes free, because the
+replacement calls the same `addElement`, `addImpl`, `addAttribute` and
+`finishParse`: the resource-bundle `i18n.` lookup, the definition-table
+attribute typing, the pairwise parent/child rule and its `IllegalArgumentException`
+messages, and `parse(String path)`'s resource resolution are all outside `parse`
+and untouched. `IllegalArgumentException` thrown from inside a SAX handler
+propagates out of `SAXParser.parse` unwrapped, so `"popupmenu add tab"` and
+`"unknown columns null for desktop"` still reach the caller verbatim.
+
+`addAttribute`'s `encoding` parameter becomes dead on the clean break — it is
+package-private and outside japicmp's reach.
+
+**3. The protected surface and the live DOM consumer.** japicmp gates signatures
+of `protected`-and-above members; the six the ROADMAP names (`parseXML`,
+`startElement`, `characters`, `endElement`, `parseDOM`, the `getDOM*` accessors)
+all keep theirs, which the identical `javap` dumps confirm. The *sequence*
+contract is what could have broken, and it does not: D86's 19 tests are green.
+
+`AmazonExplorer` (`thinlet-demos`) is unaffected in structure — but
+`convertHTML` matches the literal six-character string `"&lt;P>"`, which only ever
+arrives because the 2005 parser does **not** decode entities in element text. Once
+JAXP decodes them the method silently stops converting, and review comments render
+with literal `<P>` markup. It is a three-line fix in the demo, and it is the only
+consumer in the repo that depends on that divergence. Note also that
+`AmazonExplorer` reaches DOM mode through `parseDOM(new URL(url).openStream())` —
+see the cost of *keeping*, below.
+
+**4. The corpus is the evidence, and it argues for the swap.** 38 of the 41
+statically rendered corpus documents produce a byte-identical trace under the
+faithful spike. Three do not:
+
+- **`drafts/lists.xml` — hard failure.** Two buttons carry `text="<"` and
+  `text=">"`; no conforming parser can read the file (D96 pinned this). In the
+  Drafts app the page simply does not appear: `Drafts.showDraft` catches
+  `Exception` and only `printStackTrace`s, so the Lists page dies silently.
+  `DraftsPlaythroughTest.listsPageMovesItemsAndFillsTheTable` is the one
+  playthrough scenario that fails.
+- **`drafts/internationalization.xml` — a corruption is repaired.** The golden's
+  label changes from the mangled, truncated `ďż˝RVďż˝ZTďż˝Rďż˝ …ďż˝r` to
+  `ÁRVÍZTŰRŐ TÜKÖRFÚRÓGÉP - árvíztűrő tükörfúrógép`, which widens the label from
+  305 to 322 px and moves 20 further coordinates plus one call count (51 → 52).
+- **`drafts/widgets.xml` — a second corruption is repaired.** One `drawString`
+  changes from `Label Â` to `Label ©`.
+
+Those last two are Q19 caught corrupting shipped documents, not a hypothesis. Both
+goldens have recorded the corruption since PR #9 (Phase 1 slice 1) and nothing
+read them as wrong, because both `XML-DIALECT.md` and `KNOWN-QUIRKS` Q19 asserted
+the corpus was pure ASCII and the round trip therefore the identity. **Both halves
+of that claim are false**, and this entry's PR corrects them:
+`drafts/internationalization.xml` is not ASCII — it declares `encoding="ISO-8859-2"`
+(a third declared encoding, in the 32 files that declare one) and carries a
+Hungarian pangram in ISO-8859-2 bytes. And `drafts/widgets.xml` shows the
+reasoning itself is unsound: its source *is* pure ASCII, but `text="Label &#169;"`
+decodes to `©` **before** the re-encode runs, so a character reference is enough
+to trip a defect the ASCII argument said could not fire.
+
+**The cost of keeping, which had not been priced.** `parse` does not fail on
+truncated input — it **hangs**. Five loops never test for end of stream, four of
+them appending to a `StringBuffer` as they spin, so a document that ends inside a
+tag name, an attribute, an entity reference or a markup declaration burns a core
+or exhausts the heap (D96 recorded this from the code; no bounded input
+demonstrates it without hanging the suite). This is reachable over the network
+today: `AmazonExplorer` parses an HTTP response stream directly, so a dropped
+connection mid-response hangs the event thread. Keeping the parser means owning
+that, the 207 lines, the 16 surviving mutants D94 counted, the unreachable comment
+reader, and five quirks that each need their own disposition — against a JAXP
+implementation the JDK maintains.
+
+**The security argument really does run backwards, and it did not decide this.**
+The 2005 parser resolves five entities plus numeric references and can fetch
+nothing, so XXE, entity expansion and DTD-based SSRF are impossible by
+construction; `SAXParserFactory` permits all three by default. The spike's
+faithful variant therefore hardens explicitly, and that hardening — six lines — is
+part of the replacement's cost, not a benefit of it. The case for the swap is
+conformance, the two repaired corruptions, and the hang; not safety.
+
+**The decision.** `Thinlet.parse`'s hand-rolled body is replaced by a JAXP-backed
+implementation on `main` (0.2.x), as a **clean break**: 0.2.x reads XML. Documents
+using the 2005 superset stop loading, with a line and column, rather than being
+read by a lenient fallback. **v0.1.x remains the line that reads the 2005
+dialect** — that is what the two-line structure (D69) is for, and a fallback would
+keep every line the swap exists to delete, hang included. The maintainer settled
+the posture in session on 2026-09-07, with the measurements above in hand.
+
+The change goes through the D69 protocol: this entry is the disposition, the 17
+pins flip in the swap PR, and the two golden re-records cite this entry and cover
+only the affected scenarios. D69's per-quirk shape stretches here — this replaces
+the definition of the input language rather than fixing one behavior — which is
+why the compatibility posture is recorded above as its own decision rather than
+left implicit in a quirk flip.
+
+**The D97 freeze is lifted.** Q16, Q18, Q19, Q20 and Q21 are no longer
+`undecided` by policy: all five are resolved by the replacement, and their
+`KNOWN-QUIRKS` entries say so and name this entry. None of them is fixed
+individually; the swap fixes them together or not at all. Q17 was never frozen.
+
+**The first PR does exactly this**, and no code:
+
+1. this entry;
+2. the corrections to `XML-DIALECT.md` and `KNOWN-QUIRKS` Q19, with the two
+   golden lines as evidence;
+3. the ROADMAP item closed, and the dispositions on the five quirks.
+
+**The second PR is the swap**, and it is scoped by the measurements: the JAXP
+handler and the whitespace helper replacing `parse`'s body; the 17 pins flipped
+with their new expectations; `internationalization.json` and `widgets.json`
+re-recorded citing this entry; `convertHTML` fixed in `AmazonExplorer`;
+`lists.xml` left exactly as imported (D9/D12) with a well-formed sibling added as
+a **new** corpus file so the Drafts Lists page and its playthrough scenario keep a
+document to render. The DTD derived from D96's generated grammar is a **third**
+PR and a separate decision — D96's grammar describes what the old parser accepted,
+not what a successor should enforce, and nothing in the swap needs it.
+
+**What would reverse this.** A Thinlet document corpus in the wild that uses the
+superset materially — the 2005 dialect's tolerances are exactly the ones a
+hand-authoring GUI developer would hit, and `lists.xml` proves the 2005 authors hit
+them. One in-repo document is a fact; a population is not, and it is unknowable
+from here. If the fork sources arrive carrying documents that use raw angle
+brackets, repeated attributes or entity-bearing element text, this becomes a
+migration problem rather than a two-character one, and the fallback option
+reopens. Nothing else surfaced in the measurement would change it: the Java-8
+floor is clear, the binary surface is clear, and the callback contract is clear.
+
+(Cross-ref D97 the freeze this lifts, D96 the dialect specification and the
+conformance harness this used, D69 the enhanced-line protocol, D8 the frozen DTD,
+D9/D12 the corpus preserved as imported, D25 the pinned test charset that made the
+two corruptions reproducible, D86 the SAX/DOM net, D94 the mutation survivors,
+D44/D52 the golden re-record discipline.)
