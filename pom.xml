@@ -44,15 +44,15 @@
     <version.jar.plugin>3.5.1</version.jar.plugin>
     <version.deploy.plugin>3.1.4</version.deploy.plugin>
     <version.toolchains.plugin>3.3.0</version.toolchains.plugin>
-    <version.spotless.plugin>3.10.1</version.spotless.plugin>
+    <version.spotless.plugin>3.10.2</version.spotless.plugin>
     <version.palantir.format>2.50.0</version.palantir.format>
     <version.checkstyle.plugin>3.6.0</version.checkstyle.plugin>
     <version.checkstyle.tool>14.1.0</version.checkstyle.tool>
-    <version.spotbugs.plugin>4.10.4.0</version.spotbugs.plugin>
-    <version.japicmp.plugin>0.26.1</version.japicmp.plugin>
-    <version.jacoco.plugin>0.8.13</version.jacoco.plugin>
-    <version.pitest.plugin>1.19.1</version.pitest.plugin>
-    <version.pitest.junit5>1.2.2</version.pitest.junit5>
+    <version.spotbugs.plugin>4.10.4.1</version.spotbugs.plugin>
+    <version.japicmp.plugin>0.26.2</version.japicmp.plugin>
+    <version.jacoco.plugin>0.8.15</version.jacoco.plugin>
+    <version.pitest.plugin>1.30.0</version.pitest.plugin>
+    <version.pitest.junit5>1.2.3</version.pitest.junit5>
 
     <!-- japicmp is INACTIVE during Phase 0; activated from v0.1.0 (Phase 1). -->
     <japicmp.skip>true</japicmp.skip>
